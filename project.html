@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .project-header { background: #fdf5e6; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .tech-tag { background: #e9ecef; padding: 4px 8px; margin: 2px; border-radius: 4px; display: inline-block; font-size: 0.9em; }
+        .inquiry-btn { background: #17a2b8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; font-weight: bold; }
+        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
+        .contributor-list { list-style-type: none; padding-left: 0; }
+        .contributor-list li { padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; background: #fff; }
+    </style>
+</head>
+<body>
+    <a href="javascript:history.back()" class="back-link">← Back</a>
+    <div id="project-content">Loading project...</div>
+
+    <script>
+        async function loadProject() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) {
+                document.getElementById('project-content').innerHTML = "<p>No project ID provided.</p>";
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/api/projects/${id}`);
+                if (!response.ok) throw new Error("Project not found");
+                
+                const project = await response.json();
+                
+                const techHtml = project.technologies.map(t => `<span class="tech-tag">${t}</span>`).join('');
+                
+                // Draw a list item for each contributor
+                const contribsHtml = project.contributors.map(c => 
+                    `<li><a href="student.html?id=${c.student_id}">View Student ${c.student_id}</a> - Role: <strong>${c.role}</strong></li>`
+                ).join('');
+
+                document.getElementById('project-content').innerHTML = `
+                    <div class="project-header">
+                        <h1>${project.title}</h1>
+                        <p><strong>Domain:</strong> ${project.domain}</p>
+                        <p>${project.description}</p>
+                        <p><strong>Technologies:</strong> ${techHtml}</p>
+                        
+                        <a class="inquiry-btn" href="intake.html?source_type=project&source_id=${project.id}&source_name=${encodeURIComponent(project.title)}">
+                            Inquire about this project
+                        </a>
+                    </div>
+                    
+                    <h3>Contributors</h3>
+                    <ul class="contributor-list">
+                        ${contribsHtml}
+                    </ul>
+                `;
+            } catch(e) {
+                document.getElementById('project-content').innerHTML = "<p>Error loading project.</p>";
+            }
+        }
+        
+        loadProject();
+    </script>
+</body>
+</html>

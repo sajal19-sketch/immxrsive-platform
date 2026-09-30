@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .profile-header { background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .skills-tag { background: #e9ecef; padding: 4px 8px; margin: 2px; border-radius: 4px; display: inline-block; font-size: 0.9em; }
+        .project-link { display: block; margin: 10px 0; padding: 15px; background: #fff; border: 1px solid #ddd; text-decoration: none; color: black; border-radius: 4px; font-weight: bold; }
+        .project-link:hover { background: #f8f9fa; }
+        .inquiry-btn { background: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; font-weight: bold; }
+        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Directory</a>
+    <div id="profile">Loading profile...</div>
+
+    <script>
+        async function loadProfile() {
+            // Get the student ID from the URL (e.g., ?id=S18)
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) {
+                document.getElementById('profile').innerHTML = "<p>No student ID provided.</p>";
+                return;
+            }
+
+            try {
+                // Fetch student data from the backend
+                const response = await fetch(`http://127.0.0.1:8000/api/students/${id}`);
+                if (!response.ok) throw new Error("Student not found");
+                
+                const student = await response.json();
+                
+                const skillsHtml = student.skills.map(s => `<span class="skills-tag">${s}</span>`).join('');
+                
+                // Create links for their projects
+                const projectsHtml = student.project_ids.map(pid => 
+                    `<a class="project-link" href="project.html?id=${pid}">View Project ${pid} Details →</a>`
+                ).join('');
+
+                // Draw the page
+                document.getElementById('profile').innerHTML = `
+                    <div class="profile-header">
+                        <h1>${student.name}</h1>
+                        <h2>${student.headline}</h2>
+                        <p><strong>Program:</strong> ${student.program} | <strong>Status:</strong> ${student.status}</p>
+                        <p><strong>Availability:</strong> ${student.availability.join(', ')}</p>
+                        <p><strong>Skills:</strong> ${skillsHtml}</p>
+                        <p><a href="${student.github_link}" target="_blank">View GitHub Profile</a></p>
+                        
+                        <!-- This button passes the student data to the intake form -->
+                        <a class="inquiry-btn" href="intake.html?source_type=student&source_id=${student.id}&source_name=${encodeURIComponent(student.name)}">
+                            Interested in working with this student
+                        </a>
+                    </div>
+                    
+                    <h3>Project Evidence</h3>
+                    ${projectsHtml}
+                `;
+            } catch(e) {
+                document.getElementById('profile').innerHTML = "<p>Error loading profile or student not found.</p>";
+            }
+        }
+        
+        loadProfile();
+    </script>
+</body>
+</html>

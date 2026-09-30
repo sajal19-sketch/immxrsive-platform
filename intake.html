@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Intake Form</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .context-box { background: #e2e3e5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6c757d; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <a href="javascript:history.back()" class="back-link">← Back</a>
+    <h1>Employer Inquiry Form</h1>
+    
+    <!-- This box automatically displays the student or project context -->
+    <div class="context-box">
+        <strong>Inquiring about:</strong> <span id="display-name">Loading...</span><br>
+        <small>ID: <span id="display-id"></span> | Type: <span id="display-type"></span></small>
+    </div>
+
+    <!-- The actual form the employer fills out -->
+    <form onsubmit="submitForm(event)">
+        <div class="form-group">
+            <label for="company">Company Name</label>
+            <input type="text" id="company" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="contact">Contact Name</label>
+            <input type="text" id="contact" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Contact Email</label>
+            <input type="email" id="email" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Inquiry Description</label>
+            <textarea id="description" rows="5" required></textarea>
+        </div>
+        
+        <button type="submit">Submit Inquiry</button>
+    </form>
+
+    <script>
+        // 1. Pull the data from the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sourceType = urlParams.get('source_type') || 'Unknown';
+        const sourceId = urlParams.get('source_id') || 'Unknown';
+        const sourceName = urlParams.get('source_name') || 'Unknown';
+
+        // 2. Fill the context box so the employer knows who they are messaging
+        document.getElementById('display-name').textContent = sourceName;
+        document.getElementById('display-id').textContent = sourceId;
+        document.getElementById('display-type').textContent = sourceType;
+
+        // 3. Handle the fake submission
+        function submitForm(event) {
+            event.preventDefault(); // Stop the page from reloading
+            alert("Simulated Form Submitted Successfully! \\n\\nIn a real app, this would send an email to the university.");
+            window.location.href = "index.html"; // Send them back to the home page
+        }
+    </script>
+</body>
+</html>
