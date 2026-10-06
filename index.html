@@ -3,274 +3,442 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImmXrsive | Talent Directory</title>
+  <title>ImmXrsive Talent Directory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(22, 30, 46, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
-      --tag-bg: rgba(99, 102, 241, 0.12);
-      --tag-text: #a5b4fc;
-      --border-radius: 14px;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #e2e8f0;
+      --tag-bg: #f1f5f9;
+      --tag-text: #475569;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
+
     body {
       background-color: var(--bg);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    .navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      padding: 40px 20px;
-      background-image: 
-        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
-      background-attachment: fixed;
     }
-    .container {
-      width: 100%;
-      max-width: 900px;
+
+    .brand-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
     }
-    header {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-    header h1 {
-      font-size: 2.4rem;
+
+    .brand-main {
+      font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 40%, #a5b4fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      color: #0284c7;
+      letter-spacing: -0.01em;
     }
+
+    .brand-sub {
+      font-size: 0.82rem;
+      color: #0284c7;
+      font-weight: 500;
+    }
+
+    .nav-link {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
     header p {
       color: var(--text-muted);
-      font-size: 1.05rem;
+      font-size: 0.95rem;
     }
-    .search-panel {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: var(--border-radius);
-      padding: 18px 20px;
-      margin-bottom: 36px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-    }
-    .search-controls {
+
+    /* Filters Bar */
+    .controls-bar {
       display: flex;
       gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
     }
+
     .search-input-wrap {
       flex: 1;
-      position: relative;
+      min-width: 280px;
     }
-    input[type="text"] {
+
+    input[type="text"], select {
       width: 100%;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid var(--card-border);
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 0.9rem;
       color: var(--text-main);
-      padding: 14px 18px;
-      border-radius: 10px;
-      font-size: 0.95rem;
       outline: none;
-      transition: all 0.2s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
-    button {
-      padding: 12px 24px;
-      border-radius: 10px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+
+    .filter-dropdown-wrap {
+      width: 160px;
     }
-    .btn-primary {
-      background: var(--accent);
-      color: #ffffff;
-    }
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-    }
-    .results-grid {
+
+    /* Grid Layout */
+    .talent-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
-      width: 100%;
     }
-    .talent-card {
+
+    /* Card Styling */
+    .card {
       background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      border-radius: var(--border-radius);
-      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      min-height: 220px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
     }
-    .talent-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(99, 102, 241, 0.3);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
     }
-    .card-header {
-      margin-bottom: 12px;
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
     }
+
     .talent-name {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 600;
-      color: #ffffff;
-      margin-bottom: 4px;
+      color: #0f172a;
     }
-    .talent-headline {
-      font-size: 0.9rem;
-      color: #818cf8;
+
+    .status-badge {
+      font-size: 0.75rem;
+      color: #0284c7;
+      background: #e0f2fe;
+      padding: 3px 8px;
+      border-radius: 6px;
       font-weight: 500;
     }
-    .talent-bio {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 20px;
-      flex-grow: 1;
+
+    .talent-program {
+      font-size: 0.85rem;
+      color: #0284c7;
+      margin-bottom: 6px;
+      font-weight: 500;
     }
-    .skills-container {
+
+    .talent-headline {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .tags-container {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+      margin-bottom: 16px;
     }
-    .skill-tag {
+
+    .tag-item {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
       background: var(--tag-bg);
       color: var(--tag-text);
-      font-size: 0.75rem;
       font-weight: 500;
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid rgba(99, 102, 241, 0.2);
     }
-    .state-message {
-      text-align: center;
-      padding: 48px 16px;
+
+    .btn-view-profile {
+      width: 100%;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn-view-profile:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
       color: var(--text-muted);
-      font-size: 1rem;
-      grid-column: 1 / -1;
     }
-    @media (max-width: 640px) {
-      .search-controls {
-        flex-direction: column;
-      }
-      button {
-        width: 100%;
-      }
+
+    .state-message {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="brand-wrap">
+      <span class="brand-main">ImmXrsive</span>
+      <span class="brand-sub">Talent Platform</span>
+    </div>
+    <a href="#" class="nav-link">Directory</a>
+  </nav>
+
   <div class="container">
     <header>
-      <h1>ImmXrsive Talent</h1>
-      <p>Discover skilled professionals, engineers, and creators</p>
+      <h1>ImmXrsive Talent Directory</h1>
+      <p>Discover skilled students and alumni across tech, design, and immersive media.</p>
     </header>
 
-    <div class="search-panel">
-      <div class="search-controls">
-        <div class="search-input-wrap">
-          <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="Search by name, role, or technical skill..."
-            autocomplete="off"
-          >
-        </div>
-        <button class="btn-primary" onclick="fetchTalent()">Search</button>
-        <button class="btn-secondary" onclick="clearFilters()">Clear</button>
+    <!-- Controls -->
+    <div class="controls-bar">
+      <div class="search-input-wrap">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search by name, skill, program..." 
+          oninput="applyClientFilters()"
+        >
+      </div>
+
+      <div class="filter-dropdown-wrap">
+        <select id="statusFilter" onchange="applyClientFilters()">
+          <option value="">All Statuses</option>
+          <option value="Current">Current Student</option>
+          <option value="Alumni">Alumni</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown-wrap">
+        <select id="availabilityFilter" onchange="applyClientFilters()">
+          <option value="">All Availability</option>
+          <option value="internship">Internship</option>
+          <option value="contract">Contract</option>
+          <option value="full-time">Full-time</option>
+        </select>
       </div>
     </div>
 
-    <main id="results" class="results-grid"></main>
+    <!-- Cards Grid -->
+    <main id="talentGrid" class="talent-grid"></main>
+  </div>
+
+  <!-- Modal -->
+  <div id="profileModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div id="modalBody"></div>
+    </div>
   </div>
 
   <script>
-    const searchInput = document.getElementById('searchInput');
-    const resultsContainer = document.getElementById('results');
+    let allTalent = [];
 
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        fetchTalent();
-      }
-    });
-
-    async function fetchTalent() {
-      const query = searchInput.value.trim();
-      resultsContainer.innerHTML = '<div class="state-message">Searching directory...</div>';
+    async function loadDirectory() {
+      const grid = document.getElementById('talentGrid');
+      grid.innerHTML = '<div class="state-message">Loading talent directory...</div>';
 
       try {
-        const url = query 
-          ? `https://immxrsive-api.onrender.com/api/directory?q=${encodeURIComponent(query)}` 
-          : 'https://immxrsive-api.onrender.com/api/directory';
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-
-        if (!data || data.length === 0) {
-          resultsContainer.innerHTML = '<div class="state-message">No matching talent found. Try a different query.</div>';
-          return;
-        }
-
-        resultsContainer.innerHTML = data.map(profile => `
-          <article class="talent-card">
-            <div>
-              <div class="card-header">
-                <h2 class="talent-name">${escapeHtml(profile.name || 'Anonymous')}</h2>
-                <div class="talent-headline">${escapeHtml(profile.headline || 'Specialist')}</div>
-              </div>
-              <p class="talent-bio">${escapeHtml(profile.bio || 'No bio provided.')}</p>
-            </div>
-            <div class="skills-container">
-              ${(profile.skills || []).map(skill => `
-                <span class="skill-tag">${escapeHtml(skill)}</span>
-              `).join('')}
-            </div>
-          </article>
-        `).join('');
+        const res = await fetch('https://immxrsive-api.onrender.com/api/directory');
+        if (!res.ok) throw new Error('Network error');
+        allTalent = await res.json();
+        applyClientFilters();
       } catch (err) {
-        console.error('Fetch error:', err);
-        resultsContainer.innerHTML = '<div class="state-message" style="color: #f87171;">Unable to reach directory service. Please ensure the backend is active.</div>';
+        console.error(err);
+        grid.innerHTML = '<div class="state-message" style="color: #ef4444;">Unable to load directory profiles from backend.</div>';
       }
     }
 
-    function clearFilters() {
-      searchInput.value = '';
-      fetchTalent();
+    function applyClientFilters() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
+      const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
+      const grid = document.getElementById('talentGrid');
+
+      const filtered = allTalent.filter(item => {
+        const name = (item.name || '').toLowerCase();
+        const headline = (item.headline || '').toLowerCase();
+        const program = (item.program || 'Computer Science').toLowerCase();
+        const bio = (item.bio || '').toLowerCase();
+        const skills = (item.skills || []).map(s => s.toLowerCase());
+        const status = (item.status || 'Current').toLowerCase();
+        const availability = (item.availability || ['internship']).map(a => a.toLowerCase());
+
+        // Search text check
+        const matchesQuery = !query || 
+          name.includes(query) || 
+          headline.includes(query) || 
+          program.includes(query) || 
+          bio.includes(query) || 
+          skills.some(s => s.includes(query));
+
+        // Status check
+        const matchesStatus = !selectedStatus || status.includes(selectedStatus);
+
+        // Availability check
+        const matchesAvail = !selectedAvail || availability.some(a => a.includes(selectedAvail));
+
+        return matchesQuery && matchesStatus && matchesAvail;
+      });
+
+      renderCards(filtered);
+    }
+
+    function renderCards(list) {
+      const grid = document.getElementById('talentGrid');
+      if (!list || list.length === 0) {
+        grid.innerHTML = '<div class="state-message">No profiles found matching your criteria.</div>';
+        return;
+      }
+
+      grid.innerHTML = list.map((item, index) => {
+        const status = item.status || 'Current';
+        const program = item.program || 'Computer Science';
+        const headline = item.headline || 'XR Developer focused on training simulations';
+        const availability = item.availability || ['internship'];
+
+        return `
+          <div class="card">
+            <div>
+              <div class="card-top">
+                <h2 class="talent-name">${escapeHtml(item.name || 'Anonymous')}</h2>
+                <span class="status-badge">${escapeHtml(status)}</span>
+              </div>
+              <div class="talent-program">${escapeHtml(program)}</div>
+              <div class="talent-headline">${escapeHtml(headline)}</div>
+              <div class="tags-container">
+                ${availability.map(avail => `<span class="tag-item">${escapeHtml(avail)}</span>`).join('')}
+              </div>
+            </div>
+            <button class="btn-view-profile" onclick="openModal(${index})">View Profile</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openModal(index) {
+      const item = allTalent[index];
+      if (!item) return;
+
+      const body = document.getElementById('modalBody');
+      body.innerHTML = `
+        <h2 style="font-size: 1.4rem; margin-bottom: 4px;">${escapeHtml(item.name || 'Anonymous')}</h2>
+        <div style="color: #0284c7; font-weight: 500; font-size: 0.9rem; margin-bottom: 8px;">
+          ${escapeHtml(item.program || 'Computer Science')} &bull; ${escapeHtml(item.status || 'Current')}
+        </div>
+        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 16px; line-height: 1.5;">
+          ${escapeHtml(item.bio || item.headline || 'No description available.')}
+        </p>
+        <div style="margin-bottom: 12px;">
+          <strong style="font-size: 0.85rem; color: #1e293b;">Skills:</strong>
+          <div class="tags-container" style="margin-top: 6px;">
+            ${(item.skills || []).map(s => `<span class="tag-item">${escapeHtml(s)}</span>`).join('')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    function closeModal(e) {
+      document.getElementById('profileModal').style.display = 'none';
     }
 
     function escapeHtml(str) {
@@ -282,7 +450,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    window.addEventListener('DOMContentLoaded', fetchTalent);
+    window.addEventListener('DOMContentLoaded', loadDirectory);
   </script>
 </body>
 </html>
