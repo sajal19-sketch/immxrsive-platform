@@ -20,14 +20,12 @@
       --tag-text: #a5b4fc;
       --border-radius: 14px;
     }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-
     body {
       background-color: var(--bg);
       color: var(--text-main);
@@ -41,17 +39,14 @@
         radial-gradient(at 0% 100%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
       background-attachment: fixed;
     }
-
     .container {
       width: 100%;
       max-width: 900px;
     }
-
     header {
       text-align: center;
       margin-bottom: 36px;
     }
-
     header h1 {
       font-size: 2.4rem;
       font-weight: 700;
@@ -61,12 +56,10 @@
       -webkit-text-fill-color: transparent;
       margin-bottom: 8px;
     }
-
     header p {
       color: var(--text-muted);
       font-size: 1.05rem;
     }
-
     .search-panel {
       background: var(--card-bg);
       backdrop-filter: blur(16px);
@@ -77,17 +70,14 @@
       margin-bottom: 36px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     }
-
     .search-controls {
       display: flex;
       gap: 12px;
     }
-
     .search-input-wrap {
       flex: 1;
       position: relative;
     }
-
     input[type="text"] {
       width: 100%;
       background: rgba(15, 23, 42, 0.8);
@@ -99,12 +89,10 @@
       outline: none;
       transition: all 0.2s ease;
     }
-
     input[type="text"]:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
     }
-
     button {
       padding: 12px 24px;
       border-radius: 10px;
@@ -114,34 +102,28 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-
     .btn-primary {
       background: var(--accent);
       color: #ffffff;
     }
-
     .btn-primary:hover {
       background: var(--accent-hover);
       transform: translateY(-1px);
     }
-
     .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted);
     }
-
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.1);
       color: var(--text-main);
     }
-
     .results-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
       width: 100%;
     }
-
     .talent-card {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -154,30 +136,25 @@
       justify-content: space-between;
       transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
-
     .talent-card:hover {
       transform: translateY(-3px);
       border-color: rgba(99, 102, 241, 0.3);
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
     }
-
     .card-header {
       margin-bottom: 12px;
     }
-
     .talent-name {
       font-size: 1.25rem;
       font-weight: 600;
       color: #ffffff;
       margin-bottom: 4px;
     }
-
     .talent-headline {
       font-size: 0.9rem;
       color: #818cf8;
       font-weight: 500;
     }
-
     .talent-bio {
       font-size: 0.9rem;
       color: var(--text-muted);
@@ -185,13 +162,11 @@
       margin-bottom: 20px;
       flex-grow: 1;
     }
-
     .skills-container {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-
     .skill-tag {
       background: var(--tag-bg);
       color: var(--tag-text);
@@ -201,7 +176,6 @@
       border-radius: 6px;
       border: 1px solid rgba(99, 102, 241, 0.2);
     }
-
     .state-message {
       text-align: center;
       padding: 48px 16px;
@@ -209,7 +183,6 @@
       font-size: 1rem;
       grid-column: 1 / -1;
     }
-
     @media (max-width: 640px) {
       .search-controls {
         flex-direction: column;
