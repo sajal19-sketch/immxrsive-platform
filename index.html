@@ -411,10 +411,20 @@
       }
     }
 
-    function applyClientFilters() {
-      const query = document.getElementById('searchInput').value.trim().toLowerCase();
-      const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
-      const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
+ 
+function applyClientFilters() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  const searchMessage = document.getElementById('searchMessage');
+  if (searchMessage) {
+    searchMessage.textContent = query
+      ? `Searching for: ${query}`
+      : '';
+  }
+
+  const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
+  const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
+
 
       const filtered = allTalent.filter(item => {
         const name = (item.name || '').toLowerCase();
