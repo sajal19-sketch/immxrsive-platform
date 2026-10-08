@@ -467,7 +467,7 @@
                 ${availability.map(avail => `<span class="tag-item">${escapeHtml(avail)}</span>`).join('')}
               </div>
             </div>
-            <button class="btn-view-profile" onclick="openModal(${index})">View Profile</button>
+            <a class="btn-view-profile"    href="student.html?id=${encodeURIComponent(item.id)}">    View Profile </a>
           </div>
         `;
       }).join('');
