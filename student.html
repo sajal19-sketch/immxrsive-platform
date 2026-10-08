@@ -31,7 +31,9 @@
 
             try {
                 // Fetch student data from the backend
-                const response = await fetch[https://immxrsive-api.onrender.com/api/students/$](https://immxrsive-api.onrender.com/api/students/$){id};
+                const response = await fetch(
+    `https://immxrsive-api.onrender.com/api/students/${encodeURIComponent(id)}`
+);
                 if (!response.ok) throw new Error("Student not found");
                 
                 const student = await response.json();
