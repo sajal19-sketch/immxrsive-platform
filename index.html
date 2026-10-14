@@ -1,395 +1,371 @@
+cat << 'EOF' > index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImmXrsive Talent Directory</title>
+  <title>ImmXrsive | Talent Matrix</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --card-hover-bg: #151f32;
-      --border: #1e293b;
-      --border-hover: #3b82f6;
+      --bg-base: #030712;
+      --panel-bg: rgba(17, 24, 39, 0.6);
+      --panel-border: rgba(31, 41, 55, 0.8);
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --accent-badge-bg: rgba(59, 130, 246, 0.15);
-      --accent-badge-text: #60a5fa;
-      --tag-bg: rgba(148, 163, 184, 0.08);
-      --tag-border: rgba(148, 163, 184, 0.18);
-      --tag-text: #cbd5e1;
+      --radius: 12px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: var(--bg);
+      background-color: var(--bg-base);
       color: var(--text-main);
-      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
       display: flex;
-      flex-direction: column;
+      min-height: 100vh;
       background-image: 
-        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+        radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05), transparent 25%);
       background-attachment: fixed;
     }
 
-    /* Top Navigation Bar */
-    .navbar {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 36px;
+    /* Sidebar Layout */
+    .sidebar {
+      width: 320px;
+      background: rgba(3, 7, 18, 0.8);
+      border-right: 1px solid var(--panel-border);
+      padding: 32px 24px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       position: sticky;
       top: 0;
-      z-index: 50;
+      height: 100vh;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 10;
     }
 
-    .brand-wrap {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
+    .brand {
+      margin-bottom: 48px;
     }
-
-    .brand-main {
-      font-size: 1.35rem;
+    .brand-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 40%, #60a5fa);
+      letter-spacing: -0.05em;
+      background: linear-gradient(to right, var(--text-main), var(--accent-cyan));
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--accent-purple);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      margin-top: 4px;
     }
 
-    .brand-sub {
-      font-size: 0.82rem;
-      color: #38bdf8;
-      font-weight: 600;
+    .nav-actions { margin-bottom: 40px; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      color: var(--accent-cyan);
+      text-decoration: none;
+      border-radius: var(--radius);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .nav-link:hover {
+      background: var(--accent-cyan);
+      color: var(--bg-base);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+
+    .filter-group { margin-bottom: 24px; }
+    .filter-label {
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-    }
-
-    .nav-link {
-      font-size: 0.9rem;
       color: var(--text-muted);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.15s ease;
-    }
-
-    .nav-link:hover {
-      color: #ffffff;
-    }
-
-    /* Main Container */
-    .container {
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 40px 24px;
-    }
-
-    header {
-      margin-bottom: 28px;
-    }
-
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ffffff;
       margin-bottom: 8px;
-      letter-spacing: -0.02em;
+      display: block;
     }
-
-    header p {
-      color: var(--text-muted);
-      font-size: 1rem;
-    }
-
-    /* Controls Bar */
-    .controls-bar {
-      display: flex;
-      gap: 14px;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      background: rgba(17, 24, 39, 0.7);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: 14px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-    }
-
-    .search-input-wrap {
-      flex: 1;
-      min-width: 280px;
-    }
-
     input[type="text"], select {
       width: 100%;
       padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #0b1120;
-      font-size: 0.92rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
       color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
       outline: none;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s;
     }
-
     input[type="text"]:focus, select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-      background: #0f172a;
+      border-color: var(--accent-cyan);
     }
 
-    select option {
-      background: #0f172a;
-      color: #f8fafc;
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 48px;
+      overflow-y: auto;
     }
 
-    .filter-dropdown-wrap {
-      width: 175px;
+    .header-stats {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 16px;
+    }
+    .header-stats h1 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .match-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1;
+    }
+    .match-label {
+      font-size: 0.8rem;
+      color: var(--accent-purple);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
-    /* Cards Grid */
     .talent-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
     }
 
-    /* Card Styling */
     .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
       padding: 24px;
+      position: relative;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 240px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      transition: all 0.2s ease;
-      position: relative;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-
     .card:hover {
-      background: var(--card-hover-bg);
-      border-color: rgba(59, 130, 246, 0.4);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      border-color: rgba(139, 92, 246, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.3);
     }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .card:hover::before { opacity: 1; }
 
-    .card-top {
+    .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
+      margin-bottom: 16px;
     }
-
-    .talent-name {
+    
+    .profile-id {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .monogram {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 1.25rem;
+      color: var(--accent-purple);
+    }
+    .name-block h2 {
+      font-size: 1.15rem;
       font-weight: 600;
-      color: #ffffff;
+      margin-bottom: 2px;
+    }
+    .name-block p {
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
     }
 
-    .status-badge {
-      font-size: 0.72rem;
-      color: var(--accent-badge-text);
-      background: var(--accent-badge-bg);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-weight: 600;
+    .status-dot {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
     }
 
-    .talent-program {
+    .headline {
       font-size: 0.85rem;
-      color: #38bdf8;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-
-    .talent-headline {
-      font-size: 0.88rem;
       color: var(--text-muted);
       line-height: 1.5;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      flex-grow: 1;
     }
 
-    .tags-container {
+    .skills-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
-
-    .tag-item {
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: var(--tag-bg);
-      border: 1px solid var(--tag-border);
-      color: var(--tag-text);
-      font-weight: 500;
-    }
-
-    .btn-view-profile {
-      width: 100%;
-      background: var(--primary);
-      color: #ffffff;
-      border: none;
-      padding: 11px;
-      border-radius: 9px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-view-profile:hover {
-      background: var(--primary-hover);
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-    }
-
-    /* Modal Styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(3, 7, 18, 0.75);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .modal-card {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      max-width: 520px;
-      width: 100%;
-      padding: 28px;
-      position: relative;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      background: rgba(255, 255, 255, 0.05);
-      border: none;
-      font-size: 1.4rem;
-      line-height: 1;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
+    .skill-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
       color: var(--text-muted);
-      cursor: pointer;
+    }
+
+    .card-footer {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
     }
-
-    .modal-close:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #ffffff;
+    .meta-data {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-
-    .state-message {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 48px 16px;
+    .meta-label {
+      font-size: 0.65rem;
       color: var(--text-muted);
-      font-size: 1rem;
+      text-transform: uppercase;
     }
+    .meta-value {
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+    
+    .btn-action {
+      background: transparent;
+      border: none;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn-action:hover { transform: translateX(4px); }
 
-    @media (max-width: 680px) {
-      .navbar { padding: 14px 20px; }
-      .container { padding: 24px 16px; }
-      .controls-bar { flex-direction: column; }
-      .filter-dropdown-wrap { width: 100%; }
+    /* Modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center; z-index: 1000;
     }
+    .modal-card {
+      background: var(--bg-base); border: 1px solid var(--accent-purple);
+      border-radius: var(--radius); max-width: 500px; width: 100%; padding: 32px; position: relative;
+      box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px; background: none; border: none;
+      font-size: 1.2rem; color: var(--text-muted); cursor: pointer;
+    }
+    .state-message { text-align: center; color: var(--text-muted); padding: 40px; font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation -->
-  <nav class="navbar">
-    <div class="brand-wrap">
-      <span class="brand-main">ImmXrsive</span>
-      <span class="brand-sub">Talent Platform</span>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-name">IMM_XR_SIVE</div>
+      <span class="brand-sub">Talent_Matrix</span>
     </div>
-    <a href="#" class="nav-link">Directory</a>
-  </nav>
 
-  <div class="container">
-    <header>
-      <h1>ImmXrsive Talent Directory</h1>
-      <p>Discover skilled students and alumni across tech, design, and immersive media.</p>
+    <div class="nav-actions">
+      <a href="upload.html" class="nav-link">INITIALIZE UPLOAD &rarr;</a>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Search Parameters</label>
+      <input type="text" id="searchInput" placeholder="Name, skill, ID..." oninput="applyClientFilters()">
+    </div>
+    
+    <div class="filter-group">
+      <label class="filter-label">Operational Status</label>
+      <select id="statusFilter" onchange="applyClientFilters()">
+        <option value="">All Profiles</option>
+        <option value="Current">Current Student</option>
+        <option value="Alumni">Alumni</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Availability Vector</label>
+      <select id="availabilityFilter" onchange="applyClientFilters()">
+        <option value="">Any Configuration</option>
+        <option value="internship">Internship</option>
+        <option value="contract">Contract</option>
+        <option value="full-time">Full-time</option>
+      </select>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="header-stats">
+      <h1>PUBLISHED PROFILES</h1>
+      <div style="text-align: right;">
+        <div id="matchCount" class="match-count">0</div>
+        <div class="match-label">MATCHES DETECTED</div>
+      </div>
     </header>
 
-    <!-- Filter & Search Controls -->
-    <div class="controls-bar">
-      <div class="search-input-wrap">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="Search by name, skill, program..." 
-          oninput="applyClientFilters()"
-        >
-        <small id="searchMessage" style="display:block; margin-top:8px; color:#94a3b8;"></small>
-      </div>
+    <div id="talentGrid" class="talent-grid"></div>
+  </main>
 
-      <div class="filter-dropdown-wrap">
-        <select id="statusFilter" onchange="applyClientFilters()">
-          <option value="">All Statuses</option>
-          <option value="Current">Current Student</option>
-          <option value="Alumni">Alumni</option>
-        </select>
-      </div>
-
-      <div class="filter-dropdown-wrap">
-        <select id="availabilityFilter" onchange="applyClientFilters()">
-          <option value="">All Availability</option>
-          <option value="internship">Internship</option>
-          <option value="contract">Contract</option>
-          <option value="full-time">Full-time</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Cards Grid -->
-    <main id="talentGrid" class="talent-grid"></main>
-  </div>
-
-  <!-- Profile Modal -->
   <div id="profileModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <button class="modal-close" onclick="closeModal()">✕</button>
       <div id="modalBody"></div>
     </div>
   </div>
@@ -399,33 +375,21 @@
 
     async function loadDirectory() {
       const grid = document.getElementById('talentGrid');
-      grid.innerHTML = '<div class="state-message">Loading talent directory profiles...</div>';
-
+      grid.innerHTML = '<div class="state-message">ESTABLISHING CONNECTION...</div>';
       try {
         const res = await fetch('https://immxrsive-api.onrender.com/api/directory');
-        if (!res.ok) throw new Error('API request failed');
+        if (!res.ok) throw new Error('API failed');
         allTalent = await res.json();
         applyClientFilters();
       } catch (err) {
-        console.error(err);
-        grid.innerHTML = '<div class="state-message" style="color: #f87171;">Unable to connect to backend service.</div>';
+        grid.innerHTML = '<div class="state-message" style="color: #ef4444;">CONNECTION FAILED</div>';
       }
     }
 
- 
-function applyClientFilters() {
-  const query = document.getElementById('searchInput').value.trim().toLowerCase();
-
-  const searchMessage = document.getElementById('searchMessage');
-  if (searchMessage) {
-    searchMessage.textContent = query
-      ? `Searching for: ${query}`
-      : '';
-  }
-
-  const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
-  const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
-
+    function applyClientFilters() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
+      const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
 
       const filtered = allTalent.filter(item => {
         const name = (item.name || '').toLowerCase();
@@ -436,49 +400,60 @@ function applyClientFilters() {
         const status = (item.status || 'Current').toLowerCase();
         const availability = (item.availability || ['internship']).map(a => a.toLowerCase());
 
-        const matchesQuery = !query || 
-          name.includes(query) || 
-          headline.includes(query) || 
-          program.includes(query) || 
-          bio.includes(query) || 
-          skills.some(s => s.includes(query));
-
+        const matchesQuery = !query || name.includes(query) || headline.includes(query) || program.includes(query) || bio.includes(query) || skills.some(s => s.includes(query));
         const matchesStatus = !selectedStatus || status.includes(selectedStatus);
         const matchesAvail = !selectedAvail || availability.some(a => a.includes(selectedAvail));
 
         return matchesQuery && matchesStatus && matchesAvail;
       });
-
+      
+      document.getElementById('matchCount').textContent = filtered.length.toString().padStart(2, '0');
       renderCards(filtered);
     }
 
     function renderCards(list) {
       const grid = document.getElementById('talentGrid');
       if (!list || list.length === 0) {
-        grid.innerHTML = '<div class="state-message">No profiles found matching your search.</div>';
+        grid.innerHTML = '<div class="state-message">NO MATCHING DATA FOUND</div>';
         return;
       }
 
       grid.innerHTML = list.map((item, index) => {
+        const name = item.name || 'Anonymous';
+        const initial = name.charAt(0).toUpperCase();
         const status = item.status || 'Current';
         const program = item.program || 'Computer Science';
-        const headline = item.headline || 'XR Developer focused on training simulations';
+        const headline = item.headline || 'Software Engineer';
         const availability = item.availability || ['internship'];
+        
+        let statusColor = status.toLowerCase() === 'alumni' ? '#f59e0b' : '#10b981';
 
         return `
-          <div class="card">
-            <div>
-              <div class="card-top">
-                <h2 class="talent-name">${escapeHtml(item.name || 'Anonymous')}</h2>
-                <span class="status-badge">${escapeHtml(status)}</span>
+          <div class="card" onclick="openModal(${index})">
+            <div class="card-header">
+              <div class="profile-id">
+                <div class="monogram">${initial}</div>
+                <div class="name-block">
+                  <h2>${escapeHtml(name)}</h2>
+                  <p>${escapeHtml(program)}</p>
+                </div>
               </div>
-              <div class="talent-program">${escapeHtml(program)}</div>
-              <div class="talent-headline">${escapeHtml(headline)}</div>
-              <div class="tags-container">
-                ${availability.map(avail => `<span class="tag-item">${escapeHtml(avail)}</span>`).join('')}
-              </div>
+              <div class="status-dot" style="color: ${statusColor}; --tw-shadow-color: ${statusColor};">${escapeHtml(status)}</div>
             </div>
-            <a class="btn-view-profile"    href="student.html?id=${encodeURIComponent(item.id)}">    View Profile </a>
+            
+            <div class="headline">${escapeHtml(headline)}</div>
+            
+            <div class="skills-row">
+              ${(item.skills || []).map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('')}
+            </div>
+            
+            <div class="card-footer">
+              <div class="meta-data">
+                <span class="meta-label">Availability</span>
+                <span class="meta-value">${escapeHtml(availability[0] || 'Open')}</span>
+              </div>
+              <button class="btn-action">&nearr;</button>
+            </div>
           </div>
         `;
       }).join('');
@@ -490,38 +465,22 @@ function applyClientFilters() {
 
       const body = document.getElementById('modalBody');
       body.innerHTML = `
-        <h2 style="font-size: 1.5rem; color: #ffffff; margin-bottom: 6px;">${escapeHtml(item.name || 'Anonymous')}</h2>
-        <div style="color: #38bdf8; font-weight: 500; font-size: 0.9rem; margin-bottom: 14px;">
-          ${escapeHtml(item.program || 'Computer Science')} &bull; ${escapeHtml(item.status || 'Current')}
+        <h2 style="font-size: 1.5rem; margin-bottom: 4px;">${escapeHtml(item.name || 'Anonymous')}</h2>
+        <div style="color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; margin-bottom: 16px;">
+          ${escapeHtml(item.program || 'Computer Science')} | SYSTEM_STATUS: ${escapeHtml(item.status || 'Current')}
         </div>
-        <p style="font-size: 0.92rem; color: #94a3b8; margin-bottom: 20px; line-height: 1.6;">
-          ${escapeHtml(item.bio || item.headline || 'No description available.')}
+        <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 24px; color: var(--text-muted);">
+          ${escapeHtml(item.bio || item.headline || 'No telemetry provided.')}
         </p>
-        <div>
-          <strong style="font-size: 0.85rem; color: #e2e8f0; display: block; margin-bottom: 8px;">Key Skills:</strong>
-          <div class="tags-container">
-            ${(item.skills || []).map(s => `<span class="tag-item">${escapeHtml(s)}</span>`).join('')}
-          </div>
-        </div>
       `;
-
       document.getElementById('profileModal').style.display = 'flex';
     }
 
-    function closeModal() {
-      document.getElementById('profileModal').style.display = 'none';
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
+    function closeModal(e) { if(e) e.stopPropagation(); document.getElementById('profileModal').style.display = 'none'; }
+    function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
+    
     window.addEventListener('DOMContentLoaded', loadDirectory);
   </script>
 </body>
 </html>
+EOF
