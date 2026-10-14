@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 import json
+import html
+from pypdf import PdfReader
+import io
 
 app = FastAPI()
 
-# This allows your future frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,7 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Helper function to connect to the database
 def get_db():
     conn = sqlite3.connect('immxrsive.db')
     conn.row_factory = sqlite3.Row
@@ -32,21 +33,17 @@ def get_directory(q: str = "", skills: list[str] = Query(default=[]), availabili
         student['availability'] = json.loads(student['availability'])
         
         match = True
-        
-        # Text Search
         if q:
             search_text = q.lower()
             if search_text not in student['name'].lower() and search_text not in student['headline'].lower():
                 match = False
                 
-        # Skills Filter (AND logic - must have all selected skills)
         if skills:
             for skill in skills:
                 if skill not in student['skills']:
                     match = False
                     break
                     
-        # Availability Filter (OR logic - must match at least one selected availability)
         if availability:
             has_avail = False
             for avail in availability:
@@ -57,7 +54,6 @@ def get_directory(q: str = "", skills: list[str] = Query(default=[]), availabili
                 match = False
                 
         if match:
-            # Add a placeholder for project count
             student['project_count'] = len(json.loads(student['project_ids']))
             results.append(student)
             
@@ -93,3 +89,33 @@ def get_project(project_id: str):
     result['technologies'] = json.loads(result['technologies'])
     result['contributors'] = [dict(c) for c in contributors]
     return result
+
+# --- RELEASE 2: RESUME PARSING ---
+@app.post("/api/resumes/parse")
+async def parse_resume(file: UploadFile = File(...)):
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+    
+    try:
+        pdf_bytes = await file.read()
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        
+        extracted_text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                extracted_text += page_text + "\n"
+        
+        # Security: Escape HTML to neutralize the <script> injection from resume_untrusted_text.pdf
+        sanitized_text = html.escape(extracted_text.strip())
+        
+        # Simple extraction logic to grab basic fields if they exist
+        parsed_data = {
+            "raw_text": sanitized_text,
+            "filename": file.filename
+        }
+        
+        return parsed_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing PDF: {str(e)}")
