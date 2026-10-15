@@ -19,12 +19,12 @@ https://immxrsive-api.onrender.com
 ## Release 2 — Resume Parsing & Security
 
 **Release Tag:** R2-submission
-**Commit SHA:** 25058759c21f304d5673694f4318caedc0fc1c7e
+**Commit SHA:** ebcc7551803f2468bf5b52f0b30b95f4205849a2
 
 **Release 2 Notes for Evaluator:**
-* **Core Requirements:** Added secure PDF upload and parsing endpoint (`/api/resumes/parse`) via FastAPI and `pypdf`. Created frontend interface (`upload.html`) for profile generation.
-* **Robustness & Regression:** Verified HTML sanitization successfully neutralizes the `<script>` injection attack from the `resume_untrusted_text.pdf` fixture. R1 directory and profile workflows remain fully intact and operational.
-* **Test Setup:** No authentication required. Upload page is accessible directly via `upload.html`.
+* **Core Requirements:** Added secure PDF upload and parsing endpoint (`/api/resumes/parse`) via FastAPI and `pypdf`. Implemented frontend interface (`upload.html`) and applied a new multi-page "Interstellar" UI theme.
+* **Robustness & Regression:** Verified HTML sanitization successfully neutralizes the `<script>` injection attack from the `resume_untrusted_text.pdf` fixture. R1 directory and profile workflows remain fully intact and operational across the new UI.
+* **Test Setup:** No authentication required. Upload page is accessible directly via `upload.html` or the "Upload" link in the navigation bar.
 
 ---
 
