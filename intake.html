@@ -1,73 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Intake Form</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .context-box { background: #e2e3e5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6c757d; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Employer inquiry · ImmXrsive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <a href="javascript:history.back()" class="back-link">← Back</a>
-    <h1>Employer Inquiry Form</h1>
-    
-    <!-- This box automatically displays the student or project context -->
-    <div class="context-box">
-        <strong>Inquiring about:</strong> <span id="display-name">Loading...</span><br>
-        <small>ID: <span id="display-id"></span> | Type: <span id="display-type"></span></small>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="page">
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="index.html" aria-label="ImmXrsive, home">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke-linecap="round"/><g fill="currentColor"><rect x="10.5" y="2.6" width="3" height="2.2" rx=".5"/><rect x="10.5" y="19.2" width="3" height="2.2" rx=".5"/><rect x="2.6" y="10.9" width="2.2" height="3" rx=".5"/><rect x="19.2" y="10.9" width="2.2" height="3" rx=".5"/></g></svg>
+        ImmXrsive
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="hide-sm" href="index.html#field">The field</a>
+        <a href="index.html#index">Index</a>
+        <a href="upload.html">Upload</a>
+        <a class="cta" href="intake.html">Inquire</a>
+      </nav>
     </div>
+  </header>
 
-    <!-- The actual form the employer fills out -->
-    <form onsubmit="submitForm(event)">
-        <div class="form-group">
-            <label for="company">Company Name</label>
-            <input type="text" id="company" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="contact">Contact Name</label>
-            <input type="text" id="contact" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="email">Contact Email</label>
-            <input type="email" id="email" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="description">Inquiry Description</label>
-            <textarea id="description" rows="5" required></textarea>
-        </div>
-        
-        <button type="submit">Submit Inquiry</button>
-    </form>
+  <main>
+    <section class="chapter sub">
+      <div class="wrap">
+        <p class="ch-label"><b>Employer</b>Inquiry</p>
+        <h2>Open a <em>channel.</em></h2>
+        <p class="sub-copy">Tell us who you are and what you are hiring for. We will pass it on.</p>
 
-    <script>
-        // 1. Pull the data from the URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const sourceType = urlParams.get('source_type') || 'Unknown';
-        const sourceId = urlParams.get('source_id') || 'Unknown';
-        const sourceName = urlParams.get('source_name') || 'Unknown';
+        <p class="about-line" id="about" style="margin-top:30px">Inquiry about: <b>General inquiry</b></p>
 
-        // 2. Fill the context box so the employer knows who they are messaging
-        document.getElementById('display-name').textContent = sourceName;
-        document.getElementById('display-id').textContent = sourceId;
-        document.getElementById('display-type').textContent = sourceType;
+        <form class="formbox" id="form" novalidate>
+          <input type="hidden" id="source_id" name="source_id" value="">
+          <div class="hp" aria-hidden="true"><label>Leave this empty<input id="website" name="website" tabindex="-1" autocomplete="off"></label></div>
+          <label class="f"><span>Your name</span><input class="ctl" id="name" name="name" maxlength="80" autocomplete="name"></label>
+          <label class="f"><span>Company</span><input class="ctl" id="company" name="company" maxlength="100" autocomplete="organization"></label>
+          <label class="f"><span>Work email</span><input class="ctl" id="email" name="email" type="email" maxlength="120" autocomplete="email"></label>
+          <label class="f"><span>Role type</span>
+            <select class="control" id="role" name="role_type">
+              <option value="">Select one</option>
+              <option>Internship</option>
+              <option>Contract</option>
+              <option>Full-time</option>
+            </select>
+          </label>
+          <label class="f"><span>Message</span><textarea class="ctl ta" id="message" name="message" maxlength="1000"></textarea></label>
+          <p class="form-msg" id="msg" aria-live="polite"></p>
+          <button class="btn inline" id="send" type="submit">Send inquiry</button>
+        </form>
 
-        // 3. Handle the fake submission
-        function submitForm(event) {
-            event.preventDefault(); // Stop the page from reloading
-            alert("Simulated Form Submitted Successfully! \\n\\nIn a real app, this would send an email to the university.");
-            window.location.href = "index.html"; // Send them back to the home page
-        }
-    </script>
+        <div><a class="back" href="index.html#index">Back to the talent index</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap"><span>ImmXrsive · Endurance Mission Control</span><span>Profiles load from the ImmXrsive directory API</span></div>
+  </footer>
+</div>
+
+<script src="site.js"></script>
+<script>
+(function () {
+  "use strict";
+  var X = window.IMX, $ = X.$, el = X.el, lc = X.lc;
+
+  // Set this to your backend route to receive inquiries as JSON (POST).
+  // While it is empty, inquiries are only saved in this browser so you can test the flow.
+  var INQUIRY_URL = "";
+
+  // Read ?source_id=S01 from the URL.
+  var raw = new URLSearchParams(window.location.search).get("source_id");
+  var sourceId = X.validId(raw) ? raw : "";
+  $("source_id").value = sourceId;
+
+  var about = $("about");
+  function setAbout(text) {
+    about.replaceChildren(document.createTextNode("Inquiry about: "), el("b", null, text));
+  }
+  if (!sourceId) {
+    setAbout("General inquiry");
+  } else {
+    setAbout(sourceId.toUpperCase());
+    // Swap the id for the student's name once the directory loads.
+    X.loadDirectory().then(function (res) {
+      var p = res.data.filter(function (x) { return lc(x.id) === lc(sourceId); })[0];
+      if (p) { setAbout(p.name + " (" + p.id.toUpperCase() + ")"); document.title = "Inquiry about " + p.name + " · ImmXrsive"; }
+    });
+  }
+
+  function msg(text, cls) { var m = $("msg"); m.textContent = text; m.className = "form-msg" + (cls ? " " + cls : ""); }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if ($("website").value) return; // honeypot: bots fill this in, people never see it
+    var d = {
+      source_id: sourceId,
+      name: $("name").value.trim(),
+      company: $("company").value.trim(),
+      email: $("email").value.trim(),
+      role_type: $("role").value,
+      message: $("message").value.trim()
+    };
+    if (!d.name) return msg("Add your name.", "err");
+    if (!d.company) return msg("Add your company.", "err");
+    if (!/^\S+@\S+\.\S+$/.test(d.email)) return msg("Enter a valid email address.", "err");
+    if (!d.message) return msg("Add a short message.", "err");
+
+    var btn = $("send"); btn.disabled = true; msg("Sending", "");
+    var done = function (note) {
+      $("form").reset(); msg(""); btn.disabled = false; X.toast(note);
+      document.dispatchEvent(new CustomEvent("inquiry:submit", { detail: d }));
+    };
+    if (!INQUIRY_URL) {
+      try { var box = JSON.parse(localStorage.getItem("imx_inquiries") || "[]"); box.push(d); localStorage.setItem("imx_inquiries", JSON.stringify(box)); } catch (err) {}
+      done("Saved in this browser. Set INQUIRY_URL to send it to your backend.");
+      return;
+    }
+    fetch(INQUIRY_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d), credentials: "same-origin" })
+      .then(function (res) { if (!res.ok) throw new Error("HTTP " + res.status); done("Inquiry sent."); })
+      .catch(function () { btn.disabled = false; msg("Couldn't send your inquiry. Try again in a moment.", "err"); });
+  });
+})();
+</script>
 </body>
 </html>

@@ -1,75 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Profile</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .profile-header { background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .skills-tag { background: #e9ecef; padding: 4px 8px; margin: 2px; border-radius: 4px; display: inline-block; font-size: 0.9em; }
-        .project-link { display: block; margin: 10px 0; padding: 15px; background: #fff; border: 1px solid #ddd; text-decoration: none; color: black; border-radius: 4px; font-weight: bold; }
-        .project-link:hover { background: #f8f9fa; }
-        .inquiry-btn { background: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; font-weight: bold; }
-        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crew file · ImmXrsive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <a href="index.html" class="back-link">← Back to Directory</a>
-    <div id="profile">Loading profile...</div>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="progress" id="progress" aria-hidden="true"></div>
 
-    <script>
-        async function loadProfile() {
-            // Get the student ID from the URL (e.g., ?id=S18)
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
+<div class="page">
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="index.html" aria-label="ImmXrsive, home">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke-linecap="round"/><g fill="currentColor"><rect x="10.5" y="2.6" width="3" height="2.2" rx=".5"/><rect x="10.5" y="19.2" width="3" height="2.2" rx=".5"/><rect x="2.6" y="10.9" width="2.2" height="3" rx=".5"/><rect x="19.2" y="10.9" width="2.2" height="3" rx=".5"/></g></svg>
+        ImmXrsive
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="hide-sm" href="index.html#field">The field</a>
+        <a href="index.html#index">Index</a>
+        <a href="upload.html">Upload</a>
+        <a class="cta" href="intake.html">Inquire</a>
+      </nav>
+    </div>
+  </header>
 
-            if (!id) {
-                document.getElementById('profile').innerHTML = "<p>No student ID provided.</p>";
-                return;
-            }
+  <main>
+    <section class="chapter sub">
+      <div class="wrap">
+        <p class="ch-label"><b>Crew file</b><span id="crew-id"></span></p>
+        <div id="banner" class="banner" hidden></div>
+        <div id="profile" aria-live="polite" aria-busy="true"></div>
+      </div>
+    </section>
+  </main>
 
-            try {
-                // Fetch student data from the backend
-                const response = await fetch(
-    `https://immxrsive-api.onrender.com/api/students/${encodeURIComponent(id)}`
-);
-                if (!response.ok) throw new Error("Student not found");
-                
-                const student = await response.json();
-                
-                const skillsHtml = student.skills.map(s => `<span class="skills-tag">${s}</span>`).join('');
-                
-                // Create links for their projects
-                const projectsHtml = student.project_ids.map(pid => 
-                    `<a class="project-link" href="project.html?id=${pid}">View Project ${pid} Details →</a>`
-                ).join('');
+  <footer>
+    <div class="wrap"><span>ImmXrsive · Endurance Mission Control</span><span>Profiles load from the ImmXrsive directory API</span></div>
+  </footer>
+</div>
 
-                // Draw the page
-                document.getElementById('profile').innerHTML = `
-                    <div class="profile-header">
-                        <h1>${student.name}</h1>
-                        <h2>${student.headline}</h2>
-                        <p><strong>Program:</strong> ${student.program} | <strong>Status:</strong> ${student.status}</p>
-                        <p><strong>Availability:</strong> ${student.availability.join(', ')}</p>
-                        <p><strong>Skills:</strong> ${skillsHtml}</p>
-                        <p><a href="${student.github_link}" target="_blank">View GitHub Profile</a></p>
-                        
-                        <!-- This button passes the student data to the intake form -->
-                        <a class="inquiry-btn" href="intake.html?source_type=student&source_id=${student.id}&source_name=${encodeURIComponent(student.name)}">
-                            Interested in working with this student
-                        </a>
-                    </div>
-                    
-                    <h3>Project Evidence</h3>
-                    ${projectsHtml}
-                `;
-            } catch(e) {
-                document.getElementById('profile').innerHTML = "<p>Error loading profile or student not found.</p>";
-            }
-        }
-        
-        loadProfile();
-    </script>
+<script src="site.js"></script>
+<script>
+(function () {
+  "use strict";
+  var X = window.IMX, $ = X.$, el = X.el, lc = X.lc;
+  var root = $("profile"), banner = $("banner");
+
+  // Read ?id=S01 from the URL.
+  var id = new URLSearchParams(window.location.search).get("id");
+
+  function state(title, message) {
+    root.setAttribute("aria-busy", "false");
+    var box = el("div", "state");
+    box.appendChild(el("h3", null, title));
+    box.appendChild(el("p", null, message));
+    var a = el("a", "btn", "Back to the index"); a.href = "index.html#index"; a.style.marginTop = "22px";
+    box.appendChild(a);
+    root.replaceChildren(box);
+  }
+
+  function section(title, node) {
+    var s = el("div", "m-sec"); s.appendChild(el("h4", null, title)); s.appendChild(node); return s;
+  }
+
+  function showProfile(p, all) {
+    document.title = p.name + " · ImmXrsive";
+    $("crew-id").textContent = p.id.toUpperCase();
+    root.setAttribute("aria-busy", "false");
+    root.replaceChildren();
+
+    var back = el("a", "back", "Back to the talent index"); back.href = "index.html#index"; back.style.marginTop = "0";
+    root.appendChild(back);
+
+    var head = el("div", "pf-head");
+    head.appendChild(X.constellation(p, 120));
+    var t = el("div");
+    t.appendChild(el("span", "badge" + (lc(p.status) === "current" ? " current" : ""), p.status || "N/A"));
+    t.appendChild(el("h1", "pf-name", p.name));
+    if (p.program) t.appendChild(el("p", "program", p.program));
+    if (p.headline) t.appendChild(el("p", "pf-headline", p.headline));
+    head.appendChild(t);
+    root.appendChild(head);
+
+    // Employer Inquiry button: intake.html?source_id=S01
+    var acts = el("div", "pf-actions");
+    var inq = el("a", "btn inline", "Employer Inquiry"); inq.href = X.intakeUrl(p.id);
+    acts.appendChild(inq);
+    root.appendChild(acts);
+
+    var stack = el("div", "pf-stack"); stack.style.marginTop = "40px";
+    var bio = el("p", null, p.bio || "This profile doesn't have a bio yet."); bio.style.whiteSpace = "pre-line";
+    stack.appendChild(section("About", bio));
+
+    var skills = el("div", "tags"); X.fillTags(skills, p.skills);
+    stack.appendChild(section("Skills", p.skills.length ? skills : el("p", null, "No skills listed.")));
+
+    if (p.availability.length) {
+      var av = el("div", "tags"); X.fillTags(av, p.availability);
+      stack.appendChild(section("Open to", av));
+    }
+    if (p.projects.length) {
+      var pg = el("div", "ev-grid");
+      p.projects.forEach(function (pr) {
+        var c = el("article", "ev");
+        if (X.str(pr && pr.role)) c.appendChild(el("span", "meta", X.str(pr.role)));
+        c.appendChild(el("h3", null, X.str(pr && pr.title) || "Untitled project"));
+        if (X.str(pr && pr.summary)) c.appendChild(el("p", null, X.str(pr.summary)));
+        pg.appendChild(c);
+      });
+      stack.appendChild(section("Projects", pg));
+    }
+    root.appendChild(stack);
+
+    // Previous / next profile, as ordinary links.
+    var i = all.indexOf(p);
+    if (all.length > 1) {
+      var pr = all[(i + all.length - 1) % all.length], nx = all[(i + 1) % all.length];
+      var pager = el("div", "pager");
+      var l1 = el("a", "back", "\u2190 " + pr.name); l1.href = X.studentUrl(pr.id); l1.style.marginTop = "0";
+      var l2 = el("a", "back", nx.name + " \u2192"); l2.href = X.studentUrl(nx.id); l2.style.marginTop = "0";
+      pager.appendChild(l1); pager.appendChild(l2);
+      root.appendChild(pager);
+    }
+  }
+
+  if (!id) { state("No profile selected", "Open a profile from the talent index."); return; }
+  if (!X.validId(id)) { state("Invalid profile id", "That link doesn't look right. Open a profile from the talent index."); return; }
+  $("crew-id").textContent = id.toUpperCase();
+
+  // Fetch from the directory API and pick out this student.
+  X.loadDirectory(function () {
+    banner.replaceChildren();
+    var m = el("span"); m.appendChild(el("strong", null, "Waking up the API.")); m.appendChild(document.createTextNode(" The first request can take up to a minute on free hosting."));
+    banner.appendChild(m); banner.hidden = false;
+  }).then(function (res) {
+    banner.hidden = true;
+    var p = res.data.filter(function (x) { return lc(x.id) === lc(id); })[0];
+    if (!p) { state("Profile not found", "There is no crew file with the id " + id.toUpperCase() + "."); return; }
+    showProfile(p, res.data);
+    if (!res.live) {
+      var m = el("span"); m.appendChild(el("strong", null, "Couldn't reach the live API.")); m.appendChild(document.createTextNode(" Showing sample data."));
+      banner.replaceChildren(m); banner.hidden = false;
+    }
+  });
+})();
+</script>
 </body>
 </html>

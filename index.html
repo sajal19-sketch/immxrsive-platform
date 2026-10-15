@@ -1,186 +1,334 @@
-cat << 'EOF' > index.html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImmXrsive | Talent</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #ffffff;
-      --text: #000000;
-      --accent: #FFD700; /* Bright Yellow */
-      --accent-alt: #FF69B4; /* Hot Pink */
-      --border: 3px solid #000000;
-      --shadow: 6px 6px 0px #000000;
-      --shadow-hover: 2px 2px 0px #000000;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      min-height: 100vh;
-      padding-bottom: 60px;
-    }
-    .navbar {
-      background: var(--accent);
-      border-bottom: var(--border);
-      padding: 16px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .brand-main { font-size: 1.5rem; letter-spacing: -0.05em; }
-    .nav-link { color: var(--text); text-decoration: none; border: var(--border); padding: 8px 16px; background: #fff; box-shadow: 3px 3px 0px #000; transition: all 0.1s; }
-    .nav-link:hover { transform: translate(3px, 3px); box-shadow: 0px 0px 0px #000; }
-    
-    .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
-    header h1 { font-size: 3.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.05em; line-height: 1; margin-bottom: 16px; }
-    header p { font-size: 1.1rem; font-weight: 500; border-bottom: var(--border); padding-bottom: 32px; margin-bottom: 32px; }
-
-    .controls-bar { display: flex; gap: 16px; margin-bottom: 40px; flex-wrap: wrap; }
-    input[type="text"], select {
-      padding: 12px 16px; border: var(--border); background: #fff; color: var(--text); font-family: inherit; font-size: 1rem; font-weight: 500; outline: none; box-shadow: var(--shadow);
-    }
-    .search-input-wrap { flex: 1; min-width: 280px; }
-    input[type="text"] { width: 100%; }
-    input[type="text"]:focus, select:focus { background: #f0f0f0; }
-
-    .talent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 32px; }
-    .card {
-      background: #fff; border: var(--border); padding: 24px; box-shadow: var(--shadow); transition: all 0.1s ease; display: flex; flex-direction: column; justify-content: space-between;
-    }
-    .card:hover { transform: translate(4px, 4px); box-shadow: var(--shadow-hover); background: #fafafa; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .talent-name { font-size: 1.5rem; font-weight: 700; text-transform: uppercase; }
-    .status-badge { background: var(--accent-alt); border: var(--border); padding: 4px 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
-    .talent-program { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
-    .talent-headline { font-size: 1rem; font-weight: 500; margin-bottom: 24px; }
-    
-    .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-    .tag-item { background: #eee; border: var(--border); padding: 4px 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
-    
-    .btn-view-profile { width: 100%; background: var(--accent); color: var(--text); border: var(--border); padding: 12px; font-family: inherit; font-size: 1rem; font-weight: 700; text-transform: uppercase; cursor: pointer; box-shadow: 4px 4px 0px #000; transition: all 0.1s; }
-    .btn-view-profile:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
-
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-    .modal-card { background: #fff; border: var(--border); box-shadow: 12px 12px 0px var(--accent); max-width: 500px; width: 100%; padding: 32px; position: relative; }
-    .modal-close { position: absolute; top: 16px; right: 16px; background: var(--accent-alt); border: var(--border); font-size: 1.2rem; font-weight: 700; cursor: pointer; padding: 4px 12px; }
-    .state-message { grid-column: 1 / -1; text-align: center; padding: 48px 16px; font-weight: 700; font-size: 1.2rem; text-transform: uppercase; border: var(--border); background: var(--accent); }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ImmXrsive · Endurance Mission Control</title>
+<meta name="description" content="Student and alumni developers and creators, charted by skill, program and availability.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="brand-main">ImmXrsive Directory</div>
-    <a href="upload.html" class="nav-link">Add Profile</a>
-  </nav>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="progress" id="progress" aria-hidden="true"></div>
 
-  <div class="container">
-    <header>
-      <h1>Tech Talent.</h1>
-      <p>Discover skilled students and alumni across tech, design, and immersive media.</p>
-    </header>
+<div class="page">
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="index.html" aria-label="ImmXrsive, home">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke-linecap="round"/><g fill="currentColor"><rect x="10.5" y="2.6" width="3" height="2.2" rx=".5"/><rect x="10.5" y="19.2" width="3" height="2.2" rx=".5"/><rect x="2.6" y="10.9" width="2.2" height="3" rx=".5"/><rect x="19.2" y="10.9" width="2.2" height="3" rx=".5"/></g></svg>
+        ImmXrsive
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="hide-sm" href="index.html#field">The field</a>
+        <a href="index.html#index">Index</a>
+        <a href="upload.html">Upload</a>
+        <a class="cta" href="intake.html">Inquire</a>
+      </nav>
+    </div>
+  </header>
 
-    <div class="controls-bar">
-      <div class="search-input-wrap">
-        <input type="text" id="searchInput" placeholder="SEARCH BY NAME, SKILL..." oninput="applyClientFilters()">
+  <main id="top">
+    <section class="hero" aria-labelledby="h-signal">
+      <div class="wrap">
+        <p class="kicker"><b>Sector 01</b><i></i>Signal</p>
+        <h1 id="h-signal">Find the crew for your next <em>mission.</em></h1>
+        <p class="lede">Student and alumni developers and creators, charted by skill, program and availability. Scan the field, open a crew file, open a channel.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#index">Begin descent <span aria-hidden="true">↓</span></a>
+          <span class="cue">Scroll to descend</span>
+        </div>
+        <div class="telemetry" aria-hidden="true"><div><small>Target</small><b>Gargantua</b></div><div><small>Distance</small><b id="t-dist">10.40 AU</b></div><div><small>Time dilation</small><b class="warn" id="t-dil">1 h = 7 yr</b></div></div>
       </div>
-      <select id="statusFilter" onchange="applyClientFilters()">
-        <option value="">ALL STATUSES</option>
-        <option value="Current">CURRENT</option>
-        <option value="Alumni">ALUMNI</option>
-      </select>
-      <select id="availabilityFilter" onchange="applyClientFilters()">
-        <option value="">ALL AVAILABILITY</option>
-        <option value="internship">INTERNSHIP</option>
-        <option value="contract">CONTRACT</option>
-        <option value="full-time">FULL-TIME</option>
-      </select>
-    </div>
+    </section>
 
-    <main id="talentGrid" class="talent-grid"></main>
-  </div>
-
-  <div id="profileModal" class="modal-overlay" onclick="closeModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="closeModal()">X</button>
-      <div id="modalBody"></div>
-    </div>
-  </div>
-
-  <script>
-    let allTalent = [];
-    async function loadDirectory() {
-      const grid = document.getElementById('talentGrid');
-      grid.innerHTML = '<div class="state-message">LOADING DATA...</div>';
-      try {
-        const res = await fetch('https://immxrsive-api.onrender.com/api/directory');
-        if (!res.ok) throw new Error('API failed');
-        allTalent = await res.json();
-        applyClientFilters();
-      } catch (err) { grid.innerHTML = '<div class="state-message" style="background:#ff69b4;">CONNECTION FAILED!</div>'; }
-    }
-    function applyClientFilters() {
-      const query = document.getElementById('searchInput').value.trim().toLowerCase();
-      const selectedStatus = document.getElementById('statusFilter').value.toLowerCase();
-      const selectedAvail = document.getElementById('availabilityFilter').value.toLowerCase();
-      const filtered = allTalent.filter(item => {
-        const name = (item.name || '').toLowerCase();
-        const headline = (item.headline || '').toLowerCase();
-        const program = (item.program || 'Computer Science').toLowerCase();
-        const skills = (item.skills || []).map(s => s.toLowerCase());
-        const status = (item.status || 'Current').toLowerCase();
-        const availability = (item.availability || ['internship']).map(a => a.toLowerCase());
-        const matchesQuery = !query || name.includes(query) || headline.includes(query) || program.includes(query) || skills.some(s => s.includes(query));
-        const matchesStatus = !selectedStatus || status.includes(selectedStatus);
-        const matchesAvail = !selectedAvail || availability.some(a => a.includes(selectedAvail));
-        return matchesQuery && matchesStatus && matchesAvail;
-      });
-      renderCards(filtered);
-    }
-    function renderCards(list) {
-      const grid = document.getElementById('talentGrid');
-      if (!list || list.length === 0) { grid.innerHTML = '<div class="state-message">NO RESULTS.</div>'; return; }
-      grid.innerHTML = list.map((item, index) => `
-        <div class="card">
+    <section class="chapter" id="field" aria-labelledby="h-field">
+      <div class="wrap">
+        <div class="field-grid">
           <div>
-            <div class="card-top">
-              <h2 class="talent-name">${escapeHtml(item.name || 'Anonymous')}</h2>
-              <span class="status-badge">${escapeHtml(item.status || 'Current')}</span>
-            </div>
-            <div class="talent-program">${escapeHtml(item.program || 'Computer Science')}</div>
-            <div class="talent-headline">${escapeHtml(item.headline || 'Software Engineer')}</div>
-            <div class="tags-container">${(item.skills || []).map(s => `<span class="tag-item">${escapeHtml(s)}</span>`).join('')}</div>
+            <p class="ch-label"><b>Sector 02</b>The field</p>
+            <h2 id="h-field">One galaxy. Many <em>disciplines.</em></h2>
+            <p class="ch-copy">Every skill below comes from the profiles in the directory. Larger means more people list it. Pick one to filter the index.</p>
           </div>
-          <button class="btn-view-profile" onclick="openModal(${index})">View Profile</button>
+          <div>
+            <div class="cloud" id="cloud" aria-label="Skills across the directory"></div>
+            <p class="cloud-note" id="cloud-note"></p>
+          </div>
         </div>
-      `).join('');
-    }
-    function openModal(index) {
-      const item = allTalent[index];
-      if (!item) return;
-      document.getElementById('modalBody').innerHTML = `
-        <h2 style="font-size: 2rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">${escapeHtml(item.name || 'Anonymous')}</h2>
-        <div style="font-size: 1rem; font-weight: 700; margin-bottom: 24px; border-bottom: 3px solid #000; padding-bottom: 8px;">
-          ${escapeHtml(item.program || 'Computer Science')} | ${escapeHtml(item.status || 'Current')}
+        <div class="stats" id="stats" aria-label="Directory summary">
+          <div class="stat"><div class="n" id="s-total">0</div><div class="l">Profiles</div></div>
+          <div class="stat"><div class="n" id="s-current">0</div><div class="l">Current students</div></div>
+          <div class="stat"><div class="n" id="s-alumni">0</div><div class="l">Alumni</div></div>
+          <div class="stat"><div class="n" id="s-skills">0</div><div class="l">Distinct skills</div></div>
         </div>
-        <p style="font-size: 1.1rem; font-weight: 500; line-height: 1.5; margin-bottom: 24px;">
-          ${escapeHtml(item.bio || item.headline || 'No description provided.')}
-        </p>
-        <div class="tags-container">${(item.skills || []).map(s => `<span class="tag-item">${escapeHtml(s)}</span>`).join('')}</div>
-      `;
-      document.getElementById('profileModal').style.display = 'flex';
+      </div>
+    </section>
+
+    <section class="chapter" id="index" aria-labelledby="h-index" style="padding-bottom:0">
+      <div class="wrap index-head">
+        <p class="ch-label"><b>Sector 03</b>Talent index</p>
+        <h2 id="h-index">Find the <em>signal</em> in the field.</h2>
+      </div>
+
+      <div class="filters" role="search">
+        <div class="wrap">
+          <div class="filters-row">
+            <div class="field">
+              <label for="q">Search talent</label>
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <input class="control" id="q" type="search" placeholder="Search talent" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label for="status">Status</label>
+              <select class="control" id="status">
+                <option value="">All statuses</option>
+                <option value="current">Current</option>
+                <option value="alumni">Alumni</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="avail">Availability</label>
+              <select class="control" id="avail">
+                <option value="">Any availability</option>
+                <option value="internship">Internship</option>
+                <option value="contract">Contract</option>
+                <option value="full-time">Full-time</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint"><span>Use <b>,</b> for AND</span><span>Use <b>|</b> for OR</span><span>Example: react, figma | unity</span></p>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <div id="banner" class="banner" hidden></div>
+        <div class="results-meta">
+          <div class="count" id="count" aria-live="polite">Loading profiles</div>
+          <div class="meta-right">
+            <select class="control sort" id="sort" aria-label="Sort profiles"><option value="">Sort: default</option><option value="az">Name A to Z</option><option value="skills">Most skills</option></select>
+            <button class="link-btn" id="clear" type="button" hidden>Clear filters</button>
+          </div>
+        </div>
+        <div class="grid" id="grid" aria-busy="true"></div>
+      </div>
+      <div style="height:clamp(64px,9vw,120px)"></div>
+    </section>
+
+    <section class="chapter join" id="join" aria-labelledby="h-join">
+      <div class="wrap">
+        <p class="ch-label"><b>Sector 04</b>Join</p>
+        <h2 id="h-join">Dock with the <em>Endurance.</em></h2>
+        <p class="ch-copy">Students and alumni can upload a resume to start a profile. Employers can open an inquiry from any crew file.</p>
+        <a class="btn" href="upload.html">Upload resume</a>
+        <div><a class="back" href="#index">Return to the index ↑</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap"><span>ImmXrsive · Endurance Mission Control</span><span>Profiles load from the ImmXrsive directory API</span></div>
+  </footer>
+</div>
+
+<script src="site.js"></script>
+<script>
+(function () {
+  "use strict";
+  var X = window.IMX, $ = X.$, el = X.el, lc = X.lc, REDUCED = X.REDUCED;
+  var grid = $("grid"), countEl = $("count"), clearBtn = $("clear"), banner = $("banner");
+  var qEl = $("q"), statusEl = $("status"), availEl = $("avail"), sortEl = $("sort");
+  var all = [], filtered = [];
+
+  /* ---------- Telemetry ---------- */
+  (function () {
+    var d = $("t-dist"), l = $("t-dil");
+    function upd() {
+      var h = Math.max(1, document.documentElement.scrollHeight - window.innerHeight), p = Math.min(1, (window.scrollY || 0) / h);
+      d.textContent = (10.4 * (1 - p * 0.92)).toFixed(2) + " AU";
+      l.textContent = "1 h = " + Math.round(7 + p * 60) + " yr";
     }
-    function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
-    function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
-    window.addEventListener('DOMContentLoaded', loadDirectory);
-  </script>
+    window.addEventListener("scroll", upd, { passive: true }); upd();
+  })();
+
+  /* ---------- Search parsing: "," = AND, "|" = OR ---------- */
+  function parseQuery(raw) {
+    return raw.split("|").map(function (g) {
+      return g.split(",").map(function (t) { return lc(t.trim()); }).filter(Boolean);
+    }).filter(function (g) { return g.length; });
+  }
+  function termMatches(hay, term) {
+    var words = term.split(/\s+/).filter(Boolean);
+    for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) === -1) return false;
+    return true;
+  }
+  function queryMatches(hay, groups) {
+    if (!groups.length) return true;
+    return groups.some(function (g) { return g.every(function (t) { return termMatches(hay, t); }); });
+  }
+
+  /* ---------- Rendering ---------- */
+  function renderSkeletons() {
+    grid.setAttribute("aria-busy", "true");
+    grid.replaceChildren();
+    for (var i = 0; i < 6; i++) grid.appendChild(el("div", "card skeleton"));
+  }
+  function renderState(title, message, label, action) {
+    var box = el("div", "state");
+    box.appendChild(el("h3", null, title));
+    box.appendChild(el("p", null, message));
+    if (label) { var b = el("button", "btn", label); b.type = "button"; b.addEventListener("click", action); box.appendChild(b); }
+    grid.replaceChildren(box);
+  }
+
+  function buildCard(p) {
+    var card = el("article", "card");
+    card.appendChild(el("span", "badge" + (lc(p.status) === "current" ? " current" : ""), p.status || "N/A"));
+
+    var top = el("div", "card-top");
+    top.appendChild(X.constellation(p, 56));
+    top.appendChild(el("span", "cid", "CREW-" + p.id.toUpperCase()));
+    card.appendChild(top);
+
+    var head = el("div");
+    head.appendChild(el("h3", null, p.name));
+    if (p.program) head.appendChild(el("p", "program", p.program));
+    card.appendChild(head);
+
+    if (p.headline) card.appendChild(el("p", "headline", p.headline));
+
+    if (p.skills.length) {
+      var tags = el("div", "tags");
+      p.skills.slice(0, 5).forEach(function (s) { tags.appendChild(el("span", "tag", s)); });
+      if (p.skills.length > 5) tags.appendChild(el("span", "tag more", "+" + (p.skills.length - 5)));
+      card.appendChild(tags);
+    }
+    // A normal link to a real page: student.html?id=S01
+    var link = el("a", "btn block", "View Profile");
+    link.href = X.studentUrl(p.id);
+    link.setAttribute("aria-label", "View profile for " + p.name);
+    card.appendChild(link);
+    return card;
+  }
+
+  function render() {
+    grid.setAttribute("aria-busy", "false");
+    clearBtn.hidden = !(qEl.value.trim() || statusEl.value || availEl.value);
+    var n = filtered.length, total = all.length;
+    countEl.replaceChildren();
+    countEl.appendChild(el("b", null, String(n)));
+    countEl.appendChild(document.createTextNode(" / " + total + (n === 1 ? " match" : " matches")));
+    if (!n) {
+      renderState(
+        total ? "Nothing in range" : "The sky is empty",
+        total ? "No profiles match that search. Loosen a filter or try different keywords." : "The directory has no profiles to show right now.",
+        total ? "Clear filters" : null, clearFilters
+      );
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    filtered.forEach(function (p) { frag.appendChild(buildCard(p)); });
+    grid.replaceChildren(frag);
+  }
+
+  function applyFilters() {
+    var groups = parseQuery(qEl.value), status = statusEl.value, avail = availEl.value, sort = sortEl.value;
+    filtered = all.filter(function (p) {
+      if (status && lc(p.status) !== status) return false;
+      if (avail && !p.availability.some(function (a) { return lc(a) === avail; })) return false;
+      return queryMatches(p.hay, groups);
+    });
+    if (sort === "az") filtered.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    else if (sort === "skills") filtered.sort(function (a, b) { return b.skills.length - a.skills.length; });
+    render();
+  }
+  function clearFilters() { qEl.value = ""; statusEl.value = ""; availEl.value = ""; applyFilters(); qEl.focus(); }
+
+  /* ---------- Skill cloud + stats from real data ---------- */
+  function renderField() {
+    var freq = {}, label = {};
+    all.forEach(function (p) {
+      p.skills.forEach(function (s) {
+        var k = lc(s);
+        freq[k] = (freq[k] || 0) + 1;
+        if (!label[k]) label[k] = s;
+      });
+    });
+    var keys = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a] || a.localeCompare(b); });
+    var top = keys.slice(0, 22);
+    var max = top.length ? freq[top[0]] : 1, min = top.length ? freq[top[top.length - 1]] : 1;
+
+    var cloud = $("cloud");
+    cloud.replaceChildren();
+    top.forEach(function (k) {
+      var t = max === min ? 0.5 : (freq[k] - min) / (max - min);
+      var b = el("button", null, label[k]);
+      b.type = "button";
+      b.style.fontSize = (17 + t * 15).toFixed(1) + "px";
+      b.title = freq[k] + (freq[k] === 1 ? " profile" : " profiles");
+      b.dataset.skill = label[k];
+      b.appendChild(el("sup", null, String(freq[k])));
+      cloud.appendChild(b);
+    });
+    $("cloud-note").textContent = keys.length > top.length ? "Showing the top " + top.length + " of " + keys.length + " skills." : (keys.length ? keys.length + " skills across " + all.length + " profiles." : "");
+
+    $("s-total").textContent = String(all.length);
+    $("s-current").textContent = String(all.filter(function (p) { return lc(p.status) === "current"; }).length);
+    $("s-alumni").textContent = String(all.filter(function (p) { return lc(p.status) === "alumni"; }).length);
+    $("s-skills").textContent = String(keys.length);
+  }
+  $("cloud").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-skill]");
+    if (!b) return;
+    qEl.value = b.dataset.skill;
+    applyFilters();
+    $("index").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+  });
+
+  /* ---------- Data ---------- */
+  function showBanner(info) {
+    banner.replaceChildren();
+    if (!info) { banner.hidden = true; return; }
+    var msg = el("span");
+    msg.appendChild(el("strong", null, info.title));
+    msg.appendChild(document.createTextNode(" " + info.text));
+    banner.appendChild(msg);
+    if (info.retry) {
+      var r = el("button", "link-btn", "Retry live API");
+      r.type = "button"; r.addEventListener("click", load);
+      banner.appendChild(r);
+    }
+    banner.hidden = false;
+  }
+  function load() {
+    renderSkeletons();
+    countEl.textContent = "Loading profiles";
+    showBanner(null);
+    X.loadDirectory(function () {
+      showBanner({ title: "Waking up the API.", text: "The first request can take up to a minute on free hosting." });
+    }).then(function (res) {
+      all = res.data;
+      showBanner(res.live ? null : { title: "Couldn't reach the live API.", text: "Showing " + all.length + " sample profiles instead.", retry: true });
+      renderField(); applyFilters();
+    });
+  }
+
+  qEl.addEventListener("input", applyFilters);
+  statusEl.addEventListener("change", applyFilters);
+  availEl.addEventListener("change", applyFilters);
+  sortEl.addEventListener("change", applyFilters);
+  clearBtn.addEventListener("click", clearFilters);
+  grid.addEventListener("pointermove", function (e) {
+    var card = e.target.closest(".card");
+    if (!card) return;
+    var r = card.getBoundingClientRect();
+    card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    card.style.setProperty("--my", (e.clientY - r.top) + "px");
+  });
+
+  load();
+})();
+</script>
 </body>
 </html>
-EOF
