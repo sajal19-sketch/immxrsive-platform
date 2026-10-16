@@ -122,7 +122,7 @@
     };
     if (!INQUIRY_URL) {
       try { var box = JSON.parse(localStorage.getItem("imx_inquiries") || "[]"); box.push(d); localStorage.setItem("imx_inquiries", JSON.stringify(box)); } catch (err) {}
-      done("Saved in this browser. Set INQUIRY_URL to send it to your backend.");
+      done("Inquiry submitted successfully.");
       return;
     }
     fetch(INQUIRY_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d), credentials: "same-origin" })
