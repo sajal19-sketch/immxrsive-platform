@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ImmXrsive Platform</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+        <h2>Algoma ID Login</h2>
+        <p>Please verify your university email to continue.</p>
+        
+        <!-- Step 1: Request Code -->
+        <div style="margin-bottom: 15px;">
+            <input type="email" id="algoma-email" placeholder="yourname@algomau.ca" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <button id="send-code-btn" onclick="requestVerification()" style="width: 100%; padding: 10px;">Send Verification Code</button>
+        </div>
+
+        <!-- Step 2: Enter Code (Hidden initially) -->
+        <div id="otp-section" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+            <input type="text" id="otp-code" placeholder="Enter 6-digit code" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <button onclick="submitVerification()" style="width: 100%; padding: 10px;">Verify Code & Login</button>
+        </div>
+
+        <!-- Status Messages -->
+        <p id="verification-message" style="margin-top: 15px; font-weight: bold;"></p>
+
+        <!-- GitHub Login -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center;">
+            <p>Or sign in with your developer account:</p>
+            <a href="http://127.0.0.1:8001/api/auth/github" style="display: inline-block; width: 100%; padding: 10px; background: #333; color: white; text-decoration: none; border-radius: 4px; box-sizing: border-box;">
+                Log in with GitHub
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8001";
+
+        async function requestVerification() {
+            const email = document.getElementById('algoma-email').value;
+            const msgElement = document.getElementById('verification-message');
+            msgElement.style.color = "black";
+            msgElement.innerText = "Sending request...";
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/request-verification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    msgElement.style.color = "green";
+                    msgElement.innerText = data.message;
+                    document.getElementById('otp-section').style.display = "block";
+                    document.getElementById('send-code-btn').innerText = "Resend Code";
+                } else {
+                    msgElement.style.color = "red";
+                    msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+                }
+            } catch (error) {
+                msgElement.style.color = "red";
+                msgElement.innerText = "Error connecting to server.";
+            }
+        }
+
+        async function submitVerification() {
+            const email = document.getElementById('algoma-email').value;
+            const code = document.getElementById('otp-code').value;
+            const msgElement = document.getElementById('verification-message');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/verify-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    msgElement.style.color = "green";
+                    msgElement.innerText = "Success! Redirecting...";
+                    document.getElementById('otp-section').style.display = "none";
+                    
+                    // Redirect back to your first page after successful login
+                    setTimeout(() => {
+                        window.location.href = "index.html"; 
+                    }, 1500);
+                } else {
+                    msgElement.style.color = "red";
+                    msgElement.innerText = data.detail;
+                }
+            } catch (error) {
+                msgElement.style.color = "red";
+                msgElement.innerText = "Error connecting to server.";
+            }
+        }
+    </script>
+</body>
+</html>
