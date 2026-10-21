@@ -14,3 +14,7 @@ typing_extensions==4.16.0
 uvicorn==0.54.0
 pypdf
 python-multipart
+bcrypt
+email-validator
+python-multipart
+httpx
