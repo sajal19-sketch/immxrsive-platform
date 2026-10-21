@@ -12,7 +12,7 @@ import hashlib
 import hmac
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 import bcrypt
 import httpx
@@ -32,7 +32,17 @@ GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
 APPROVED_DOMAINS = set(x.strip().lower() for x in os.environ.get('APPROVED_EMAIL_DOMAINS', 'algomau.ca').split(',') if x.strip())
 OTP_MINUTES = min(30, max(1, int(os.environ.get('OTP_EXPIRY_MINUTES', '10'))))
 app = FastAPI(title='ImmXrsive API')
-app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND], allow_methods=['GET','POST','PUT','OPTIONS'], allow_headers=['Authorization','Content-Type'], allow_credentials=False)
+# CORS compares origins only (scheme + host + optional port), not URL paths.
+# GitHub Pages is served under /immxrsive-platform but its Origin excludes that path.
+frontend_parts = urlsplit(FRONTEND)
+FRONTEND_ORIGIN = f'{frontend_parts.scheme}://{frontend_parts.netloc}'
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_ORIGIN],
+    allow_methods=['GET', 'POST', 'PUT', 'OPTIONS'],
+    allow_headers=['Authorization', 'Content-Type'],
+    allow_credentials=False,
+)
 
 @contextmanager
 def db():
