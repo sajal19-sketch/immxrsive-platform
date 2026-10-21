@@ -123,3 +123,47 @@ def test_unverified_other_student_cannot_read_otp(env):
     assert response.status_code == 200
     assert sent[-1][1] not in response.text
     assert 'otp_hash' not in response.text
+def test_concurrent_wrong_otp_attempts(env):
+    """Check whether simultaneous incorrect OTPs bypass the lockout."""
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+
+    module, client, path, sid, email, sent, request, verify = env
+
+    assert request().status_code == 200
+    correct_code = sent[-1][1]
+    wrong_code = "000000" if correct_code != "000000" else "999999"
+
+    barrier = threading.Barrier(8)
+
+    def submit_wrong_code(_):
+        barrier.wait(timeout=10)
+        try:
+            return verify(wrong_code).status_code
+        except Exception as exc:
+            return f"ERROR: {type(exc).__name__}"
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(submit_wrong_code, range(8)))
+
+    with module.db() as conn:
+        record = conn.execute(
+            "SELECT attempts FROM otp_challenges WHERE student_id=?",
+            (sid,)
+        ).fetchone()
+
+    assert record is not None
+    print("Concurrent HTTP results:", results)
+    print("Recorded failed attempts:", record["attempts"])
+
+    assert all(isinstance(code, int) for code in results), (
+        f"Unexpected server errors: {results}"
+    )
+
+    assert record["attempts"] <= 5, (
+        "Concurrent requests exceeded the five-attempt limit"
+    )
+
+    assert 429 in results, (
+        "Expected at least one request to be rate-limited"
+    )

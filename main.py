@@ -386,6 +386,9 @@ def request_verification(req:VerificationRequest,student=Depends(authenticated))
 
     with db() as conn:
 
+        # Keep rate-limit reads and updates atomic for simultaneous requests.
+        conn.execute('BEGIN IMMEDIATE')
+
         existing=conn.execute('SELECT id FROM students WHERE lower(email)=? AND id<>?',(email,student['id'])).fetchone()
 
         if existing: raise HTTPException(409,'This email is linked to another account. Contact support.')
@@ -421,6 +424,11 @@ def verify_code(req: VerificationSubmit,student=Depends(authenticated)):
     email=require_domain(str(req.email))
 
     with db() as conn:
+
+        # Serialize OTP read/check/update as one transaction across requests.
+        # BEGIN IMMEDIATE takes SQLite's reserved write lock before reading
+        # the attempt counter, preventing concurrent stale reads.
+        conn.execute('BEGIN IMMEDIATE')
 
         rec=conn.execute('SELECT * FROM otp_challenges WHERE student_id=?',(student['id'],)).fetchone()
 
