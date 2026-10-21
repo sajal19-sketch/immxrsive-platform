@@ -9,13 +9,14 @@ from pypdf import PdfReader
 import io
 import uuid
 import httpx
+import os
 
 # IMPORTS FOR VERIFICATION
 import random
 import string
 from datetime import datetime, timedelta, timezone
 import bcrypt
-from schemas import VerificationRequest, VerificationSubmit
+from schemas import VerificationRequest, VerificationSubmit, ProfileUpdate
 from email_service import send_verification_email
 
 app = FastAPI()
@@ -80,18 +81,22 @@ def setup_db():
 
 # --- GITHUB OAUTH (R2.01 - R2.03) ---
 
-GITHUB_CLIENT_ID = "Ov23liiC0UQjKQQiriL8"
-GITHUB_CLIENT_SECRET = "830635d01d68019518b15fe34949acf49c28906f"
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
 
 @app.get("/api/auth/github")
 async def github_login():
     """Redirects the user to GitHub's authorization page."""
+    if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="GitHub OAuth is not configured")
     github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&scope=user:email"
     return RedirectResponse(url=github_auth_url)
 
 @app.get("/api/auth/callback")
 async def github_callback(code: str):
     """Handles the return from GitHub, exchanges the code for a token, and gets user info."""
+    if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="GitHub OAuth is not configured")
     token_url = "https://github.com/login/oauth/access_token"
     headers = {"Accept": "application/json"}
     data = {
@@ -151,7 +156,6 @@ async def request_verification(req: VerificationRequest):
     ''', (req.email, hashed_code, expires))
     conn.commit()
     conn.close()
-    print(f"DEBUG OTP: {raw_code}")
     send_verification_email(req.email, raw_code)
     return {"message": "Verification code sent."}
 
@@ -270,51 +274,6 @@ def get_directory(q: str = "", skills: list[str] = Query(default=[]), availabili
             results.append(student)
             
     return results
-
-# --- EXISTING ENDPOINTS ---
-    
-    return {"message": "Profile saved successfully."}
-
-@app.get("/api/directory")
-def get_directory(q: str = "", skills: list[str] = Query(default=[]), availability: list[str] = Query(default=[])):
-    conn = get_db()
-    # R2.10: Only show published profiles in the public directory
-    students = conn.execute('SELECT * FROM students WHERE is_published = 1').fetchall()
-    conn.close()
-    
-    results = []
-    for s in students:
-        student = dict(s)
-        student['skills'] = json.loads(student['skills'])
-        student['availability'] = json.loads(student['availability'])
-        
-        match = True
-        if q:
-            search_text = q.lower()
-            if search_text not in student['name'].lower() and search_text not in student['headline'].lower():
-                match = False
-                
-        if skills:
-            for skill in skills:
-                if skill not in student['skills']:
-                    match = False
-                    break
-                    
-        if availability:
-            has_avail = False
-            for avail in availability:
-                if avail in student['availability']:
-                    has_avail = True
-                    break
-            if not has_avail:
-                match = False
-                
-        if match:
-            student['project_count'] = len(json.loads(student['project_ids']))
-            results.append(student)
-            
-    return results
-    # ...
 
 @app.get("/api/students/{student_id}")
 def get_student(student_id: str):
