@@ -59,6 +59,12 @@ def setup_db():
     except sqlite3.OperationalError:
         pass
 
+    # Add published status for R2.10 Private Drafts
+    try:
+        conn.execute('ALTER TABLE students ADD COLUMN is_published BOOLEAN DEFAULT FALSE')
+    except sqlite3.OperationalError:
+        pass
+
     # Create OTP tracking table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS otp_verifications (
@@ -116,8 +122,8 @@ async def github_callback(code: str):
         
         if not existing_user:
             conn.execute('''
-                INSERT INTO students (id, github_id, name, headline, skills, availability, project_ids) 
-                VALUES (?, ?, ?, 'New GitHub User', '[]', '[]', '[]')
+                INSERT INTO students (id, github_id, is_published, name, headline, skills, availability, project_ids) 
+                VALUES (?, ?, 0, ?, 'New GitHub User', '[]', '[]', '[]')
             ''', (github_id[:8], github_id, github_username))
             conn.commit()
             
@@ -185,9 +191,9 @@ async def verify_code(req: VerificationSubmit):
     if not student:
         new_id = str(uuid.uuid4())[:8]
         conn.execute('''
-            INSERT INTO students (id, email, is_algoma_verified, name, headline, skills, availability, project_ids) 
-            VALUES (?, ?, 1, ?, ?, '[]', '[]', '[]')
-        ''', (new_id, req.email, "New Student", "Newly verified Algoma student"))
+            INSERT INTO students (id, email, is_algoma_verified, is_published, name, headline, skills, availability, project_ids) 
+            VALUES (?, ?, 1, 0, ?, 'Newly verified Algoma student', '[]', '[]', '[]')
+        ''', (new_id, req.email, "New Student"))
     else:
         conn.execute('UPDATE students SET is_algoma_verified = 1 WHERE email = ?', (req.email,))
         
@@ -203,7 +209,8 @@ async def verify_code(req: VerificationSubmit):
 @app.get("/api/directory")
 def get_directory(q: str = "", skills: list[str] = Query(default=[]), availability: list[str] = Query(default=[])):
     conn = get_db()
-    students = conn.execute('SELECT * FROM students').fetchall()
+    # R2.10: Only show published profiles in the public directory
+    students = conn.execute('SELECT * FROM students WHERE is_published = 1').fetchall()
     conn.close()
     
     results = []

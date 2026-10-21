@@ -1,105 +1,144 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ImmXrsive Platform</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Login · ImmXrsive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
-        <h2>Algoma ID Login</h2>
-        <p>Please verify your university email to continue.</p>
-        
-        <!-- Step 1: Request Code -->
-        <div style="margin-bottom: 15px;">
-            <input type="email" id="algoma-email" placeholder="yourname@algomau.ca" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
-            <button id="send-code-btn" onclick="requestVerification()" style="width: 100%; padding: 10px;">Send Verification Code</button>
-        </div>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="progress" id="progress" aria-hidden="true"></div>
 
-        <!-- Step 2: Enter Code (Hidden initially) -->
-        <div id="otp-section" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
-            <input type="text" id="otp-code" placeholder="Enter 6-digit code" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-            <button onclick="submitVerification()" style="width: 100%; padding: 10px;">Verify Code & Login</button>
-        </div>
-
-        <!-- Status Messages -->
-        <p id="verification-message" style="margin-top: 15px; font-weight: bold;"></p>
-
-        <!-- GitHub Login -->
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center;">
-            <p>Or sign in with your developer account:</p>
-            <a href="http://127.0.0.1:8001/api/auth/github" style="display: inline-block; width: 100%; padding: 10px; background: #333; color: white; text-decoration: none; border-radius: 4px; box-sizing: border-box;">
-                Log in with GitHub
-            </a>
-        </div>
+<div class="page">
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="index.html" aria-label="ImmXrsive, home">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke-linecap="round"/><g fill="currentColor"><rect x="10.5" y="2.6" width="3" height="2.2" rx=".5"/><rect x="10.5" y="19.2" width="3" height="2.2" rx=".5"/><rect x="2.6" y="10.9" width="2.2" height="3" rx=".5"/><rect x="19.2" y="10.9" width="2.2" height="3" rx=".5"/></g></svg>
+        ImmXrsive
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="hide-sm" href="index.html#field">The field</a>
+        <a href="index.html#index">Index</a>
+        <a href="upload.html">Upload</a>
+        <a class="cta" href="intake.html">Inquire</a>
+        <a href="login.html" style="background: #004b87; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; margin-left: 10px;">Algoma Login</a>
+      </nav>
     </div>
+  </header>
 
-    <script>
-        const API_BASE_URL = "https://immxrsive-api.onrender.com";
+  <main>
+    <section class="chapter sub">
+      <div class="wrap">
+        <p class="ch-label"><b>System</b>Access</p>
+        <h2>Algoma ID <em>Login.</em></h2>
+        <p class="sub-copy">Verify your university email to join the directory.</p>
 
-        async function requestVerification() {
-            const email = document.getElementById('algoma-email').value;
-            const msgElement = document.getElementById('verification-message');
-            msgElement.style.color = "black";
-            msgElement.innerText = "Sending request...";
+        <div class="formbox" style="margin-top: 30px; max-width: 400px;">
+            <!-- Step 1: Request Code -->
+            <div style="margin-bottom: 20px;">
+                <label class="f"><span>Algoma Email</span>
+                    <input class="ctl" type="email" id="algoma-email" placeholder="yourname@algomau.ca" required>
+                </label>
+                <button class="btn inline" id="send-code-btn" onclick="requestVerification()" style="width: 100%; margin-top: 10px;">Send Verification Code</button>
+            </div>
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/request-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    msgElement.style.color = "green";
-                    msgElement.innerText = data.message;
-                    document.getElementById('otp-section').style.display = "block";
-                    document.getElementById('send-code-btn').innerText = "Resend Code";
-                } else {
-                    msgElement.style.color = "red";
-                    msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
-                }
-            } catch (error) {
-                msgElement.style.color = "red";
-                msgElement.innerText = "Error connecting to server.";
+            <!-- Step 2: Enter Code -->
+            <div id="otp-section" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <label class="f"><span>6-Digit Code</span>
+                    <input class="ctl" type="text" id="otp-code" placeholder="Enter code">
+                </label>
+                <button class="btn inline" onclick="submitVerification()" style="width: 100%; margin-top: 10px;">Verify Code & Login</button>
+            </div>
+
+            <p id="verification-message" class="form-msg" style="margin-top: 15px;"></p>
+
+            <!-- GitHub Login -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                <p style="margin-bottom: 15px; font-size: 0.9em; opacity: 0.8;">Or sign in with your developer account:</p>
+                <a class="btn inline" href="https://immxrsive-api.onrender.com/api/auth/github" style="width: 100%; background: #333; border-color: #555;">Log in with GitHub</a>
+            </div>
+        </div>
+        
+        <div><a class="back" href="index.html#index" style="margin-top: 30px; display: inline-block;">Back to the talent index</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap"><span>ImmXrsive · Endurance Mission Control</span><span>Profiles load from the ImmXrsive directory API</span></div>
+  </footer>
+</div>
+
+<script src="site.js"></script>
+<script>
+    // Ensure this points to your live Render API
+    const API_BASE_URL = "https://immxrsive-api.onrender.com";
+
+    async function requestVerification() {
+        const email = document.getElementById('algoma-email').value;
+        const msgElement = document.getElementById('verification-message');
+        msgElement.style.color = "inherit";
+        msgElement.innerText = "Sending request...";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/request-verification`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                msgElement.style.color = "#4ade80"; // success green
+                msgElement.innerText = data.message;
+                document.getElementById('otp-section').style.display = "block";
+                document.getElementById('send-code-btn').innerText = "Resend Code";
+            } else {
+                msgElement.style.color = "#f87171"; // error red
+                msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
             }
+        } catch (error) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Error connecting to server.";
         }
+    }
 
-        async function submitVerification() {
-            const email = document.getElementById('algoma-email').value;
-            const code = document.getElementById('otp-code').value;
-            const msgElement = document.getElementById('verification-message');
+    async function submitVerification() {
+        const email = document.getElementById('algoma-email').value;
+        const code = document.getElementById('otp-code').value;
+        const msgElement = document.getElementById('verification-message');
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/verify-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, code: code })
-                });
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/verify-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, code: code })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                msgElement.style.color = "#4ade80";
+                msgElement.innerText = "Success! Redirecting...";
+                document.getElementById('otp-section').style.display = "none";
                 
-                const data = await response.json();
-                
-                if (response.ok) {
-                    msgElement.style.color = "green";
-                    msgElement.innerText = "Success! Redirecting...";
-                    document.getElementById('otp-section').style.display = "none";
-                    
-                    // Redirect back to your first page after successful login
-                    setTimeout(() => {
-                        window.location.href = "index.html"; 
-                    }, 1500);
-                } else {
-                    msgElement.style.color = "red";
-                    msgElement.innerText = data.detail;
-                }
-            } catch (error) {
-                msgElement.style.color = "red";
-                msgElement.innerText = "Error connecting to server.";
+                setTimeout(() => {
+                    window.location.href = "index.html"; 
+                }, 1500);
+            } else {
+                msgElement.style.color = "#f87171";
+                msgElement.innerText = data.detail;
             }
+        } catch (error) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Error connecting to server.";
         }
-    </script>
+    }
+</script>
 </body>
 </html>
