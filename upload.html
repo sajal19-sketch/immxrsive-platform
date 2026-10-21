@@ -177,9 +177,8 @@
                 msgElement.innerText = "Success! Your draft profile is saved.";
             } else {
                 msgElement.style.color = "#f87171";
-                // This will print the exact field name that is missing
-                const err = data.detail[0];
-                msgElement.innerText = `Field '${err.loc[err.loc.length - 1]}': ${err.msg}`;
+                // This prints the exact fields FastAPI is rejecting
+                msgElement.innerText = JSON.stringify(data.detail);
             }
         } catch (error) {
             msgElement.style.color = "#f87171";
