@@ -16,7 +16,7 @@ class VerificationSubmit(BaseModel):
     code: str
 
 class ProfileUpdate(BaseModel):
-    email: EmailStr
+    email: str  # Changed from EmailStr to prevent Render DNS blocking
     name: str
     headline: str
     skills: List[str]
