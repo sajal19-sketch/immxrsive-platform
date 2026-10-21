@@ -272,6 +272,8 @@ def get_directory(q: str = "", skills: list[str] = Query(default=[]), availabili
             
     return results
 
+# --- EXISTING ENDPOINTS ---
+
 @app.put("/api/students/update")
 async def update_profile(profile: ProfileUpdate):
     conn = get_db()
@@ -298,12 +300,16 @@ async def update_profile(profile: ProfileUpdate):
     
     return {"message": "Profile saved successfully."}
 
+@app.get("/api/directory")
+def get_directory(q: str = "", skills: list[str] = Query(default=[]), availability: list[str] = Query(default=[])):
+    # ...
+
 @app.get("/api/students/{student_id}")
 def get_student(student_id: str):
     conn = get_db()
     student = conn.execute('SELECT * FROM students WHERE id = ?', (student_id,)).fetchone()
     conn.close()
-    
+
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
         
