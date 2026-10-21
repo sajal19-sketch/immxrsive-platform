@@ -13,3 +13,11 @@ class VerificationRequest(BaseModel):
 class VerificationSubmit(BaseModel):
     email: EmailStr
     code: str
+    from typing import List
+
+class ProfileUpdate(BaseModel):
+    email: EmailStr
+    name: str
+    headline: str
+    skills: List[str]
+    availability: List[str]

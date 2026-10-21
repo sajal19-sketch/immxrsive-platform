@@ -203,6 +203,32 @@ async def verify_code(req: VerificationSubmit):
     
     return {"message": "Email successfully verified."}
 
+@app.put("/api/students/update")
+async def update_profile(profile: ProfileUpdate):
+    conn = get_db()
+    
+    # Check if the user exists
+    student = conn.execute('SELECT * FROM students WHERE email = ?', (profile.email,)).fetchone()
+    if not student:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Student not found.")
+        
+    # Convert Python lists to JSON strings for SQLite storage
+    skills_json = json.dumps(profile.skills)
+    avail_json = json.dumps(profile.availability)
+    
+    # Update the database record
+    conn.execute('''
+        UPDATE students 
+        SET name = ?, headline = ?, skills = ?, availability = ?
+        WHERE email = ?
+    ''', (profile.name, profile.headline, skills_json, avail_json, profile.email))
+    
+    conn.commit()
+    conn.close()
+    
+    return {"message": "Profile saved successfully."}
+
 
 # --- EXISTING ENDPOINTS ---
 
@@ -294,16 +320,26 @@ async def parse_resume(file: UploadFile = File(...)):
                 extracted_text += page_text + "\n"
         
         sanitized_text = html.escape(extracted_text.strip())
+        text_lower = sanitized_text.lower()
+        
+        # Simple extraction logic: check for common skills in the text
+        possible_skills = ["python", "javascript", "react", "sql", "fastapi", "html", "css", "git", "postgresql"]
+        found_skills = [skill for skill in possible_skills if skill in text_lower]
+        
+        # Try to guess the name from the first line
+        first_line = sanitized_text.split('\n')[0] if '\n' in sanitized_text else ""
         
         parsed_data = {
             "raw_text": sanitized_text,
-            "filename": file.filename
+            "filename": file.filename,
+            "extracted_name": first_line,
+            "extracted_skills": found_skills
         }
         
         return parsed_data
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing PDF: {str(e)}")
-
+    
 # Must be completely unindented at the very bottom to serve the HTML files
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
