@@ -397,9 +397,26 @@ async def parse_resume(file:UploadFile=File(...),student=Depends(verified)):
         text='\n'.join(lines)
     except Exception:raise HTTPException(422,'This PDF could not be read. You can still edit your profile manually.')
     # Extraction is data-only; do not execute instructions embedded in the PDF.
-    known=['Python','JavaScript','React','SQL','FastAPI','HTML','CSS','Git','PostgreSQL','Unity','C#','TypeScript','WebXR']
-    found=[skill for skill in known if re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',text,re.I)]
+    # Catalog values are the ONLY standardized skills we offer to apply.
+    # Additional detected terms are review-only and never sent to profile filters.
+    approved = skill_catalog()
+    # These common resume terms may be useful to show as unrecognized suggestions,
+    # but they must not be treated as canonical catalog entries unless approved.
+    detectable = list(dict.fromkeys(approved + [
+        'Python', 'JavaScript', 'React', 'SQL', 'FastAPI', 'HTML', 'CSS',
+        'Git', 'PostgreSQL', 'Unity', 'C#', 'TypeScript', 'WebXR'
+    ]))
+    # Match longest labels first and use boundaries so 'Git' does not match 'GitHub'.
+    found_terms = [label for label in sorted(detectable, key=len, reverse=True)
+                   if re.search(r'(?<!\w)' + re.escape(label) + r'(?!\w)', text, re.I)]
+    approved_by_case = {label.casefold(): label for label in approved}
+    found = list(dict.fromkeys(approved_by_case[label.casefold()]
+                               for label in found_terms if label.casefold() in approved_by_case))
+    unrecognized = list(dict.fromkeys(label for label in found_terms
+                                       if label.casefold() not in approved_by_case))
     links=list(dict.fromkeys(re.findall(r'https?://[^\s<>"\']+',text)))[:8]
-    candidates={'name':next((x.strip() for x in lines if x.strip()),''),'skills':found,'education':'','experience':'','links':links}
+    candidates={'name':next((x.strip() for x in lines if x.strip()),''),
+                'skills':found,'unrecognized_skills':unrecognized,
+                'education':'','experience':'','links':links}
     # Uploaded original bytes are only in memory; do not store or serve original PDFs.
     return {'filename':file.filename,'extracted_name':candidates['name'],'extracted_skills':found,'candidates':candidates,'message':'Review all suggestions before applying. Uploaded original PDF is not stored.'}
