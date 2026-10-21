@@ -123,7 +123,7 @@ async def github_callback(code: str):
             
         conn.close()
         
-        return RedirectResponse(url="http://127.0.0.1:8001/index.html?login=success")
+        return RedirectResponse(url="https://sajal19-sketch.github.io/immxrsive-platform/index.html?login=success")
 
 
 # --- VERIFICATION ENDPOINTS (R2.04 - R2.09) ---
