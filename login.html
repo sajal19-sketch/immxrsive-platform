@@ -39,7 +39,7 @@
 
         <div class="formbox" style="margin-top: 30px; max-width: 400px;">
             <!-- Step 1: Request Code -->
-            <div style="margin-bottom: 20px;">
+            <div id="verification-controls" style="display:none; margin-bottom: 20px;">
                 <label class="f"><span>Algoma Email</span>
                     <input class="ctl" type="email" id="algoma-email" placeholder="yourname@algomau.ca" required>
                 </label>
@@ -59,8 +59,9 @@
             <!-- GitHub Login -->
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
                 <p style="margin-bottom: 15px; font-size: 0.9em; opacity: 0.8;">Or sign in with your developer account:</p>
-                <a class="btn inline" href="https://immxrsive-api.onrender.com/api/auth/github" style="width: 100%; background: #333; border-color: #555;">Log in with GitHub</a>
+                <a class="btn inline" id="github-login-link" href="#" style="width: 100%; background: #333; border-color: #555;">Log in with GitHub</a>
             </div>
+            <a class="btn inline" href="editor.html" id="editor-link" style="display:none">Open profile editor</a>
         </div>
         
         <div><a class="back" href="index.html#index" style="margin-top: 30px; display: inline-block;">Back to the talent index</a></div>
@@ -75,70 +76,48 @@
 
 <script src="site.js"></script>
 <script>
-    // Ensure this points to your live Render API
-    const API_BASE_URL = "https://immxrsive-api.onrender.com";
-
-    async function requestVerification() {
-        const email = document.getElementById('algoma-email').value;
-        const msgElement = document.getElementById('verification-message');
-        msgElement.style.color = "inherit";
-        msgElement.innerText = "Sending request...";
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/request-verification`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                msgElement.style.color = "#4ade80"; // success green
-                msgElement.innerText = data.message;
-                document.getElementById('otp-section').style.display = "block";
-                document.getElementById('send-code-btn').innerText = "Resend Code";
-            } else {
-                msgElement.style.color = "#f87171"; // error red
-                msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
-            }
-        } catch (error) {
-            msgElement.style.color = "#f87171";
-            msgElement.innerText = "Error connecting to server.";
-        }
-    }
-
-    async function submitVerification() {
-        const email = document.getElementById('algoma-email').value;
-        const code = document.getElementById('otp-code').value;
-        const msgElement = document.getElementById('verification-message');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/verify-code`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, code: code })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                msgElement.style.color = "#4ade80";
-                msgElement.innerText = "Success! Redirecting...";
-                document.getElementById('otp-section').style.display = "none";
-                
-                setTimeout(() => {
-                    window.location.href = "index.html"; 
-                }, 1500);
-            } else {
-                msgElement.style.color = "#f87171";
-                msgElement.innerText = data.detail;
-            }
-        } catch (error) {
-            msgElement.style.color = "#f87171";
-            msgElement.innerText = "Error connecting to server.";
-        }
-    }
-</script>
-</body>
-</html>
+const API = 'https://immxrsive-api.onrender.com';
+const $ = id => document.getElementById(id);
+const authHeaders = () => ({'Authorization': 'Bearer ' + (sessionStorage.getItem('imx_token') || '')});
+const status = (message, error=false) => { $('verification-message').textContent=message; $('verification-message').style.color=error?'#f87171':'#4ade80'; };
+async function requestJSON(path, payload) {
+ const r=await fetch(API+path,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const data=await r.json().catch(()=>({detail:'Unexpected server response'}));
+ if(!r.ok) throw new Error(Array.isArray(data.detail)?data.detail.map(x=>x.msg).join(', '):data.detail||'Request failed');
+ return data;
+}
+async function githubSignIn() {
+ const values = new Uint8Array(32); crypto.getRandomValues(values);
+ const state = Array.from(values, x=>x.toString(16).padStart(2,'0')).join('');
+ sessionStorage.setItem('imx_oauth_state',state);
+ location.href = API+'/api/auth/github?state='+encodeURIComponent(state);
+}
+async function finishGitHub() {
+ const fragment=new URLSearchParams(location.hash.slice(1));
+ const ticket=fragment.get('ticket'),state=fragment.get('state');
+ if (!ticket) return;
+ history.replaceState(null,'',location.pathname);
+ if (!state || state !== sessionStorage.getItem('imx_oauth_state')) {status('Sign-in state mismatch; try GitHub login again.',true);return;}
+ sessionStorage.removeItem('imx_oauth_state');
+ try {const data=await requestJSON('/api/auth/exchange',{ticket});sessionStorage.setItem('imx_token',data.access_token); location.href='editor.html';}
+ catch(err){status(err.message,true);}
+}
+async function requestVerification(){
+ try {status('Sending verification code...');const email=$('algoma-email').value; const data=await requestJSON('/api/request-verification',{email});status(data.message);$('otp-section').style.display='block';}
+ catch(e){status(e.message,true);}
+}
+async function submitVerification(){
+ try {const data=await requestJSON('/api/verify-code',{email:$('algoma-email').value,code:$('otp-code').value});status(data.message);location.href='editor.html';}
+ catch(e){status(e.message,true);}
+}
+(async()=>{
+ $('github-login-link').addEventListener('click', e=>{e.preventDefault();githubSignIn()});
+ if(location.hash.includes('ticket=')){await finishGitHub();return;}
+ const token=sessionStorage.getItem('imx_token');
+ if(!token) {status('Sign in with GitHub first.');return;}
+ try {const r=await fetch(API+'/api/auth/me',{headers:authHeaders()});if(!r.ok)throw Error('Session expired');const me=await r.json();
+  if(me.verified){status('Verified account ready. Open your profile editor.');$('editor-link').style.display='block';}
+  else {status('Signed in as '+me.name+'. Verify your university email.');$('verification-controls').style.display='block';}
+ }catch(e){sessionStorage.removeItem('imx_token');status('Please sign in with GitHub.',true);}
+})();
+</script></body></html>
