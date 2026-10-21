@@ -368,3 +368,16 @@ body[data-portfolio-theme="nebula"] .pf-name{color:#cfb9ff}
 body[data-portfolio-theme="minimal"] .pf-head{background:#111820;border:1px solid #8994a6;border-radius:6px;padding:22px}
 body[data-portfolio-theme="minimal"] .pf-name{letter-spacing:0;font-family:system-ui,sans-serif;font-weight:700}
 body[data-portfolio-theme="stellar"] .pf-head{border-bottom:1px solid #3c576a}
+
+
+/* R2 public portfolio rendering — scoped to published student detail pages. */
+.pf-intro { min-width: 0; flex: 1 1 280px; }
+.pf-hero-image { display: block; flex: 0 0 120px; width: 120px; height: 120px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line-strong); }
+body[data-portfolio-theme="stellar"] .pf-head { border-bottom: 1px solid #3c576a; padding-bottom: 18px; }
+body[data-portfolio-theme="nebula"] .pf-head { border: 1px solid #9b7cde; background: linear-gradient(130deg,#1d1839,#0a1425); border-radius: 20px; padding: 22px; box-shadow: 0 12px 42px rgba(111,73,174,.18); }
+body[data-portfolio-theme="nebula"] .pf-name { color: #e0cfff; }
+body[data-portfolio-theme="nebula"] .pf-stack .m-sec { border-left: 2px solid #9b7cde; padding-left: 18px; }
+body[data-portfolio-theme="minimal"] .pf-head { background: #111820; border: 1px solid #8994a6; border-radius: 6px; padding: 22px; box-shadow: none; }
+body[data-portfolio-theme="minimal"] .pf-name { letter-spacing: 0; font-family: system-ui,sans-serif; font-weight: 700; }
+body[data-portfolio-theme="minimal"] .pf-stack .m-sec { padding-bottom: 16px; border-bottom: 1px solid #364454; }
+@media(max-width:560px) { .pf-hero-image { width: 94px; height: 94px; flex-basis: 94px; } body[data-portfolio-theme="nebula"] .pf-head, body[data-portfolio-theme="minimal"] .pf-head { padding: 16px; } }
