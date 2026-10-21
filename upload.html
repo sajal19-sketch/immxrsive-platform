@@ -90,8 +90,23 @@
 
 <script src="site.js"></script>
 <script>
-    const API_BASE_URL = "https://immxrsive-api.onrender.com";
-
-    function parseResume(){location.href='editor.html'}
-    function saveProfile(){location.href='editor.html'}
+    const API_BASE_URL = 'https://immxrsive-api.onrender.com';
+    const $ = id => document.getElementById(id);
+    $('upload-msg').textContent='You can select a PDF here. You must sign in and verify your university email before submitting it for profile import.';
+    async function parseResume(){
+      const file=$('resume-file').files[0];
+      if(!file){$('upload-msg').textContent='Select a PDF first.';return;}
+      if(!file.name.toLowerCase().endsWith('.pdf')){$('upload-msg').textContent='Only PDF files are supported.';return;}
+      // Never store the PDF in browser local storage; the editor provides authenticated import.
+      const token=sessionStorage.getItem('imx_token');
+      if(!token){$('upload-msg').textContent='Sign in first to import your resume.';location.href='login.html';return;}
+      try {
+        const resp=await fetch(API_BASE_URL+'/api/auth/me',{headers:{Authorization:'Bearer '+token}});
+        const me=await resp.json();
+        if(!resp.ok||!me.verified){$('upload-msg').textContent='Verify your Algoma affiliation first.';location.href='login.html';return;}
+        $('upload-msg').textContent='Open the profile editor, choose this PDF again, and review each extracted suggestion before saving.';
+        location.href='editor.html';
+      } catch(e) {$('upload-msg').textContent='Could not connect to the API. Try again later.';}
+    }
+    function saveProfile(){location.href='editor.html';}
 </script></body></html>

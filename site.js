@@ -68,6 +68,14 @@
       headline: str(p && p.headline),
       program: str(p && p.program),
       bio: str(p && p.bio),
+      education: str(p && p.education),
+      experience: str(p && p.experience),
+      theme: str(p && p.theme) || 'stellar',
+      section_order: Array.isArray(p && p.section_order) ? p.section_order : ['education','experience'],
+      hero_media: str(p && p.hero_media),
+      github_link: str(p && p.github_link),
+      linkedin_link: str(p && p.linkedin_link),
+      portfolio_link: str(p && p.portfolio_link),
       status: str(p && p.status),
       availability: list(p && p.availability),
       skills: list(p && p.skills),
@@ -80,23 +88,14 @@
   // Resolves { data: [normalized profiles], live: boolean }. Never rejects: falls back to SAMPLE.
   // The first request to free hosting can be slow, so a successful response is cached for the tab session.
   function loadDirectory(onSlow) {
-    try {
-      var c = JSON.parse(sessionStorage.getItem("imx_dir") || "null");
-      if (Array.isArray(c) && c.length) return Promise.resolve({ data: c.map(normalize), live: true });
-    } catch (e) {}
     var controller = new AbortController();
-    var timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
-    var slow = setTimeout(function () { if (onSlow) onSlow(); }, 4000);
-    return fetch(API_URL, { headers: { "Accept": "application/json" }, signal: controller.signal })
-      .then(function (res) { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
-      .then(function (data) {
-        var arr = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : null);
-        if (!arr) throw new Error("Unexpected response shape");
-        try { sessionStorage.setItem("imx_dir", JSON.stringify(arr)); } catch (e) {}
-        return { data: arr.map(normalize), live: true };
-      })
-      .catch(function () { return { data: SAMPLE.map(normalize), live: false }; })
-      .then(function (r) { clearTimeout(timer); clearTimeout(slow); return r; });
+    var timer=setTimeout(function(){ controller.abort(); },TIMEOUT_MS);
+    var slow=setTimeout(function(){ if(onSlow)onSlow(); },4000);
+    return fetch(API_URL,{headers:{'Accept':'application/json'},signal:controller.signal,cache:'no-store'})
+      .then(function(r){if(!r.ok)throw Error('Directory service unavailable');return r.json();})
+      .then(function(data){ if(!Array.isArray(data))throw Error('Invalid directory response');return {data:data.map(normalize),live:true}; })
+      .catch(function(e){return {data:[],live:false,error:e.message};})
+      .then(function(r){clearTimeout(timer);clearTimeout(slow);return r;});
   }
 
   /* ---------- Constellation avatar (deterministic per person) ---------- */

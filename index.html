@@ -310,7 +310,7 @@
       showBanner({ title: "Waking up the API.", text: "The first request can take up to a minute on free hosting." });
     }).then(function (res) {
       all = res.data;
-      showBanner(res.live ? null : { title: "Couldn't reach the live API.", text: "Showing " + all.length + " sample profiles instead.", retry: true });
+      showBanner(res.live ? null : { title: "Couldn't reach the live API.", text: "No sample data is displayed; please retry the live directory.", retry: true });
       renderField(); applyFilters();
     });
   }

@@ -1,7 +1,116 @@
 {
-  "project_option": 1,
   "release": "R2",
+  "deployment_url": "https://sajal19-sketch.github.io/immxrsive-platform",
+  "project_option": "Project 1",
   "repository_url": "https://github.com/sajal19-sketch/immxrsive-platform",
-  "frontend_url": "https://sajal19-sketch.github.io/immxrsive-platform/",
-  "backend_url": "https://immxrsive-api.onrender.com"
+  "backend_url": "https://immxrsive-api.onrender.com",
+  "checks": [
+    {
+      "requirement_or_scenario": "R2.01\u2013R2.03; Scenario A",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/login.html",
+      "method_or_action": "Sign in with GitHub",
+      "role": "student",
+      "setup": "GitHub identity; live configured OAuth; open fresh browser",
+      "expected_behavior": "Same internal account on repeat sign-in; minimal GitHub scopes"
+    },
+    {
+      "requirement_or_scenario": "R2.04\u2013R2.09; Scenarios A,G",
+      "entry_point": "https://immxrsive-api.onrender.com/api/request-verification",
+      "method_or_action": "POST email / verify-code",
+      "role": "signed-in unverified student",
+      "setup": "Approved personal @algomau.ca email; working Resend sender; do not disclose OTP",
+      "expected_behavior": "Domain reject; time-limited one-use OTP; attempt limits; verified status persists"
+    },
+    {
+      "requirement_or_scenario": "R2.10\u2013R2.12,R2.30; Scenario A",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Edit, save via PUT /api/students/update",
+      "role": "verified student",
+      "setup": "GitHub login and verified Algoma email; R1 skills_2.json present in data",
+      "expected_behavior": "Private draft; standardized skills only; unauthorized write refused"
+    },
+    {
+      "requirement_or_scenario": "R2.13\u2013R2.17,R2.31\u2013R2.32; Scenarios B,C,J",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Upload PDF and individually accept/reject suggestions",
+      "role": "verified student",
+      "setup": "Provided four R2 fixture PDFs; existing draft with manually edited fields",
+      "expected_behavior": "Candidates editable before apply; reupload never overwrites; no invented facts; errors graceful"
+    },
+    {
+      "requirement_or_scenario": "R2.18\u2013R2.19; Scenario D",
+      "entry_point": "https://immxrsive-api.onrender.com/api/students/{id}",
+      "method_or_action": "GET public profile as guest",
+      "role": "public",
+      "setup": "Own profile published; toggle availability or links private; open incognito",
+      "expected_behavior": "Hidden fields absent/blank in public responses; original PDF not retained"
+    },
+    {
+      "requirement_or_scenario": "R2.20\u2013R2.22; Scenario E",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Preview, publish, unpublish; GET /api/directory",
+      "role": "verified student and public",
+      "setup": "Signed-in verified draft and separate incognito browser",
+      "expected_behavior": "Draft preview; publish discoverable; unpublish hidden without deleting maintained data"
+    },
+    {
+      "requirement_or_scenario": "R2.23\u2013R2.25; Scenario F",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Theme preset, section order and hero image URL",
+      "role": "verified student",
+      "setup": "Profile with structured skills and availability, two optional sections",
+      "expected_behavior": "Three themes and reorderable Education/Experience; custom plain text escaped; filters unaffected"
+    },
+    {
+      "requirement_or_scenario": "R2.26\u2013R2.27; Scenario H",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Keyboard-only; 390px viewport",
+      "role": "verified student",
+      "setup": "Mobile emulator; browser focus navigation",
+      "expected_behavior": "Main workflow usable on mobile with labels and errors"
+    },
+    {
+      "requirement_or_scenario": "R2.28; Scenario I",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/index.html#index",
+      "method_or_action": "Filter student, follow project and inquiry",
+      "role": "public",
+      "setup": "R1 fixtures in data, seeded sqlite db; incognito browser",
+      "expected_behavior": "Public discovery, AND skill filter, project evidence and contextual inquiry"
+    },
+    {
+      "requirement_or_scenario": "R2.29",
+      "entry_point": "https://github.com/sajal19-sketch/immxrsive-platform",
+      "method_or_action": "Inspect R2-submission tag at commit",
+      "role": "reviewer",
+      "setup": "Frozen release not rewritten by this working-branch repair",
+      "expected_behavior": "Tag stays unchanged; QA fixes identifiable as later commits"
+    },
+    {
+      "requirement_or_scenario": "R2.08; Secondary",
+      "entry_point": "https://immxrsive-api.onrender.com/api/request-verification",
+      "method_or_action": "Bounded repeated requests and bad OTP attempts",
+      "role": "student",
+      "setup": "Approved test student and separate test email",
+      "expected_behavior": "429 rate limit; clear recovery"
+    },
+    {
+      "requirement_or_scenario": "R2.18 Original PDF; Secondary",
+      "entry_point": "https://immxrsive-api.onrender.com/api/resumes/parse",
+      "method_or_action": "Upload and check post-request storage",
+      "role": "verified student",
+      "setup": "One supplied synthetic PDF",
+      "expected_behavior": "Original PDF discarded after text extraction"
+    },
+    {
+      "requirement_or_scenario": "Scenario K",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/login.html",
+      "method_or_action": "Exploratory tests across flow",
+      "role": "reviewer",
+      "setup": "15 minute session using own university identity",
+      "expected_behavior": "Record observed behavior with timestamp and evidence"
+    }
+  ],
+  "fixture_setup": "Retain original R1 data/ students_2.json, projects_2.json, skills_2.json; initialize seed_db.py only if database empty. For R2 use four instructor PDF fixtures; they are synthetic, not private student files.",
+  "test_access": "Testers sign in with their GitHub account and verify their approved Algoma email. Test passwords, session tokens and OTPs are never submitted here; provide any approved test-mode access through private course channel.",
+  "limitations": "Describes working-branch design, not a verified R2-submission freeze; production checks still required."
 }

@@ -362,3 +362,9 @@ a.btn{text-decoration:none}
 .kv dd{margin:0;overflow-wrap:anywhere;color:#cfccc2}
 .result pre{margin:0;padding:16px;overflow:auto;border:1px solid var(--line);border-radius:3px;background:rgba(7,10,20,.82);font:12.5px var(--mono);color:#cfccc2}
 @media(max-width:560px){.kv{grid-template-columns:1fr}}
+/* R2 controlled public portfolio presets; structured filter data remains untouched */
+body[data-portfolio-theme="nebula"] .pf-head {border:1px solid #9b7cde;background:linear-gradient(130deg,#1d1839,#0a1425);border-radius:20px;padding:22px}
+body[data-portfolio-theme="nebula"] .pf-name{color:#cfb9ff}
+body[data-portfolio-theme="minimal"] .pf-head{background:#111820;border:1px solid #8994a6;border-radius:6px;padding:22px}
+body[data-portfolio-theme="minimal"] .pf-name{letter-spacing:0;font-family:system-ui,sans-serif;font-weight:700}
+body[data-portfolio-theme="stellar"] .pf-head{border-bottom:1px solid #3c576a}

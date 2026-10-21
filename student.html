@@ -73,12 +73,19 @@
     $("crew-id").textContent = p.id.toUpperCase();
     root.setAttribute("aria-busy", "false");
     root.replaceChildren();
-
+    var theme=['stellar','nebula','minimal'].includes(p.theme)?p.theme:'stellar';
+    document.body.dataset.portfolioTheme=theme;
     var back = el("a", "back", "Back to the talent index"); back.href = "index.html#index"; back.style.marginTop = "0";
     root.appendChild(back);
 
     var head = el("div", "pf-head");
-    head.appendChild(X.constellation(p, 120));
+    if (p.hero_media) {
+      var media=document.createElement('img');
+      media.src=p.hero_media;media.alt='Student selected profile image';
+      media.style.cssText='width:120px;height:120px;object-fit:cover;border-radius:16px';
+      media.onerror=function(){media.replaceWith(X.constellation(p,120));};
+      head.appendChild(media);
+    } else head.appendChild(X.constellation(p, 120));
     var t = el("div");
     t.appendChild(el("span", "badge" + (lc(p.status) === "current" ? " current" : ""), p.status || "N/A"));
     t.appendChild(el("h1", "pf-name", p.name));
@@ -115,6 +122,18 @@
       });
       stack.appendChild(section("Projects", pg));
     }
+    (p.section_order||['education','experience']).forEach(function(k){
+      if ((k==='education'||k==='experience') && p[k]) {
+        var paragraph=el('p',null,p[k]);paragraph.style.whiteSpace='pre-line';
+        stack.appendChild(section(k==='education'?'Education':'Experience',paragraph));
+      }
+    });
+    var linkGroup=el('div','tags');
+    [['GitHub',p.github_link],['LinkedIn',p.linkedin_link],['Portfolio',p.portfolio_link]].forEach(function(entry){
+      if (!entry[1] || !/^https:\/\//i.test(entry[1]))return;
+      var a=el('a','tag',entry[0]);a.href=entry[1];a.target='_blank';a.rel='noopener noreferrer';linkGroup.appendChild(a);
+    });
+    if (linkGroup.children.length) stack.appendChild(section('Professional links',linkGroup));
     root.appendChild(stack);
 
     // Previous / next profile, as ordinary links.

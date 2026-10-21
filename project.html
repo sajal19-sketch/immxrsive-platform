@@ -19,6 +19,7 @@
     <div id="project-content">Loading project...</div>
 
     <script>
+        function escapeHtml(v) {return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         async function loadProject() {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
@@ -34,21 +35,21 @@
                 
                 const project = await response.json();
                 
-                const techHtml = project.technologies.map(t => `<span class="tech-tag">${t}</span>`).join('');
+                const techHtml = project.technologies.map(t => `<span class="tech-tag">${escapeHtml(t)}</span>`).join('');
                 
                 // Draw a list item for each contributor
                 const contribsHtml = project.contributors.map(c => 
-                    `<li><a href="student.html?id=${c.student_id}">View Student ${c.student_id}</a> - Role: <strong>${c.role}</strong></li>`
+                    `<li><a href="student.html?id=${encodeURIComponent(String(c.student_id))}">View Student ${escapeHtml(c.student_id)}</a> - Role: <strong>${escapeHtml(c.role)}</strong></li>`
                 ).join('');
 
                 document.getElementById('project-content').innerHTML = `
                     <div class="project-header">
-                        <h1>${project.title}</h1>
-                        <p><strong>Domain:</strong> ${project.domain}</p>
-                        <p>${project.description}</p>
+                        <h1>${escapeHtml(project.title)}</h1>
+                        <p><strong>Domain:</strong> ${escapeHtml(project.domain)}</p>
+                        <p>${escapeHtml(project.description)}</p>
                         <p><strong>Technologies:</strong> ${techHtml}</p>
                         
-                        <a class="inquiry-btn" href="intake.html?source_type=project&source_id=${project.id}&source_name=${encodeURIComponent(project.title)}">
+                        <a class="inquiry-btn" href="intake.html?source_type=project&source_id=${encodeURIComponent(String(project.id))}&source_name=${encodeURIComponent(project.title)}">
                             Inquire about this project
                         </a>
                     </div>
