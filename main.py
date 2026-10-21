@@ -204,7 +204,7 @@ async def verify_code(req: VerificationSubmit):
     return {"message": "Email successfully verified."}
 
 @app.put("/api/students/update")
-async def update_profile(profile: ProfileUpdate = Body(...)):
+async def update_profile(profile: ProfileUpdate):
     conn = get_db()
     
     # Check if the user exists
@@ -228,7 +228,6 @@ async def update_profile(profile: ProfileUpdate = Body(...)):
     conn.close()
     
     return {"message": "Profile saved successfully."}
-
 
 # --- EXISTING ENDPOINTS ---
 
