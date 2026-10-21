@@ -7,7 +7,8 @@ import json
 import os
 import re
 import secrets
-import sqlite3
+import psycopg
+from psycopg.rows import dict_row
 import hashlib
 import hmac
 from contextlib import contextmanager
@@ -26,7 +27,7 @@ from schemas import VerificationRequest, VerificationSubmit
 from email_service import send_verification_email
 
 FRONTEND = os.environ.get('FRONTEND_URL', 'https://sajal19-sketch.github.io/immxrsive-platform').rstrip('/')
-DB_PATH = os.environ.get('DATABASE_PATH', 'immxrsive.db')
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', '')
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
 APPROVED_DOMAINS = set(x.strip().lower() for x in os.environ.get('APPROVED_EMAIL_DOMAINS', 'algomau.ca').split(',') if x.strip())
@@ -46,16 +47,17 @@ app.add_middleware(
 
 @contextmanager
 def db():
-    conn = sqlite3.connect(DB_PATH, timeout=20)
-    conn.row_factory = sqlite3.Row
-    try:
+    """A short PostgreSQL transaction per request; requires Render DATABASE_URL."""
+    if not DATABASE_URL:
+        raise RuntimeError('DATABASE_URL must be configured on the server')
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10) as conn:
         yield conn
-        conn.commit()
-    except:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+
+
+def execute(conn, sql, params=()):
+    """Use PostgreSQL-native placeholders throughout this application."""
+    return conn.execute(sql, params)
+
 
 def now():
     return datetime.now(timezone.utc)
@@ -74,38 +76,42 @@ def parsed(value, fallback=None):
     except (ValueError, TypeError): return fallback if fallback is not None else []
 
 def setup_db():
+    """Additive schema setup; never drops a table or overwrites an existing row."""
     with db() as conn:
         conn.execute('''CREATE TABLE IF NOT EXISTS students (
           id TEXT PRIMARY KEY, name TEXT, headline TEXT, program TEXT, status TEXT,
           availability TEXT, skills TEXT, github_link TEXT, project_ids TEXT)''')
-        cols = {x['name'] for x in conn.execute('PRAGMA table_info(students)')}
         extras = {
           'email':'TEXT', 'github_id':'TEXT', 'is_algoma_verified':'INTEGER DEFAULT 0',
-          'is_published':'INTEGER', 'bio':'TEXT DEFAULT ""', 'education':'TEXT DEFAULT ""',
-          'experience':'TEXT DEFAULT ""', 'portfolio_link':'TEXT DEFAULT ""',
-          'linkedin_link':'TEXT DEFAULT ""', 'location':'TEXT DEFAULT ""',
+          'is_published':'INTEGER', 'bio':"TEXT DEFAULT ''", 'education':"TEXT DEFAULT ''",
+          'experience':"TEXT DEFAULT ''", 'portfolio_link':"TEXT DEFAULT ''",
+          'linkedin_link':"TEXT DEFAULT ''", 'location':"TEXT DEFAULT ''",
           'show_availability':'INTEGER DEFAULT 1', 'show_links':'INTEGER DEFAULT 1'
         }
         for key, spec in extras.items():
-            if key not in cols: conn.execute(f'ALTER TABLE students ADD COLUMN {key} {spec}')
-        # Keep seeded public R1 profiles visible; mark only newly created OAuth profiles private.
+            # Names and definitions are static constants above, never user input.
+            conn.execute(f'ALTER TABLE students ADD COLUMN IF NOT EXISTS {key} {spec}')
         conn.execute('UPDATE students SET is_published=1 WHERE is_published IS NULL AND github_id IS NULL')
         conn.execute('UPDATE students SET is_published=0 WHERE is_published IS NULL')
         conn.execute('''CREATE TABLE IF NOT EXISTS auth_tickets(
-           ticket_hash TEXT PRIMARY KEY, student_id TEXT NOT NULL, expires_at TEXT NOT NULL)''')
+            ticket_hash TEXT PRIMARY KEY, student_id TEXT NOT NULL, expires_at TEXT NOT NULL)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS auth_sessions(
-           token_hash TEXT PRIMARY KEY, student_id TEXT NOT NULL, expires_at TEXT NOT NULL)''')
+            token_hash TEXT PRIMARY KEY, student_id TEXT NOT NULL, expires_at TEXT NOT NULL)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS oauth_states(
-           state_hash TEXT PRIMARY KEY, expires_at TEXT NOT NULL)''')
+            state_hash TEXT PRIMARY KEY, expires_at TEXT NOT NULL)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS otp_challenges(
-           student_id TEXT PRIMARY KEY, email TEXT NOT NULL, otp_hash TEXT NOT NULL,
-           expires_at TEXT NOT NULL, attempts INTEGER DEFAULT 0, requested_at TEXT NOT NULL)''')
+            student_id TEXT PRIMARY KEY, email TEXT NOT NULL, otp_hash TEXT NOT NULL,
+            expires_at TEXT NOT NULL, attempts INTEGER DEFAULT 0, requested_at TEXT NOT NULL)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS verification_rate(
-           student_id TEXT PRIMARY KEY, window_start TEXT NOT NULL, requests INTEGER NOT NULL)''')
+            student_id TEXT PRIMARY KEY, window_start TEXT NOT NULL, requests INTEGER NOT NULL)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS projects(
-           id TEXT PRIMARY KEY, title TEXT, description TEXT, domain TEXT, technologies TEXT)''')
+            id TEXT PRIMARY KEY, title TEXT, description TEXT, domain TEXT, technologies TEXT)''')
         conn.execute('''CREATE TABLE IF NOT EXISTS project_contributors(
-           project_id TEXT, student_id TEXT, role TEXT)''')
+            project_id TEXT, student_id TEXT, role TEXT,
+            UNIQUE(project_id, student_id, role))''')
+        conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS students_github_unique ON students(github_id) WHERE github_id IS NOT NULL')
+        conn.execute('''CREATE UNIQUE INDEX IF NOT EXISTS verified_email_unique
+            ON students(lower(email)) WHERE email IS NOT NULL AND github_id IS NOT NULL AND is_algoma_verified=1''')
 
 @app.on_event('startup')
 def startup(): setup_db()
@@ -115,9 +121,9 @@ def authenticated(request: Request):
     if not header.startswith('Bearer '):
         raise HTTPException(401,'Please sign in with GitHub.')
     with db() as conn:
-        s = conn.execute('SELECT student_id,expires_at FROM auth_sessions WHERE token_hash=?', (hash_token(header[7:]),)).fetchone()
+        s = conn.execute('SELECT student_id,expires_at FROM auth_sessions WHERE token_hash=%s', (hash_token(header[7:]),)).fetchone()
         if not s or parse_time(s['expires_at']) < now(): raise HTTPException(401,'Session expired. Sign in again.')
-        student = conn.execute('SELECT * FROM students WHERE id=?', (s['student_id'],)).fetchone()
+        student = conn.execute('SELECT * FROM students WHERE id=%s', (s['student_id'],)).fetchone()
         if not student: raise HTTPException(401,'Account not found')
         return dict(student)
 
@@ -130,15 +136,15 @@ def github_login(state: str):
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET: raise HTTPException(503,'GitHub OAuth not configured')
     if not re.fullmatch(r'[a-zA-Z0-9_-]{24,128}', state): raise HTTPException(400,'Invalid sign-in state')
     with db() as conn:
-        conn.execute('INSERT OR REPLACE INTO oauth_states VALUES (?,?)',(hash_token(state),stamp(now()+timedelta(minutes=10))))
+        conn.execute('INSERT INTO oauth_states VALUES (%s,%s) ON CONFLICT (state_hash) DO UPDATE SET expires_at=excluded.expires_at',(hash_token(state),stamp(now()+timedelta(minutes=10))))
     url = 'https://github.com/login/oauth/authorize?' + urlencode({'client_id': GITHUB_CLIENT_ID, 'scope':'read:user','state':state})
     return RedirectResponse(url)
 
 @app.get('/api/auth/callback')
 async def github_callback(code: str, state: str):
     with db() as conn:
-        rec=conn.execute('SELECT expires_at FROM oauth_states WHERE state_hash=?',(hash_token(state),)).fetchone()
-        conn.execute('DELETE FROM oauth_states WHERE state_hash=?',(hash_token(state),))
+        rec=conn.execute('SELECT expires_at FROM oauth_states WHERE state_hash=%s',(hash_token(state),)).fetchone()
+        conn.execute('DELETE FROM oauth_states WHERE state_hash=%s',(hash_token(state),))
         if not rec or parse_time(rec['expires_at'])<now(): raise HTTPException(400,'Invalid/expired OAuth state')
     async with httpx.AsyncClient(timeout=15) as client:
         t=await client.post('https://github.com/login/oauth/access_token',data={'client_id':GITHUB_CLIENT_ID,'client_secret':GITHUB_CLIENT_SECRET,'code':code},headers={'Accept':'application/json'})
@@ -151,25 +157,25 @@ async def github_callback(code: str, state: str):
     gh_id=str(identity.get('id') or '')
     if not gh_id.isdigit(): raise HTTPException(502,'Invalid GitHub identity')
     with db() as conn:
-        student=conn.execute('SELECT id FROM students WHERE github_id=?',(gh_id,)).fetchone()
+        student=conn.execute('SELECT id FROM students WHERE github_id=%s',(gh_id,)).fetchone()
         if student: sid=student['id']
         else:
             sid='u_'+secrets.token_hex(10)
             conn.execute('''INSERT INTO students (id,github_id,name,headline,skills,availability,project_ids,status,is_published,github_link)
-             VALUES (?,?,?,?,'[]','[]','[]','Current',0,?)''',(sid,gh_id,identity.get('name') or identity.get('login') or 'Student','Student profile draft',identity.get('html_url') or ''))
+             VALUES (%s,%s,%s,%s,'[]','[]','[]','Current',0,%s)''',(sid,gh_id,identity.get('name') or identity.get('login') or 'Student','Student profile draft',identity.get('html_url') or ''))
         ticket=secrets.token_urlsafe(40)
-        conn.execute('INSERT INTO auth_tickets VALUES (?,?,?)',(hash_token(ticket),sid,stamp(now()+timedelta(minutes=2))))
+        conn.execute('INSERT INTO auth_tickets VALUES (%s,%s,%s)',(hash_token(ticket),sid,stamp(now()+timedelta(minutes=2))))
     return RedirectResponse(FRONTEND+'/login.html#ticket='+ticket+'&state='+state)
 
 class TicketExchange(BaseModel): ticket: str
 @app.post('/api/auth/exchange')
 def exchange(payload: TicketExchange):
     with db() as conn:
-        rec=conn.execute('SELECT * FROM auth_tickets WHERE ticket_hash=?',(hash_token(payload.ticket),)).fetchone()
-        conn.execute('DELETE FROM auth_tickets WHERE ticket_hash=?',(hash_token(payload.ticket),))
+        rec=conn.execute('SELECT * FROM auth_tickets WHERE ticket_hash=%s',(hash_token(payload.ticket),)).fetchone()
+        conn.execute('DELETE FROM auth_tickets WHERE ticket_hash=%s',(hash_token(payload.ticket),))
         if not rec or parse_time(rec['expires_at'])<now(): raise HTTPException(401,'Sign-in ticket expired; try again')
         token=secrets.token_urlsafe(48)
-        conn.execute('INSERT INTO auth_sessions VALUES (?,?,?)',(hash_token(token),rec['student_id'],stamp(now()+timedelta(hours=12))))
+        conn.execute('INSERT INTO auth_sessions VALUES (%s,%s,%s)',(hash_token(token),rec['student_id'],stamp(now()+timedelta(hours=12))))
         return {'access_token':token,'token_type':'bearer','expires_in':43200}
 
 @app.get('/api/auth/me')
@@ -178,7 +184,7 @@ def current_student(student=Depends(authenticated)):
 
 @app.post('/api/auth/logout')
 def logout(request:Request,student=Depends(authenticated)):
-    with db() as conn:conn.execute('DELETE FROM auth_sessions WHERE token_hash=?',(hash_token(request.headers['authorization'][7:]),))
+    with db() as conn:conn.execute('DELETE FROM auth_sessions WHERE token_hash=%s',(hash_token(request.headers['authorization'][7:]),))
     return {'message':'Signed out'}
 
 def require_domain(email):
@@ -192,16 +198,16 @@ def request_verification(req:VerificationRequest,student=Depends(authenticated))
     if student['is_algoma_verified']: return {'message':'Your affiliation is already verified.'}
     email=require_domain(str(req.email))
     with db() as conn:
-        existing=conn.execute('SELECT id FROM students WHERE lower(email)=? AND id<>?',(email,student['id'])).fetchone()
+        existing=conn.execute('SELECT id FROM students WHERE lower(email)=%s AND id<>%s AND (github_id IS NOT NULL OR is_algoma_verified=1)',(email,student['id'])).fetchone()
         if existing: raise HTTPException(409,'This email is linked to another account. Contact support.')
-        rate=conn.execute('SELECT * FROM verification_rate WHERE student_id=?',(student['id'],)).fetchone()
+        rate=conn.execute('SELECT * FROM verification_rate WHERE student_id=%s',(student['id'],)).fetchone()
         if rate and parse_time(rate['window_start'])>now()-timedelta(hours=1):
             if rate['requests']>=5: raise HTTPException(429,'Too many messages. Try again in an hour.')
-            conn.execute('UPDATE verification_rate SET requests=requests+1 WHERE student_id=?',(student['id'],))
-        else: conn.execute('INSERT OR REPLACE INTO verification_rate VALUES (?,?,1)',(student['id'],stamp(now())))
+            conn.execute('UPDATE verification_rate SET requests=requests+1 WHERE student_id=%s',(student['id'],))
+        else: conn.execute('INSERT INTO verification_rate VALUES (%s,%s,1) ON CONFLICT (student_id) DO UPDATE SET window_start=excluded.window_start,requests=excluded.requests',(student['id'],stamp(now())))
         raw=f'{secrets.randbelow(1000000):06d}'
         pwd=bcrypt.hashpw(raw.encode(),bcrypt.gensalt()).decode()
-        conn.execute('INSERT OR REPLACE INTO otp_challenges VALUES (?,?,?,?,0,?)',(student['id'],email,pwd,stamp(now()+timedelta(minutes=OTP_MINUTES)),stamp(now())))
+        conn.execute('INSERT INTO otp_challenges VALUES (%s,%s,%s,%s,0,%s) ON CONFLICT (student_id) DO UPDATE SET email=excluded.email,otp_hash=excluded.otp_hash,expires_at=excluded.expires_at,attempts=0,requested_at=excluded.requested_at',(student['id'],email,pwd,stamp(now()+timedelta(minutes=OTP_MINUTES)),stamp(now())))
     # Send only after commit, never print OTP. Delivery errors must be visible to user.
     send_verification_email(email,raw)
     return {'message':'Verification email requested. Check your university inbox.'}
@@ -210,18 +216,21 @@ def request_verification(req:VerificationRequest,student=Depends(authenticated))
 def verify_code(req: VerificationSubmit,student=Depends(authenticated)):
     email=require_domain(str(req.email))
     with db() as conn:
-        rec=conn.execute('SELECT * FROM otp_challenges WHERE student_id=?',(student['id'],)).fetchone()
+        rec=conn.execute('SELECT * FROM otp_challenges WHERE student_id=%s',(student['id'],)).fetchone()
         if not rec or rec['email']!=email: raise HTTPException(400,'Request a code for this email first.')
         if parse_time(rec['expires_at'])<now():
-            conn.execute('DELETE FROM otp_challenges WHERE student_id=?',(student['id'],))
+            conn.execute('DELETE FROM otp_challenges WHERE student_id=%s',(student['id'],))
             raise HTTPException(400,'Code expired. Request a new one.')
         if rec['attempts']>=5: raise HTTPException(429,'Too many attempts. Request a fresh code.')
         if not bcrypt.checkpw(req.code.encode(),rec['otp_hash'].encode()):
-            conn.execute('UPDATE otp_challenges SET attempts=attempts+1 WHERE student_id=?',(student['id'],))
+            conn.execute('UPDATE otp_challenges SET attempts=attempts+1 WHERE student_id=%s',(student['id'],))
             return_error='Invalid code. Please try again.'
         else:
-            conn.execute('UPDATE students SET email=?,is_algoma_verified=1 WHERE id=?',(email,student['id']))
-            conn.execute('DELETE FROM otp_challenges WHERE student_id=?',(student['id'],))
+            conflict=conn.execute('SELECT 1 FROM students WHERE lower(email)=%s AND id<>%s AND (github_id IS NOT NULL OR is_algoma_verified=1)',(email,student['id'])).fetchone()
+            if conflict:
+                raise HTTPException(409,'This email is already verified by another account; contact support.')
+            conn.execute('UPDATE students SET email=%s,is_algoma_verified=1 WHERE id=%s',(email,student['id']))
+            conn.execute('DELETE FROM otp_challenges WHERE student_id=%s',(student['id'],))
             return_error=None
     if return_error: raise HTTPException(400,return_error)
     return {'message':'Algoma affiliation verified.'}
@@ -272,7 +281,7 @@ def update_profile(profile:ProfileUpdate,student=Depends(verified)):
     validate_links(profile)
     # Ownership is derived exclusively from the bearer token; no student_id/email input.
     with db() as conn:
-        conn.execute('''UPDATE students SET name=?,headline=?,bio=?,education=?,experience=?,location=?,linkedin_link=?,portfolio_link=?,skills=?,availability=?,show_availability=?,show_links=? WHERE id=?''',
+        conn.execute('''UPDATE students SET name=%s,headline=%s,bio=%s,education=%s,experience=%s,location=%s,linkedin_link=%s,portfolio_link=%s,skills=%s,availability=%s,show_availability=%s,show_links=%s WHERE id=%s''',
          (profile.name,profile.headline,profile.bio,profile.education,profile.experience,profile.location,profile.linkedin_link,profile.portfolio_link,json.dumps(profile.skills),json.dumps(profile.availability),int(profile.show_availability),int(profile.show_links),student['id']))
     return {'message':'Private profile saved','id':student['id']}
 
@@ -282,12 +291,12 @@ def preview(student=Depends(verified)):
 
 @app.post('/api/profile/publish')
 def publish(student=Depends(verified)):
-    with db() as conn:conn.execute('UPDATE students SET is_published=1 WHERE id=?',(student['id'],))
+    with db() as conn:conn.execute('UPDATE students SET is_published=1 WHERE id=%s',(student['id'],))
     return {'message':'Profile published','public_url':f'{FRONTEND}/student.html?id={student["id"]}'}
 
 @app.post('/api/profile/unpublish')
 def unpublish(student=Depends(verified)):
-    with db() as conn:conn.execute('UPDATE students SET is_published=0 WHERE id=?',(student['id'],))
+    with db() as conn:conn.execute('UPDATE students SET is_published=0 WHERE id=%s',(student['id'],))
     return {'message':'Profile removed from public discovery; draft retained'}
 
 @app.get('/api/directory')
@@ -306,16 +315,16 @@ def directory(q:str='',skills:list[str]=Query(default=[]),availability:list[str]
 
 @app.get('/api/students/{student_id}')
 def student_detail(student_id:str):
-    with db() as conn:student=conn.execute('SELECT * FROM students WHERE id=? AND is_published=1',(student_id,)).fetchone()
+    with db() as conn:student=conn.execute('SELECT * FROM students WHERE id=%s AND is_published=1',(student_id,)).fetchone()
     if not student:raise HTTPException(404,'Student not found')
     return public_profile(student)
 
 @app.get('/api/projects/{project_id}')
 def project_detail(project_id:str):
     with db() as conn:
-        project=conn.execute('SELECT * FROM projects WHERE id=?',(project_id,)).fetchone()
+        project=conn.execute('SELECT * FROM projects WHERE id=%s',(project_id,)).fetchone()
         if not project:raise HTTPException(404,'Project not found')
-        contributors=conn.execute('SELECT student_id,role FROM project_contributors WHERE project_id=?',(project_id,)).fetchall()
+        contributors=conn.execute('SELECT student_id,role FROM project_contributors WHERE project_id=%s',(project_id,)).fetchall()
     out=dict(project);out['technologies']=parsed(out['technologies']);out['contributors']=[dict(x) for x in contributors]
     return out
 
