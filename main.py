@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -204,7 +204,7 @@ async def verify_code(req: VerificationSubmit):
     return {"message": "Email successfully verified."}
 
 @app.put("/api/students/update")
-async def update_profile(profile: ProfileUpdate):
+async def update_profile(profile: ProfileUpdate = Body(...)):
     conn = get_db()
     
     # Check if the user exists
