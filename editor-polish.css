@@ -1,0 +1,49 @@
+/* Editor-only UI polish — load after style.css. Does not affect public pages. */
+.editor-page .chapter.sub { padding-top:clamp(45px,7vw,96px); }
+.editor-page .chapter.sub > .wrap { max-width:880px!important; }
+.editor-page .editor-form { max-width:100%; display:block; }
+.editor-page .editor-step { margin:42px 0 20px;padding-bottom:16px;border-bottom:1px solid rgba(119,169,192,.24); }
+.editor-page .editor-step:first-child { margin-top:28px; }
+.editor-page .editor-step span { display:block;margin-bottom:10px;color:#73bad8;font:500 11px/1.6 var(--mono,monospace);letter-spacing:.15em; }
+.editor-page .editor-step h2 { margin:0 0 10px;font:700 clamp(21px,3vw,30px)/1.25 var(--sans,system-ui);letter-spacing:.01em; }
+.editor-page .editor-step p { margin:0;color:#aab7c8;line-height:1.65; }
+.editor-page .editor-step-small { margin-top:40px; }
+.editor-page .f { display:block;margin:0 0 22px;line-height:1.5; }
+.editor-page .ctl { box-sizing:border-box;display:block;width:100%;max-width:100%;margin-top:7px;min-height:46px; }
+.editor-page textarea.ctl { min-height:104px;resize:vertical; }
+.editor-page input[type=checkbox] { width:17px;height:17px;vertical-align:middle;accent-color:#76c6e8; }
+.editor-page label:has(> input[type=checkbox]) { display:inline-flex;gap:8px;align-items:center;margin:8px 20px 8px 0; }
+.editor-page .editor-fieldset { box-sizing:border-box;max-width:100%;margin:16px 0 23px;padding:16px 18px;border:1px solid rgba(119,169,192,.32);border-radius:8px; }
+.editor-page .editor-fieldset legend { padding:0 7px;color:#b5c8d5;font-size:13px; }
+.editor-page .editor-presentation {padding-top:24px;}
+.editor-page .editor-card { margin-top:40px;padding:clamp(18px,3vw,30px);border:1px solid rgba(119,169,192,.27);border-radius:10px;background:rgba(8,18,30,.65); }
+.editor-page .editor-card .editor-step { margin:0 0 20px; }
+.editor-page .editor-save-bar { display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin:30px 0 15px;padding:16px 0; }
+.editor-page .editor-save-bar p { margin:0;color:#aab7c8;max-width:32ch; }
+.editor-page .btn, .editor-page button { cursor:pointer; }
+.editor-page .editor-resume-actions { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0; }
+.editor-page .editor-resume-actions span { color:#9aa9b9;font-size:12px; }
+.editor-page .editor-suggestions { display:grid;gap:12px;margin-top:20px; }
+.editor-page .editor-suggestion { display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;padding:15px;border:1px solid rgba(119,169,192,.24);border-radius:8px;background:rgba(10,23,38,.78); }
+.editor-page .editor-suggestion-text { min-width:0;flex:1 1 250px;line-height:1.6;overflow-wrap:anywhere; }
+.editor-page .editor-suggestion-actions {display:flex;flex:0 0 auto;gap:8px;flex-wrap:wrap;}
+.editor-page .editor-suggestion-btn {padding:9px 12px;border:1px solid #659bb2;border-radius:5px;color:#e4f5ff;background:#18364b;font:500 12px var(--sans,system-ui);}
+.editor-page .editor-reject {border-color:#48586a;color:#d5dde2;background:#202a34;}
+.editor-page .editor-suggestion-btn:hover { filter:brightness(1.2); }
+.editor-page .editor-publish-actions {display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;align-items:center;}
+.editor-page .editor-publication-pair {display:flex;flex-wrap:wrap;gap:10px;}
+.editor-page #unpublish {background:transparent;color:#dce8ee;border:1px solid #778f9e;}
+.editor-page #publish-state {margin:18px 0;color:#acbfcd;}
+.editor-page #preview-panel {max-width:100%;margin-top:24px;padding:18px;border:1px solid rgba(119,169,192,.25);border-radius:8px;}
+.editor-page #preview-output {overflow-wrap:anywhere;white-space:pre-wrap;font-size:13px;line-height:1.7;}
+.editor-page :is(a,button,input,select,textarea):focus-visible {outline:3px solid #8be0ff;outline-offset:3px;}
+@media(max-width:620px){
+  .editor-page .nav .wrap {flex-wrap:wrap;gap:10px;}
+  .editor-page .nav-links {flex-wrap:wrap;gap:10px;}
+  .editor-page .editor-save-bar,.editor-page .editor-publish-actions {display:grid;grid-template-columns:minmax(0,1fr);}
+  .editor-page .editor-publication-pair {display:grid;grid-template-columns:minmax(0,1fr);}
+  .editor-page :is(.editor-save-bar,.editor-publish-actions,.editor-publication-pair) .btn {width:100%;box-sizing:border-box;text-align:center;}
+  .editor-page .editor-suggestion-actions {width:100%;}
+  .editor-page .editor-suggestion-actions button {flex:1 1 120px;}
+  .editor-page .editor-card {padding:16px;}
+}
