@@ -14,6 +14,7 @@ import hmac
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode, urlsplit
+from pathlib import Path
 
 import bcrypt
 import httpx
@@ -86,7 +87,10 @@ def setup_db():
           'is_published':'INTEGER', 'bio':"TEXT DEFAULT ''", 'education':"TEXT DEFAULT ''",
           'experience':"TEXT DEFAULT ''", 'portfolio_link':"TEXT DEFAULT ''",
           'linkedin_link':"TEXT DEFAULT ''", 'location':"TEXT DEFAULT ''",
-          'show_availability':'INTEGER DEFAULT 1', 'show_links':'INTEGER DEFAULT 1'
+          'show_availability':'INTEGER DEFAULT 1', 'show_links':'INTEGER DEFAULT 1',
+          'theme':"TEXT NOT NULL DEFAULT 'stellar'",
+          'section_order':"TEXT NOT NULL DEFAULT '[\"education\",\"experience\"]'",
+          'hero_media':"TEXT NOT NULL DEFAULT ''"
         }
         for key, spec in extras.items():
             # Names and definitions are static constants above, never user input.
@@ -235,6 +239,37 @@ def verify_code(req: VerificationSubmit,student=Depends(authenticated)):
     if return_error: raise HTTPException(400,return_error)
     return {'message':'Algoma affiliation verified.'}
 
+def skill_catalog():
+    """Use the existing R1 catalogue shipped in data/skills_2.json."""
+    path = Path(__file__).resolve().parent / 'data' / 'skills_2.json'
+    if not path.is_file():
+        raise HTTPException(503, 'Standardized skill fixture data/skills_2.json is missing from the deployment.')
+    try:
+        raw = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        raise HTTPException(503, 'Standardized skill fixture cannot be read.')
+    if isinstance(raw, dict):
+        raw = raw.get('skills', raw.get('items', raw.get('data', [])))
+    if not isinstance(raw, list):
+        raise HTTPException(503, 'Unexpected skill catalogue format.')
+    labels = []
+    for item in raw:
+        if isinstance(item, str):
+            label = item.strip()
+        elif isinstance(item, dict):
+            label = str(item.get('name') or item.get('label') or item.get('skill') or '').strip()
+        else:
+            continue
+        if label and label.casefold() not in {s.casefold() for s in labels}:
+            labels.append(label)
+    if not labels:
+        raise HTTPException(503, 'Standardized skill catalogue is empty or has unrecognized fields.')
+    return labels
+
+@app.get('/api/skills')
+def skills_catalog_endpoint():
+    return {'skills': skill_catalog()}
+
 class ProfileUpdate(BaseModel):
     name:str=Field(min_length=1,max_length=120)
     headline:str=Field(default='',max_length=250)
@@ -248,18 +283,32 @@ class ProfileUpdate(BaseModel):
     availability:list[str]=Field(default_factory=list,max_length=3)
     show_availability:bool=True
     show_links:bool=True
+    theme:str='stellar'
+    section_order:list[str]=Field(default_factory=lambda:['education','experience'])
+    hero_media:str=Field(default='',max_length=1000)
 
 def validate_links(data):
     for label in ('linkedin_link','portfolio_link'):
         value=getattr(data,label)
         if value and not re.match(r'^https://[^\s<>"\']+$',value,re.I):raise HTTPException(422,f'{label} must start with https://')
+    if data.theme not in {'stellar','nebula','minimal'}:
+        raise HTTPException(422,'Choose Stellar, Nebula, or Minimal theme.')
+    if sorted(data.section_order) != ['education','experience']:
+        raise HTTPException(422,'Section order must include education and experience exactly once.')
+    if data.hero_media and not re.fullmatch(r'https://[^\s<>\"\']+',data.hero_media,re.I):
+        raise HTTPException(422,'Hero image URL must use HTTPS.')
     if any(x not in {'internship','contract','full-time'} for x in data.availability):
         raise HTTPException(422,'Availability must be internship, contract or full-time.')
 
 def private_profile(row):
     x=dict(row)
     for key in ('skills','availability','project_ids'):x[key]=parsed(x.get(key))
-    return {k:x.get(k) for k in ('id','email','name','headline','bio','education','experience','location','linkedin_link','portfolio_link','skills','availability','project_ids','is_published','is_algoma_verified','show_availability','show_links','github_link')}
+    x['section_order']=parsed(x.get('section_order'),['education','experience'])
+    if not isinstance(x['section_order'],list) or sorted(x['section_order'])!=['education','experience']:
+        x['section_order']=['education','experience']
+    x['theme']=x.get('theme') or 'stellar'
+    x['hero_media']=x.get('hero_media') or ''
+    return {k:x.get(k) for k in ('theme','section_order','hero_media','id','email','name','headline','bio','education','experience','location','linkedin_link','portfolio_link','skills','availability','project_ids','is_published','is_algoma_verified','show_availability','show_links','github_link')}
 
 def public_profile(row):
     p=private_profile(row)
@@ -270,6 +319,9 @@ def public_profile(row):
     out['github_link']=p['github_link'] if row['show_links'] else ''
     out['linkedin_link']=p['linkedin_link'] if row['show_links'] else ''
     out['portfolio_link']=p['portfolio_link'] if row['show_links'] else ''
+    out['theme']=p['theme']
+    out['section_order']=p['section_order']
+    out['hero_media']=p['hero_media']
     out['project_count']=len(p['project_ids'])
     return out
 
@@ -279,10 +331,15 @@ def own_profile(student=Depends(verified)):return private_profile(student)
 @app.put('/api/students/update')
 def update_profile(profile:ProfileUpdate,student=Depends(verified)):
     validate_links(profile)
+    catalogue={x.casefold():x for x in skill_catalog()}
+    unknown=[x for x in profile.skills if x.strip().casefold() not in catalogue]
+    if unknown:
+        raise HTTPException(422,'Choose skills from the standardized catalogue: '+', '.join(unknown[:5]))
+    canonical=list(dict.fromkeys(catalogue[x.strip().casefold()] for x in profile.skills))
     # Ownership is derived exclusively from the bearer token; no student_id/email input.
     with db() as conn:
-        conn.execute('''UPDATE students SET name=%s,headline=%s,bio=%s,education=%s,experience=%s,location=%s,linkedin_link=%s,portfolio_link=%s,skills=%s,availability=%s,show_availability=%s,show_links=%s WHERE id=%s''',
-         (profile.name,profile.headline,profile.bio,profile.education,profile.experience,profile.location,profile.linkedin_link,profile.portfolio_link,json.dumps(profile.skills),json.dumps(profile.availability),int(profile.show_availability),int(profile.show_links),student['id']))
+        conn.execute('''UPDATE students SET name=%s,headline=%s,bio=%s,education=%s,experience=%s,location=%s,linkedin_link=%s,portfolio_link=%s,skills=%s,availability=%s,show_availability=%s,show_links=%s,theme=%s,section_order=%s,hero_media=%s WHERE id=%s''',
+         (profile.name,profile.headline,profile.bio,profile.education,profile.experience,profile.location,profile.linkedin_link,profile.portfolio_link,json.dumps(canonical),json.dumps(profile.availability),int(profile.show_availability),int(profile.show_links),profile.theme,json.dumps(profile.section_order),profile.hero_media,student['id']))
     return {'message':'Private profile saved','id':student['id']}
 
 @app.get('/api/profile/preview')
