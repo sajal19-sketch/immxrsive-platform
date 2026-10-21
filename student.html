@@ -48,124 +48,180 @@
 <script>
 (function () {
   "use strict";
-  var X = window.IMX, $ = X.$, el = X.el, lc = X.lc;
+  var X = window.IMX;
+  var $ = X.$, el = X.el;
   var root = $("profile"), banner = $("banner");
-
-  // Read ?id=S01 from the URL.
   var id = new URLSearchParams(window.location.search).get("id");
+  var API = "https://immxrsive-api.onrender.com";
+  var controller = new AbortController();
+  var timeout = setTimeout(function () { controller.abort(); }, 45000);
+  var slow = setTimeout(function () {
+    banner.textContent = "Waking up the live directory API. The first request may take longer on free hosting.";
+    banner.hidden = false;
+  }, 4000);
 
-  function state(title, message) {
+  function finish() {
+    clearTimeout(timeout);
+    clearTimeout(slow);
+    banner.hidden = true;
     root.setAttribute("aria-busy", "false");
+  }
+  function state(title, message) {
+    finish();
+    document.body.dataset.portfolioTheme = "stellar";
     var box = el("div", "state");
     box.appendChild(el("h3", null, title));
     box.appendChild(el("p", null, message));
-    var a = el("a", "btn", "Back to the index"); a.href = "index.html#index"; a.style.marginTop = "22px";
+    var a = el("a", "btn", "Back to the index");
+    a.href = "index.html#index";
+    a.style.marginTop = "22px";
     box.appendChild(a);
     root.replaceChildren(box);
   }
-
   function section(title, node) {
-    var s = el("div", "m-sec"); s.appendChild(el("h4", null, title)); s.appendChild(node); return s;
+    var s = el("section", "m-sec");
+    s.appendChild(el("h4", null, title));
+    s.appendChild(node);
+    return s;
   }
-
-  function showProfile(p, all) {
-    document.title = p.name + " · ImmXrsive";
-    $("crew-id").textContent = p.id.toUpperCase();
-    root.setAttribute("aria-busy", "false");
+  function safeHttps(raw) {
+    try {
+      var u = new URL(raw);
+      return u.protocol === "https:" && !u.username && !u.password ? u.href : "";
+    } catch (_) { return ""; }
+  }
+  function list(value) { return Array.isArray(value) ? value : []; }
+  function profileTheme(value) {
+    return ["stellar", "nebula", "minimal"].includes(value) ? value : "stellar";
+  }
+  function showProfile(p) {
+    finish();
+    document.title = (p.name || "Student") + " · ImmXrsive";
+    $("crew-id").textContent = String(p.id || id).toUpperCase();
+    document.body.dataset.portfolioTheme = profileTheme(p.theme);
     root.replaceChildren();
-    var theme=['stellar','nebula','minimal'].includes(p.theme)?p.theme:'stellar';
-    document.body.dataset.portfolioTheme=theme;
-    var back = el("a", "back", "Back to the talent index"); back.href = "index.html#index"; back.style.marginTop = "0";
+
+    var back = el("a", "back", "Back to the talent index");
+    back.href = "index.html#index";
+    back.style.marginTop = "0";
     root.appendChild(back);
 
     var head = el("div", "pf-head");
-    if (p.hero_media) {
-      var media=document.createElement('img');
-      media.src=p.hero_media;media.alt='Student selected profile image';
-      media.style.cssText='width:120px;height:120px;object-fit:cover;border-radius:16px';
-      media.onerror=function(){media.replaceWith(X.constellation(p,120));};
-      head.appendChild(media);
-    } else head.appendChild(X.constellation(p, 120));
-    var t = el("div");
-    t.appendChild(el("span", "badge" + (lc(p.status) === "current" ? " current" : ""), p.status || "N/A"));
-    t.appendChild(el("h1", "pf-name", p.name));
-    if (p.program) t.appendChild(el("p", "program", p.program));
-    if (p.headline) t.appendChild(el("p", "pf-headline", p.headline));
-    head.appendChild(t);
+    var imageUrl = safeHttps(p.hero_media);
+    if (imageUrl) {
+      var img = document.createElement("img");
+      img.className = "pf-hero-image";
+      img.src = imageUrl;
+      img.alt = "Profile hero image for " + (p.name || "student");
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.onerror = function () { img.replaceWith(X.constellation(p, 120)); };
+      head.appendChild(img);
+    } else {
+      head.appendChild(X.constellation(p, 120));
+    }
+    var intro = el("div", "pf-intro");
+    intro.appendChild(el("span", "badge" + (String(p.status || "").toLowerCase() === "current" ? " current" : ""), p.status || "Student"));
+    intro.appendChild(el("h1", "pf-name", p.name || "Student"));
+    if (p.program) intro.appendChild(el("p", "program", p.program));
+    if (p.headline) intro.appendChild(el("p", "pf-headline", p.headline));
+    head.appendChild(intro);
     root.appendChild(head);
 
-    // Employer Inquiry button: intake.html?source_id=S01
-    var acts = el("div", "pf-actions");
-    var inq = el("a", "btn inline", "Employer Inquiry"); inq.href = X.intakeUrl(p.id);
-    acts.appendChild(inq);
-    root.appendChild(acts);
+    var actions = el("div", "pf-actions");
+    var inquire = el("a", "btn inline", "Employer Inquiry");
+    inquire.href = X.intakeUrl(p.id);
+    actions.appendChild(inquire);
+    root.appendChild(actions);
 
-    var stack = el("div", "pf-stack"); stack.style.marginTop = "40px";
-    var bio = el("p", null, p.bio || "This profile doesn't have a bio yet."); bio.style.whiteSpace = "pre-line";
+    var stack = el("div", "pf-stack");
+    stack.style.marginTop = "40px";
+    var bio = el("p", null, p.bio || "This profile doesn't have a bio yet.");
+    bio.style.whiteSpace = "pre-line";
     stack.appendChild(section("About", bio));
 
-    var skills = el("div", "tags"); X.fillTags(skills, p.skills);
-    stack.appendChild(section("Skills", p.skills.length ? skills : el("p", null, "No skills listed.")));
+    var skills = list(p.skills);
+    var skillTags = el("div", "tags");
+    X.fillTags(skillTags, skills);
+    stack.appendChild(section("Skills", skills.length ? skillTags : el("p", null, "No skills listed.")));
 
-    if (p.availability.length) {
-      var av = el("div", "tags"); X.fillTags(av, p.availability);
-      stack.appendChild(section("Open to", av));
+    var availability = list(p.availability);
+    if (availability.length) {
+      var availabilityTags = el("div", "tags");
+      X.fillTags(availabilityTags, availability);
+      stack.appendChild(section("Open to", availabilityTags));
     }
-    if (p.projects.length) {
-      var pg = el("div", "ev-grid");
-      p.projects.forEach(function (pr) {
-        var c = el("article", "ev");
-        if (X.str(pr && pr.role)) c.appendChild(el("span", "meta", X.str(pr.role)));
-        c.appendChild(el("h3", null, X.str(pr && pr.title) || "Untitled project"));
-        if (X.str(pr && pr.summary)) c.appendChild(el("p", null, X.str(pr.summary)));
-        pg.appendChild(c);
+
+    // The public detail API currently supplies project_ids / project_count,
+    // not full project objects. Link by published IDs without inventing content.
+    var projectIds = list(p.project_ids);
+    if (projectIds.length) {
+      var projectLinks = el("div", "tags");
+      projectIds.forEach(function (projectId) {
+        if (!X.validId(projectId)) return;
+        var a = el("a", "tag", projectId);
+        a.href = "project.html?id=" + encodeURIComponent(projectId);
+        projectLinks.appendChild(a);
       });
-      stack.appendChild(section("Projects", pg));
+      if (projectLinks.children.length) stack.appendChild(section("Projects", projectLinks));
+    } else if (list(p.projects).length) {
+      var projectList = el("div", "ev-grid");
+      p.projects.forEach(function (pr) {
+        var card = el("article", "ev");
+        if (pr && pr.role) card.appendChild(el("span", "meta", pr.role));
+        card.appendChild(el("h3", null, pr && pr.title || "Untitled project"));
+        if (pr && pr.summary) card.appendChild(el("p", null, pr.summary));
+        projectList.appendChild(card);
+      });
+      stack.appendChild(section("Projects", projectList));
     }
-    (p.section_order||['education','experience']).forEach(function(k){
-      if ((k==='education'||k==='experience') && p[k]) {
-        var paragraph=el('p',null,p[k]);paragraph.style.whiteSpace='pre-line';
-        stack.appendChild(section(k==='education'?'Education':'Experience',paragraph));
-      }
-    });
-    var linkGroup=el('div','tags');
-    [['GitHub',p.github_link],['LinkedIn',p.linkedin_link],['Portfolio',p.portfolio_link]].forEach(function(entry){
-      if (!entry[1] || !/^https:\/\//i.test(entry[1]))return;
-      var a=el('a','tag',entry[0]);a.href=entry[1];a.target='_blank';a.rel='noopener noreferrer';linkGroup.appendChild(a);
-    });
-    if (linkGroup.children.length) stack.appendChild(section('Professional links',linkGroup));
-    root.appendChild(stack);
 
-    // Previous / next profile, as ordinary links.
-    var i = all.indexOf(p);
-    if (all.length > 1) {
-      var pr = all[(i + all.length - 1) % all.length], nx = all[(i + 1) % all.length];
-      var pager = el("div", "pager");
-      var l1 = el("a", "back", "\u2190 " + pr.name); l1.href = X.studentUrl(pr.id); l1.style.marginTop = "0";
-      var l2 = el("a", "back", nx.name + " \u2192"); l2.href = X.studentUrl(nx.id); l2.style.marginTop = "0";
-      pager.appendChild(l1); pager.appendChild(l2);
-      root.appendChild(pager);
-    }
+    var order = Array.isArray(p.section_order) &&
+      p.section_order.length === 2 &&
+      p.section_order.includes("education") && p.section_order.includes("experience")
+      ? p.section_order : ["education", "experience"];
+    order.forEach(function (key) {
+      if (!p[key]) return;
+      var paragraph = el("p", null, String(p[key]));
+      paragraph.style.whiteSpace = "pre-line";
+      stack.appendChild(section(key === "education" ? "Education" : "Experience", paragraph));
+    });
+
+    var links = el("div", "tags");
+    [["GitHub", p.github_link], ["LinkedIn", p.linkedin_link], ["Portfolio", p.portfolio_link]].forEach(function (entry) {
+      var url = safeHttps(entry[1]);
+      if (!url) return;
+      var a = el("a", "tag", entry[0]);
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      links.appendChild(a);
+    });
+    if (links.children.length) stack.appendChild(section("Professional links", links));
+    root.appendChild(stack);
   }
 
   if (!id) { state("No profile selected", "Open a profile from the talent index."); return; }
-  if (!X.validId(id)) { state("Invalid profile id", "That link doesn't look right. Open a profile from the talent index."); return; }
+  if (!X.validId(id)) { state("Invalid profile id", "Open a valid profile from the talent index."); return; }
   $("crew-id").textContent = id.toUpperCase();
 
-  // Fetch from the directory API and pick out this student.
-  X.loadDirectory(function () {
-    banner.replaceChildren();
-    var m = el("span"); m.appendChild(el("strong", null, "Waking up the API.")); m.appendChild(document.createTextNode(" The first request can take up to a minute on free hosting."));
-    banner.appendChild(m); banner.hidden = false;
-  }).then(function (res) {
-    banner.hidden = true;
-    var p = res.data.filter(function (x) { return lc(x.id) === lc(id); })[0];
-    if (!p) { state("Profile not found", "There is no crew file with the id " + id.toUpperCase() + "."); return; }
-    showProfile(p, res.data);
-    if (!res.live) {
-      var m = el("span"); m.appendChild(el("strong", null, "Couldn't reach the live API.")); m.appendChild(document.createTextNode(" Showing sample data."));
-      banner.replaceChildren(m); banner.hidden = false;
+  // Public access is verified by the backend on every page load. Never use
+  // cached directory data or sample fallback for an individual student page.
+  fetch(API + "/api/students/" + encodeURIComponent(id), {
+    headers: { "Accept": "application/json" },
+    cache: "no-store",
+    signal: controller.signal
+  }).then(function (response) {
+    if (response.status === 404) {
+      state("Profile not found", "This student profile is unavailable or unpublished.");
+      return null;
     }
+    if (!response.ok) throw new Error("API returned HTTP " + response.status);
+    return response.json();
+  }).then(function (profile) {
+    if (profile) showProfile(profile);
+  }).catch(function () {
+    state("Profile temporarily unavailable", "Could not load this profile from the live API. Please try again.");
   });
 })();
 </script>
