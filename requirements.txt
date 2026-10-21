@@ -18,3 +18,4 @@ bcrypt
 email-validator
 python-multipart
 httpx
+resend

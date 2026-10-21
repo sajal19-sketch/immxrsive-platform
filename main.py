@@ -146,7 +146,7 @@ async def request_verification(req: VerificationRequest):
     conn.commit()
     conn.close()
     print(f"DEBUG OTP: {raw_code}")
-    #send_verification_email(req.email, raw_code)
+    send_verification_email(req.email, raw_code)
     return {"message": "Verification code sent."}
 
 @app.post("/api/verify-code")
