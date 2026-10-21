@@ -15,6 +15,8 @@ class VerificationSubmit(BaseModel):
     code: str
     from typing import List
 
+from typing import List
+
 class ProfileUpdate(BaseModel):
     email: EmailStr
     name: str
