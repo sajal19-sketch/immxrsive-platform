@@ -211,7 +211,7 @@ async def update_profile(profile: ProfileUpdate):
     student = conn.execute('SELECT * FROM students WHERE email = ?', (profile.email,)).fetchone()
     if not student:
         conn.close()
-        raise HTTPException(status_code=404, detail="Student not found.")
+        raise HTTPException(status_code=404, detail="Student not found. Please log in first.")
         
     # Convert Python lists to JSON strings for SQLite storage
     skills_json = json.dumps(profile.skills)
@@ -273,30 +273,6 @@ def get_directory(q: str = "", skills: list[str] = Query(default=[]), availabili
     return results
 
 # --- EXISTING ENDPOINTS ---
-
-@app.put("/api/students/update")
-async def update_profile(profile: ProfileUpdate):
-    conn = get_db()
-    
-    # Check if the user exists
-    student = conn.execute('SELECT * FROM students WHERE email = ?', (profile.email,)).fetchone()
-    if not student:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Student not found. Please log in first.")
-        
-    # Convert Python lists to JSON strings for SQLite storage
-    skills_json = json.dumps(profile.skills)
-    avail_json = json.dumps(profile.availability)
-    
-    # Update the database record
-    conn.execute('''
-        UPDATE students 
-        SET name = ?, headline = ?, skills = ?, availability = ?
-        WHERE email = ?
-    ''', (profile.name, profile.headline, skills_json, avail_json, profile.email))
-    
-    conn.commit()
-    conn.close()
     
     return {"message": "Profile saved successfully."}
 
