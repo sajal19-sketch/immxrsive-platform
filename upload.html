@@ -177,7 +177,9 @@
                 msgElement.innerText = "Success! Your draft profile is saved.";
             } else {
                 msgElement.style.color = "#f87171";
-                msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+                // This will print the exact field name that is missing
+                const err = data.detail[0];
+                msgElement.innerText = `Field '${err.loc[err.loc.length - 1]}': ${err.msg}`;
             }
         } catch (error) {
             msgElement.style.color = "#f87171";
