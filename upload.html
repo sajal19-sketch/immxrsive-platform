@@ -177,7 +177,7 @@
                 msgElement.innerText = "Success! Your draft profile is saved.";
             } else {
                 msgElement.style.color = "#f87171";
-                msgElement.innerText = data.detail || "Failed to save profile.";
+                msgElement.innerText = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
             }
         } catch (error) {
             msgElement.style.color = "#f87171";
