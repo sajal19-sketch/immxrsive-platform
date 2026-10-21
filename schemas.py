@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
+from typing import List
 
 class VerificationRequest(BaseModel):
     email: EmailStr
@@ -13,9 +14,6 @@ class VerificationRequest(BaseModel):
 class VerificationSubmit(BaseModel):
     email: EmailStr
     code: str
-    from typing import List
-
-from typing import List
 
 class ProfileUpdate(BaseModel):
     email: EmailStr
