@@ -302,6 +302,43 @@ async def update_profile(profile: ProfileUpdate):
 
 @app.get("/api/directory")
 def get_directory(q: str = "", skills: list[str] = Query(default=[]), availability: list[str] = Query(default=[])):
+    conn = get_db()
+    # R2.10: Only show published profiles in the public directory
+    students = conn.execute('SELECT * FROM students WHERE is_published = 1').fetchall()
+    conn.close()
+    
+    results = []
+    for s in students:
+        student = dict(s)
+        student['skills'] = json.loads(student['skills'])
+        student['availability'] = json.loads(student['availability'])
+        
+        match = True
+        if q:
+            search_text = q.lower()
+            if search_text not in student['name'].lower() and search_text not in student['headline'].lower():
+                match = False
+                
+        if skills:
+            for skill in skills:
+                if skill not in student['skills']:
+                    match = False
+                    break
+                    
+        if availability:
+            has_avail = False
+            for avail in availability:
+                if avail in student['availability']:
+                    has_avail = True
+                    break
+            if not has_avail:
+                match = False
+                
+        if match:
+            student['project_count'] = len(json.loads(student['project_ids']))
+            results.append(student)
+            
+    return results
     # ...
 
 @app.get("/api/students/{student_id}")
