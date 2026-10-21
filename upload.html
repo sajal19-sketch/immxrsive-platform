@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Upload resume · ImmXrsive</title>
+<title>Upload Resume · ImmXrsive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
@@ -25,6 +25,7 @@
         <a href="index.html#index">Index</a>
         <a href="upload.html">Upload</a>
         <a class="cta" href="intake.html">Inquire</a>
+        <a href="login.html" style="background: #004b87; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; margin-left: 10px;">Algoma Login</a>
       </nav>
     </div>
   </header>
@@ -32,23 +33,52 @@
   <main>
     <section class="chapter sub">
       <div class="wrap">
-        <p class="ch-label"><b>Students</b>Resume parser</p>
+        <p class="ch-label"><b>Students</b>Resume Parser</p>
         <h2>Upload your <em>resume.</em></h2>
-        <p class="sub-copy">Upload a PDF and we will read out your details so they can be added to a profile. PDF only, up to 5 MB.</p>
+        <p class="sub-copy">Upload a PDF and we will extract your details. You can review and edit everything before saving it to your draft profile.</p>
 
-        <form class="formbox" id="form" style="margin-top:34px" novalidate>
-          <div class="file-box">
-            <label class="f" for="file"><span>Resume (PDF)</span></label>
-            <input id="file" name="file" type="file" accept="application/pdf,.pdf">
-            <p class="file-meta" id="file-meta">No file selected.</p>
-          </div>
-          <p class="form-msg" id="msg" aria-live="polite"></p>
-          <button class="btn inline" id="send" type="submit">Parse resume</button>
-        </form>
+        <!-- Step 1: Upload -->
+        <div class="formbox" id="upload-section" style="margin-top: 30px;">
+            <label class="f"><span>Select Resume (PDF)</span>
+                <input class="ctl" type="file" id="resume-file" accept=".pdf" style="padding: 10px 0;">
+            </label>
+            <button class="btn inline" onclick="parseResume()" style="width: 100%; margin-top: 10px;">Parse Resume</button>
+            <p id="upload-msg" class="form-msg" style="margin-top: 15px;"></p>
+        </div>
 
-        <div class="result" id="result" aria-live="polite" hidden></div>
+        <!-- Step 2: Review and Edit (Hidden Initially) -->
+        <div class="formbox" id="review-section" style="display: none; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+            <h3 style="margin-bottom: 20px;">Review Extracted Data</h3>
+            
+            <label class="f"><span>Confirm Your Algoma Email</span>
+                <input class="ctl" type="email" id="profile-email" placeholder="Required to update your specific profile">
+            </label>
+            
+            <label class="f"><span>Extracted Name</span>
+                <input class="ctl" type="text" id="profile-name">
+            </label>
+            
+            <label class="f"><span>Headline</span>
+                <input class="ctl" type="text" id="profile-headline" placeholder="e.g., Computer Science Student at Algoma">
+            </label>
+            
+            <label class="f"><span>Extracted Skills (comma separated)</span>
+                <input class="ctl" type="text" id="profile-skills">
+            </label>
 
-        <div><a class="back" href="index.html#index">Back to the talent index</a></div>
+            <label class="f"><span>Availability</span>
+                <select class="control" id="profile-avail">
+                    <option value="internship">Internship</option>
+                    <option value="contract">Contract</option>
+                    <option value="full-time">Full-time</option>
+                </select>
+            </label>
+            
+            <button class="btn inline" onclick="saveProfile()" style="width: 100%; margin-top: 20px; background: #4ade80; color: #000; border-color: #4ade80;">Save to Draft Profile</button>
+            <p id="save-msg" class="form-msg" style="margin-top: 15px;"></p>
+        </div>
+
+        <div><a class="back" href="index.html#index" style="margin-top: 30px; display: inline-block;">Back to the talent index</a></div>
       </div>
     </section>
   </main>
@@ -60,94 +90,100 @@
 
 <script src="site.js"></script>
 <script>
-(function () {
-  "use strict";
-  var X = window.IMX, $ = X.$, el = X.el;
+    const API_BASE_URL = "https://immxrsive-api.onrender.com";
 
-  var PARSE_URL = "https://immxrsive-api.onrender.com/api/resumes/parse";
-  var FIELD_NAME = "file";
-  var MAX_BYTES = 5 * 1024 * 1024;
-  var TIMEOUT_MS = 60000;
-
-  var fileEl = $("file"), sendBtn = $("send"), result = $("result");
-
-  function msg(text, cls) { var m = $("msg"); m.textContent = text; m.className = "form-msg" + (cls ? " " + cls : ""); }
-  function size(n) { return n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " KB" : (n / 1048576).toFixed(1) + " MB"; }
-
-  var h = location.hostname, secure = location.protocol === "https:" || h === "localhost" || h === "127.0.0.1" || h === "[::1]";
-  if (!secure) {
-    sendBtn.disabled = true; fileEl.disabled = true;
-    msg(location.protocol === "file:" ? "Open this site through a web server (not file://) to upload." : "Uploads are disabled on insecure (http) connections. Use https.", "err");
-  }
-
-  fileEl.addEventListener("change", function () {
-    result.hidden = true; msg("");
-    var f = fileEl.files[0];
-    $("file-meta").textContent = f ? f.name + " · " + size(f.size) : "No file selected.";
-  });
-
-  function isPdf(f) {
-    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) return Promise.resolve(false);
-    return f.slice(0, 5).arrayBuffer().then(function (buf) {
-      return new TextDecoder().decode(buf) === "%PDF-";
-    });
-  }
-
-  function show(data) {
-    result.replaceChildren();
-    result.appendChild(el("h3", null, "Parsed result"));
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      var dl = el("dl", "kv");
-      Object.keys(data).forEach(function (k) {
-        var v = data[k];
-        dl.appendChild(el("dt", null, k.replace(/_/g, " ")));
-        var dd = el("dd");
-        if (Array.isArray(v) && v.every(function (x) { return typeof x !== "object" || x === null; })) {
-          var tags = el("div", "tags"); X.fillTags(tags, v.map(String)); dd.appendChild(tags);
-        } else if (v && typeof v === "object") {
-          dd.appendChild(el("pre", null, JSON.stringify(v, null, 2)));
-        } else {
-          dd.textContent = v == null ? "" : String(v);
+    async function parseResume() {
+        const fileInput = document.getElementById('resume-file');
+        const msgElement = document.getElementById('upload-msg');
+        
+        if (!fileInput.files.length) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Please select a PDF file first.";
+            return;
         }
-        dl.appendChild(dd);
-      });
-      result.appendChild(dl);
-    } else {
-      result.appendChild(el("pre", null, typeof data === "string" ? data : JSON.stringify(data, null, 2)));
+
+        msgElement.style.color = "inherit";
+        msgElement.innerText = "Extracting data...";
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/resumes/parse`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                msgElement.style.color = "#4ade80";
+                msgElement.innerText = "Successfully extracted! Please review below.";
+                
+                // Pre-fill the form with backend guesses
+                document.getElementById('profile-name').value = data.extracted_name || "";
+                document.getElementById('profile-skills').value = (data.extracted_skills || []).join(", ");
+                
+                // Reveal the review section
+                document.getElementById('upload-section').style.display = "none";
+                document.getElementById('review-section').style.display = "block";
+            } else {
+                msgElement.style.color = "#f87171";
+                msgElement.innerText = data.detail || "Failed to parse resume.";
+            }
+        } catch (error) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Error connecting to server.";
+        }
     }
-    result.hidden = false;
-  }
 
-  $("form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (!secure) return;
-    var f = fileEl.files[0];
-    result.hidden = true;
-    if (!f) return msg("Choose a PDF first.", "err");
-    if (f.size === 0) return msg("That file is empty.", "err");
-    if (f.size > MAX_BYTES) return msg("That file is " + size(f.size) + ". The limit is " + size(MAX_BYTES) + ".", "err");
+    async function saveProfile() {
+        const email = document.getElementById('profile-email').value;
+        const name = document.getElementById('profile-name').value;
+        const headline = document.getElementById('profile-headline').value;
+        const skillsStr = document.getElementById('profile-skills').value;
+        const avail = document.getElementById('profile-avail').value;
+        const msgElement = document.getElementById('save-msg');
 
-    isPdf(f).then(function (ok) {
-      if (!ok) { msg("That doesn't look like a PDF.", "err"); return; }
-      var fd = new FormData();
-      fd.append(FIELD_NAME, f, f.name);
-      var controller = new AbortController();
-      var timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
-      sendBtn.disabled = true; msg("Uploading and parsing");
-      return fetch(PARSE_URL, { method: "POST", body: fd, signal: controller.signal, headers: { "Accept": "application/json" } })
-        .then(function (res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          var ct = res.headers.get("content-type") || "";
-          return ct.indexOf("json") !== -1 ? res.json() : res.text();
-        })
-        .then(function (data) { msg(""); show(data); X.toast("Resume parsed."); })
-        .catch(function (err) {
-          msg(err && err.name === "AbortError" ? "The upload timed out. Try again." : "Couldn't parse that resume (" + (err && err.message ? err.message : "network error") + ").", "err");
-        })
-        .then(function () { clearTimeout(timer); sendBtn.disabled = false; });
-    });
-  });
-})();
+        if (!email) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Email is required to link this to your account.";
+            return;
+        }
+
+        // Convert comma-separated string back to array
+        const skillsArray = skillsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+        msgElement.style.color = "inherit";
+        msgElement.innerText = "Saving profile...";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/students/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    name: name,
+                    headline: headline,
+                    skills: skillsArray,
+                    availability: [avail]
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                msgElement.style.color = "#4ade80";
+                msgElement.innerText = "Success! Your draft profile is saved.";
+            } else {
+                msgElement.style.color = "#f87171";
+                msgElement.innerText = data.detail || "Failed to save profile.";
+            }
+        } catch (error) {
+            msgElement.style.color = "#f87171";
+            msgElement.innerText = "Error connecting to server.";
+        }
+    }
 </script>
 </body>
 </html>
