@@ -19,7 +19,7 @@ https://immxrsive-api.onrender.com
 ## Release 2 — Resume Parsing & Security
 
 **Release Tag:** R2-submission
-**Commit SHA:** 9792ba312dee462887c46f71327ca88f0c5b5493
+**Commit SHA:**  1f7fba859ab5413a56de8a9afff2a611923b10c6
 
 **Release 2 Notes for Evaluator:**
 * **Core Requirements:** Added secure PDF upload and parsing endpoint (`/api/resumes/parse`) via FastAPI and `pypdf`. Implemented frontend interface (`upload.html`) and applied a new multi-page "Interstellar" UI theme.
@@ -27,6 +27,20 @@ https://immxrsive-api.onrender.com
 * **Test Setup:** No authentication required. Upload page is accessible directly via `upload.html` or the "Upload" link in the navigation bar.
 
 ---
+### Release 2 SHA Correction
+
+The original Release 2 document recorded commit
+9792ba312dee462887c46f71327ca88f0c5b5493.
+
+The correct frozen Release 2 commit is
+1f7fba859ab5413a56de8a9afff2a611923b10c6,
+as identified by the R2-submission tag.
+
+Both commits were completed before the submission
+deadline of October 16, 2026.
+
+This correction is documentation-only.
+The original R2-submission tag remains unchanged.
 
 ## Release 1 — Post-Freeze Corrections
 
