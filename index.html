@@ -205,6 +205,11 @@
       if (p.skills.length > 5) tags.appendChild(el("span", "tag more", "+" + (p.skills.length - 5)));
       card.appendChild(tags);
     }
+        var facts = [];
+    if (p.availability.length) facts.push("Open to: " + p.availability.join(", "));
+    var n = Array.isArray(p.projects) ? p.projects.length : 0;
+    facts.push(n === 1 ? "1 project" : n + " projects");
+    card.appendChild(el("p", "program", facts.join(" · ")));
     // A normal link to a real page: student.html?id=S01
     var link = el("a", "btn block", "View Profile");
     link.href = X.studentUrl(p.id);
