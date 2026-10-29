@@ -25,9 +25,9 @@ https://immxrsive-api.onrender.com
 **Evaluation adapter:** [evaluation_adapter.json](evaluation_adapter.json) (release R3)
 
 **QA evidence**
-- Shared published project with 2+ accepted contributors: `<PASTE URL>`
-- Project with working demo and fallback: `<PASTE URL>`
-- Public repository used for GitHub import: `<PASTE URL>`
+- Shared published project with 2+ accepted contributors: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae
+- Project with working demo and fallback: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae
+- Public repository used for GitHub import: https://github.com/sajal19-sketch/immxrsive-platform
 - Hosted demo: https://sajal19-sketch.github.io/immxrsive-platform/demo/working_demo.html
 - Hosted fallback: https://sajal19-sketch.github.io/immxrsive-platform/demo/fallback.svg
 

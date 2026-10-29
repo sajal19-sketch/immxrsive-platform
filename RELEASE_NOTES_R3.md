@@ -46,9 +46,9 @@
 4. Reviewer A: **Publish**, then open **View public page** in a private window.
 
 QA evidence prepared by the team:
-- Shared published project with 2+ accepted contributors: `<PASTE project.html?id=... URL>`
-- Project with working demo and fallback: `<PASTE project.html?id=... URL>`
-- Public repository for GitHub import: `<PASTE https://github.com/... URL>`
+- Shared published project with 2+ accepted contributors: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae
+- Project with working demo and fallback: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae
+- Public repository for GitHub import: https://github.com/sajal19-sketch/immxrsive-platform
 - Hosted demo: https://sajal19-sketch.github.io/immxrsive-platform/demo/working_demo.html
 - Hosted fallback image: https://sajal19-sketch.github.io/immxrsive-platform/demo/fallback.svg
 
