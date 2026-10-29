@@ -1,70 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Details</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .project-header { background: #fdf5e6; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .tech-tag { background: #e9ecef; padding: 4px 8px; margin: 2px; border-radius: 4px; display: inline-block; font-size: 0.9em; }
-        .inquiry-btn { background: #17a2b8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 15px; font-weight: bold; }
-        .back-link { text-decoration: none; color: #007bff; margin-bottom: 20px; display: inline-block; }
-        .contributor-list { list-style-type: none; padding-left: 0; }
-        .contributor-list li { padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 4px; background: #fff; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .pj{max-width:900px}
+  .pj h1{font-size:clamp(30px,6vw,56px);line-height:1.05;margin:14px 0 10px;overflow-wrap:anywhere}
+  .pj-meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+  .pj-desc{white-space:pre-line;color:#cfccc2;max-width:68ch;overflow-wrap:anywhere}
+  .pj-sec{margin-top:40px}
+  .pj-sec h2{font:11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .pj-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .pj-note{color:var(--muted);font-size:14px;margin:12px 0 0}
+  .pj-fallback{margin:18px 0 0;border:1px solid var(--line);border-radius:3px;padding:12px;background:rgba(7,10,20,.82)}
+  .pj-fallback img{display:block;width:100%;height:auto;max-height:460px;object-fit:contain;background:#05070d}
+  .pj-fallback figcaption{color:var(--muted);font-size:14px;margin-top:10px;overflow-wrap:anywhere}
+  .pj-contrib .ev h3 a{text-decoration:underline;text-underline-offset:4px}
+  .pj-statement{white-space:pre-line;overflow-wrap:anywhere}
+  .pj-state{padding:60px 0}
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tags .tag{white-space:normal;overflow-wrap:anywhere}
+</style>
 </head>
 <body>
-    <a href="javascript:history.back()" class="back-link">← Back</a>
-    <div id="project-content">Loading project...</div>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="projects.html">My Projects</a><a class="cta" href="intake.html">Inquire</a></nav></div></header>
+<main class="chapter sub"><div class="wrap pj">
+  <a href="index.html" id="back" class="pj-note">← Back to directory</a>
+  <div id="content" aria-live="polite"><p class="pj-state">Loading project…</p></div>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = "https://immxrsive-api.onrender.com";
+  var root = document.getElementById("content");
 
-    <script>
-        function escapeHtml(v) {return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-        async function loadProject() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  // Only https links are ever placed in href/src (no javascript:, data:, etc.).
+  function safeHttps(u) {
+    try { var x = new URL(String(u || "")); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; }
+  }
+  function extLink(label, url, cls) {
+    var a = el("a", cls || "btn inline", label);
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    return a;
+  }
+  function section(title, body) {
+    var s = el("section", "pj-sec");
+    s.appendChild(el("h2", null, title));
+    s.appendChild(body);
+    return s;
+  }
+  function state(title, text) {
+    root.replaceChildren();
+    var box = el("div", "pj-state");
+    box.appendChild(el("h1", null, title));
+    box.appendChild(el("p", "pj-desc", text));
+    var a = el("a", "btn inline", "Browse the directory"); a.href = "index.html";
+    box.appendChild(a);
+    root.appendChild(box);
+  }
 
-            if (!id) {
-                document.getElementById('project-content').innerHTML = "<p>No project ID provided.</p>";
-                return;
-            }
+  function render(p) {
+    document.title = p.title + " · ImmXrsive";
+    root.replaceChildren();
+    root.appendChild(el("h1", null, p.title));
+    var meta = el("div", "pj-meta");
+    [p.domain, p.status, p.project_date].forEach(function (m) { if (m) meta.appendChild(el("span", "tag", m)); });
+    root.appendChild(meta);
+    root.appendChild(el("p", "pj-desc", p.description || "No description yet."));
 
-            try {
-                const response = await fetch(     `https://immxrsive-api.onrender.com/api/projects/${encodeURIComponent(id)}` );
-                if (!response.ok) throw new Error("Project not found");
-                
-                const project = await response.json();
-                
-                const techHtml = project.technologies.map(t => `<span class="tech-tag">${escapeHtml(t)}</span>`).join('');
-                
-                // Draw a list item for each contributor
-                const contribsHtml = project.contributors.map(c => 
-                    `<li><a href="student.html?id=${encodeURIComponent(String(c.student_id))}">View Student ${escapeHtml(c.student_id)}</a> - Role: <strong>${escapeHtml(c.role)}</strong></li>`
-                ).join('');
+    // ---- Demo / evidence: links only, never embedded code (R3.19-R3.22)
+    var play = safeHttps(p.playable_url), video = safeHttps(p.video_url), fb = safeHttps(p.fallback_url);
+    var repos = (p.repo_urls || []).map(safeHttps).filter(Boolean);
+    var evidence = el("div");
+    var actions = el("div", "pj-actions");
+    if (play) actions.appendChild(extLink("▶ Play Demo", play));
+    if (video) actions.appendChild(extLink("Watch Demo Video", video, "btn inline ghost"));
+    repos.forEach(function (r, i) { actions.appendChild(extLink(repos.length > 1 ? "View Source " + (i + 1) : "View Source", r, "btn inline ghost")); });
+    if (actions.children.length) evidence.appendChild(actions);
+    if (play) evidence.appendChild(el("p", "pj-note", "The demo opens in a new tab. Some interactive experiences need a desktop browser; if it does not load, the preview below shows the project."));
 
-                document.getElementById('project-content').innerHTML = `
-                    <div class="project-header">
-                        <h1>${escapeHtml(project.title)}</h1>
-                        <p><strong>Domain:</strong> ${escapeHtml(project.domain)}</p>
-                        <p>${escapeHtml(project.description)}</p>
-                        <p><strong>Technologies:</strong> ${techHtml}</p>
-                        
-                        <a class="inquiry-btn" href="intake.html?source_type=project&source_id=${encodeURIComponent(String(project.id))}&source_name=${encodeURIComponent(project.title)}">
-                            Inquire about this project
-                        </a>
-                    </div>
-                    
-                    <h3>Contributors</h3>
-                    <ul class="contributor-list">
-                        ${contribsHtml}
-                    </ul>
-                `;
-            } catch(e) {
-                document.getElementById('project-content').innerHTML = "<p>Error loading project.</p>";
-            }
-        }
-        
-        loadProject();
-    </script>
+    if (fb || p.fallback_text) {
+      var fig = el("figure", "pj-fallback");
+      if (fb) {
+        var img = document.createElement("img");
+        img.src = fb; img.alt = "Preview of " + p.title; img.loading = "lazy";
+        img.onerror = function () {
+          // Broken/unsupported media must not break the page.
+          var alt = el("p", "pj-note", "Preview image could not be loaded. ");
+          alt.appendChild(extLink("Open preview link", fb, ""));
+          img.replaceWith(alt);
+        };
+        fig.appendChild(img);
+      }
+      fig.appendChild(el("figcaption", null, p.fallback_text || "Project preview"));
+      evidence.appendChild(fig);
+    }
+    if (!evidence.children.length) evidence.appendChild(el("p", "pj-note", "No demo, video or source link has been added for this project."));
+    root.appendChild(section("Try it / evidence", evidence));
+
+    // ---- Contributors and roles (R3.15)
+    var grid = el("div", "ev-grid pj-contrib");
+    (p.contributors || []).forEach(function (c) {
+      var card = el("article", "ev");
+      card.appendChild(el("span", "meta", c.role + (c.is_maintainer ? " · Maintainer" : "")));
+      var h = el("h3");
+      if (c.student_id) { var a = el("a", null, c.name); a.href = "student.html?id=" + encodeURIComponent(c.student_id); h.appendChild(a); }
+      else h.textContent = c.name;
+      card.appendChild(h);
+      if (c.statement) card.appendChild(el("p", "pj-statement", c.statement));
+      grid.appendChild(card);
+    });
+    root.appendChild(section("Contributors and roles", grid.children.length ? grid : el("p", "pj-note", "No public contributors yet.")));
+
+    // ---- Technologies are project-level, not personal skills (R3.14)
+    var tech = el("div");
+    var tags = el("div", "tags");
+    (p.technologies || []).forEach(function (t) { tags.appendChild(el("span", "tag", t)); });
+    tech.appendChild(tags.children.length ? tags : el("p", "pj-note", "None listed."));
+    tech.appendChild(el("p", "pj-note", "These describe the project. Each contributor's personal skills are on their own profile."));
+    root.appendChild(section("Project technologies", tech));
+
+    var inquiry = el("a", "btn inline", "Inquire about this project");
+    inquiry.href = "intake.html?source_type=project&source_id=" + encodeURIComponent(p.id) + "&source_name=" + encodeURIComponent(p.title);
+    var wrap = el("div", "pj-actions"); wrap.appendChild(inquiry);
+    root.appendChild(section("Interested?", wrap));
+  }
+
+  var id = new URLSearchParams(location.search).get("id") || "";
+  if (document.referrer && document.referrer.indexOf(location.host) !== -1) {
+    var back = document.getElementById("back");
+    back.textContent = "← Back"; back.href = "#";
+    back.onclick = function (e) { e.preventDefault(); history.back(); };
+  }
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) { state("Project not found", "This link does not point to a public project."); return; }
+
+  var ctrl = new AbortController();
+  var timer = setTimeout(function () { ctrl.abort(); }, 45000);
+  fetch(API + "/api/projects/" + encodeURIComponent(id), { signal: ctrl.signal })
+    .then(function (r) {
+      clearTimeout(timer);
+      if (r.status === 404) { state("Project not found", "This project does not exist or is not public."); return null; }
+      if (!r.ok) throw new Error("bad status");
+      return r.json();
+    })
+    .then(function (p) { if (p) render(p); })
+    .catch(function () { state("Could not load this project", "The server may be waking up. Wait a moment and refresh the page."); });
+})();
+</script>
 </body>
 </html>

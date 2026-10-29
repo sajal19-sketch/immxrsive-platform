@@ -1,4 +1,4 @@
-"""ImmXrsive Release 2 working-branch backend.
+"""ImmXrsive backend (Release 3: shared projects in projects_r3.py).
 Deploy with HTTPS. Requires GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET.
 Cross-origin static frontend uses short-lived OAuth exchange tickets and bearer sessions.
 """
@@ -26,6 +26,7 @@ from pypdf import PdfReader
 
 from schemas import VerificationRequest, VerificationSubmit
 from email_service import send_verification_email
+import projects_r3
 
 FRONTEND = os.environ.get('FRONTEND_URL', 'https://sajal19-sketch.github.io/immxrsive-platform').rstrip('/')
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
@@ -113,6 +114,7 @@ def setup_db():
         conn.execute('''CREATE TABLE IF NOT EXISTS project_contributors(
             project_id TEXT, student_id TEXT, role TEXT,
             UNIQUE(project_id, student_id, role))''')
+        projects_r3.setup_schema(conn)
         conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS students_github_unique ON students(github_id) WHERE github_id IS NOT NULL')
         conn.execute('''CREATE UNIQUE INDEX IF NOT EXISTS verified_email_unique
             ON students(lower(email)) WHERE email IS NOT NULL AND github_id IS NOT NULL AND is_algoma_verified=1''')
@@ -344,7 +346,7 @@ def update_profile(profile:ProfileUpdate,student=Depends(verified)):
 
 @app.get('/api/profile/preview')
 def preview(student=Depends(verified)):
-    return public_profile(student)
+    with db() as conn:return with_projects(conn,[public_profile(student)])[0]
 
 @app.post('/api/profile/publish')
 def publish(student=Depends(verified)):
@@ -355,6 +357,15 @@ def publish(student=Depends(verified)):
 def unpublish(student=Depends(verified)):
     with db() as conn:conn.execute('UPDATE students SET is_published=0 WHERE id=%s',(student['id'],))
     return {'message':'Profile removed from public discovery; draft retained'}
+
+def with_projects(conn, profiles):
+    """Project evidence comes from accepted, featured, published project memberships (R3)."""
+    linked = projects_r3.public_projects_for(conn, [p['id'] for p in profiles])
+    for p in profiles:
+        p['projects'] = linked.get(p['id'], [])
+        p['project_ids'] = [x['id'] for x in p['projects']]
+        p['project_count'] = len(p['projects'])
+    return profiles
 
 @app.get('/api/directory')
 def directory(q:str='',skills:list[str]=Query(default=[]),availability:list[str]=Query(default=[]),status:list[str]=Query(default=[])):
@@ -368,22 +379,17 @@ def directory(q:str='',skills:list[str]=Query(default=[]),availability:list[str]
         if availability and not (set(x.lower() for x in availability)&set(x.lower() for x in s['availability'])):continue
         if status and (s['status'] or '').lower() not in {x.lower() for x in status}:continue
         results.append(s)
+    with db() as conn:with_projects(conn,results)
     return results
 
 @app.get('/api/students/{student_id}')
 def student_detail(student_id:str):
-    with db() as conn:student=conn.execute('SELECT * FROM students WHERE id=%s AND is_published=1',(student_id,)).fetchone()
-    if not student:raise HTTPException(404,'Student not found')
-    return public_profile(student)
-
-@app.get('/api/projects/{project_id}')
-def project_detail(project_id:str):
     with db() as conn:
-        project=conn.execute('SELECT * FROM projects WHERE id=%s',(project_id,)).fetchone()
-        if not project:raise HTTPException(404,'Project not found')
-        contributors=conn.execute('SELECT student_id,role FROM project_contributors WHERE project_id=%s',(project_id,)).fetchall()
-    out=dict(project);out['technologies']=parsed(out['technologies']);out['contributors']=[dict(x) for x in contributors]
-    return out
+        student=conn.execute('SELECT * FROM students WHERE id=%s AND is_published=1',(student_id,)).fetchone()
+        if not student:raise HTTPException(404,'Student not found')
+        return with_projects(conn,[public_profile(student)])[0]
+
+# GET /api/projects/{project_id} now lives in projects_r3.py (adds demo, repos, roles, publication).
 
 @app.post('/api/resumes/parse')
 async def parse_resume(file:UploadFile=File(...),student=Depends(verified)):
@@ -420,3 +426,7 @@ async def parse_resume(file:UploadFile=File(...),student=Depends(verified)):
                 'education':'','experience':'','links':links}
     # Uploaded original bytes are only in memory; do not store or serve original PDFs.
     return {'filename':file.filename,'extracted_name':candidates['name'],'extracted_skills':found,'candidates':candidates,'message':'Review all suggestions before applying. Uploaded original PDF is not stored.'}
+
+
+projects_r3.configure(db=db, authenticated=authenticated, parsed=parsed, skill_catalog=skill_catalog, frontend=FRONTEND)
+app.include_router(projects_r3.router)

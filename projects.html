@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Projects · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .mp{max-width:880px}
+  .mp h1{font-size:clamp(30px,5vw,56px);margin:0 0 8px}
+  .mp h2{font-size:22px;margin:40px 0 12px}
+  .mp h3{font-size:18px;margin:26px 0 10px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .card{border:1px solid var(--line);border-radius:3px;padding:16px;background:rgba(7,10,20,.82);display:grid;gap:8px;margin:0 0 12px}
+  .card strong{overflow-wrap:anywhere}
+  .muted{color:var(--muted);font-size:14px}
+  .msg{min-height:1.4em}
+  .msg.err{color:#f87171}.msg.ok{color:#4ade80}
+  .panel{border:1px solid var(--line-strong);border-radius:3px;padding:18px;margin-top:22px;background:rgba(3,7,11,.9)}
+  .warn{border:1px solid var(--warn);border-radius:3px;padding:14px;margin:12px 0;display:grid;gap:8px}
+  .btn.small{padding:8px 12px;font-size:11.5px}
+  button.link{background:none;border:0;color:var(--hud,#5db7d9);text-decoration:underline;cursor:pointer;padding:0;font:inherit}
+  textarea.ctl{height:auto;min-height:90px;padding:10px 14px;line-height:1.5}
+  .formbox{max-width:none}
+  .ctl[disabled]{opacity:.65}
+  pre.keep{white-space:pre-wrap;overflow-wrap:anywhere;font:13px var(--mono);background:#05070d;padding:10px;border-radius:3px}
+  @media (max-width:520px){.row .btn{flex:1 1 auto}}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="editor.html">My Profile</a><a href="projects.html" aria-current="page">My Projects</a><button id="logout" type="button">Sign out</button></nav></div></header>
+<main class="chapter sub"><div class="wrap mp">
+  <h1>My Projects</h1>
+  <p id="message" class="msg" role="status" aria-live="polite">Checking sign-in…</p>
+
+  <div id="app" hidden>
+    <div class="row"><button class="btn inline" id="add" type="button">+ Add Project</button></div>
+
+    <section id="inv-sec" hidden><h2>Invitations</h2><div id="invitations"></div></section>
+    <section id="req-sec" hidden><h2>Requests to join your projects</h2><div id="requests"></div></section>
+    <section><h2>Your projects</h2><div id="list"><p class="muted">No projects yet. Use Add Project to create one or import it from GitHub.</p></div></section>
+
+    <!-- Create / edit panel -->
+    <section id="editor" class="panel" hidden aria-labelledby="editor-title">
+      <h2 id="editor-title" style="margin-top:0">Add Project</h2>
+      <p id="editor-note" class="muted"></p>
+
+      <div id="import-box">
+        <h3>Import from GitHub (optional)</h3>
+        <p class="muted">Paste a public repository link. We suggest a title, description and languages; you can edit everything before saving.</p>
+        <div class="formbox">
+          <label class="f">Public GitHub repository <input class="ctl" id="gh-url" type="url" inputmode="url" placeholder="https://github.com/owner/repo"></label>
+          <div class="row"><button class="btn inline ghost" id="gh-import" type="button">Import details</button></div>
+        </div>
+      </div>
+
+      <div id="dupes"></div>
+
+      <h3>Project details</h3>
+      <form class="formbox" id="pform" novalidate>
+        <label class="f">Title (required) <input class="ctl shared" id="title" maxlength="150" required></label>
+        <label class="f">Short description <textarea class="ctl shared" id="description" rows="4" maxlength="2000"></textarea></label>
+        <label class="f">Type / domain (e.g. Game, Training simulation, Web app) <input class="ctl shared" id="domain" maxlength="80"></label>
+        <label class="f">Project technologies (comma separated) <input class="ctl shared" id="technologies" placeholder="Unity, C#, Blender"></label>
+        <p class="muted">Technologies describe the project. They are not added to anyone's personal skills.</p>
+        <label class="f">Status <select class="ctl shared" id="status"><option value="">Not set</option><option>Planning</option><option>In progress</option><option>Completed</option><option>Archived</option></select></label>
+        <label class="f">Date (YYYY, YYYY-MM or YYYY-MM-DD) <input class="ctl shared" id="project_date" placeholder="2026-10" maxlength="10"></label>
+        <label class="f">Repository links (one per line, optional) <textarea class="ctl shared" id="repo_urls" rows="3" placeholder="https://github.com/owner/repo"></textarea></label>
+        <label class="f">Playable demo link (https, optional) <input class="ctl shared" id="playable_url" type="url" placeholder="https://..."></label>
+        <label class="f">Video demo link (https, optional) <input class="ctl shared" id="video_url" type="url" placeholder="https://..."></label>
+        <label class="f">Fallback image or link (https, shown if the demo can't run) <input class="ctl shared" id="fallback_url" type="url" placeholder="https://.../screenshot.png"></label>
+        <label class="f">Fallback caption <input class="ctl shared" id="fallback_text" maxlength="300" placeholder="Screenshot of the main scene"></label>
+        <label class="f" id="my-role-wrap">Your role on this project <select class="ctl" id="my_role"></select></label>
+        <div id="conflict"></div>
+        <div class="row"><button class="btn inline" id="save" type="submit">Save project</button><button class="btn inline ghost" id="cancel" type="button">Close</button></div>
+      </form>
+
+      <div id="manage" hidden>
+        <h3>Publish</h3>
+        <p id="pub-state" class="muted"></p>
+        <div class="row"><button class="btn inline" id="publish" type="button">Publish</button><button class="btn inline ghost" id="unpublish" type="button">Make private</button><a class="btn inline ghost" id="view-public" target="_blank" rel="noopener">View public page</a></div>
+
+        <h3>Add teammate</h3>
+        <p class="muted">Your teammate must have signed in to ImmXrsive with GitHub and verified their Algoma email. They appear on the project only after they accept.</p>
+        <div class="formbox">
+          <label class="f">Teammate's GitHub username <input class="ctl" id="inv-user" placeholder="octocat" autocomplete="off"></label>
+          <label class="f">Proposed role <select class="ctl" id="inv-role"></select></label>
+          <div class="row"><button class="btn inline" id="invite" type="button">Send invitation</button></div>
+        </div>
+
+        <h3>Contributors</h3>
+        <div id="contributors"></div>
+
+        <h3>Transfer maintenance</h3>
+        <p class="muted">Hand the project to another accepted contributor. The project keeps its page and link.</p>
+        <div class="formbox">
+          <label class="f">New maintainer <select class="ctl" id="transfer-to"></select></label>
+          <div class="row"><button class="btn inline ghost" id="transfer" type="button">Transfer</button></div>
+        </div>
+      </div>
+
+      <div id="mine" hidden>
+        <h3>Your contribution</h3>
+        <p class="muted">Only you can edit this. It appears next to your name on the project page.</p>
+        <div class="formbox">
+          <label class="f">Your role <select class="ctl" id="c-role"></select></label>
+          <label class="f">What you did (optional) <textarea class="ctl" id="c-statement" rows="3" maxlength="1000"></textarea></label>
+          <label><input type="checkbox" id="c-featured"> Show this project on my public profile</label>
+          <div class="row"><button class="btn inline" id="c-save" type="button">Save my contribution</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = "https://immxrsive-api.onrender.com";
+  var $ = function (id) { return document.getElementById(id); };
+  var token = function () { return sessionStorage.getItem("imx_token"); };
+  var ROLES = [];
+  var current = null;      // project open in the editor (null = creating)
+  var FIELDS = ["title", "description", "domain", "technologies", "status", "project_date", "repo_urls", "playable_url", "video_url", "fallback_url", "fallback_text"];
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function btn(label, cls, fn) { var b = el("button", cls || "btn inline small", label); b.type = "button"; b.onclick = fn; return b; }
+  function tell(s, err) { var m = $("message"); m.textContent = s; m.className = "msg " + (err ? "err" : "ok"); }
+  function detailText(d) {
+    if (!d) return "Request failed";
+    if (typeof d === "string") return d;
+    if (Array.isArray(d)) return d.map(function (e) { return e.msg; }).join(", ");
+    return d.message || "Request failed";
+  }
+  async function call(path, method, payload) {
+    var h = { Authorization: "Bearer " + token() };
+    if (payload !== undefined) h["Content-Type"] = "application/json";
+    var r = await fetch(API + path, { method: method || "GET", headers: h, body: payload === undefined ? undefined : JSON.stringify(payload) });
+    var data = await r.json().catch(function () { return { detail: "Server error" }; });
+    if (r.status === 401) { sessionStorage.removeItem("imx_token"); location.href = "login.html"; throw new Error("Please sign in again."); }
+    if (!r.ok) { var e = new Error(detailText(data.detail)); e.status = r.status; e.detail = data.detail; throw e; }
+    return data;
+  }
+  function fillRoles(select, value) {
+    select.replaceChildren();
+    ROLES.forEach(function (r) { var o = el("option", null, r); o.value = r; select.appendChild(o); });
+    if (value) select.value = value;
+  }
+  function splitList(v, sep) { return v.split(sep).map(function (x) { return x.trim(); }).filter(Boolean); }
+
+  // ---------------- lists
+  async function loadLists() {
+    var data = await call("/api/my/projects");
+    var inv = $("invitations"); inv.replaceChildren();
+    data.invitations.forEach(function (p) {
+      var c = el("div", "card");
+      c.appendChild(el("strong", null, p.title));
+      c.appendChild(el("span", "muted", "You were invited as " + p.role + ". You will appear on the project only if you accept."));
+      var row = el("div", "row");
+      row.appendChild(btn("Accept", "btn inline small", function () { respond(p.id, true); }));
+      row.appendChild(btn("Decline", "btn inline small ghost", function () { respond(p.id, false); }));
+      c.appendChild(row); inv.appendChild(c);
+    });
+    $("inv-sec").hidden = !data.invitations.length;
+
+    var req = $("requests"); req.replaceChildren();
+    data.join_requests.forEach(function (q) {
+      var c = el("div", "card");
+      c.appendChild(el("strong", null, q.name + " wants to join " + q.title));
+      c.appendChild(el("span", "muted", "Proposed role: " + q.role));
+      var row = el("div", "row");
+      row.appendChild(btn("Approve", "btn inline small", function () { decide(q.project_id, q.student_id, true); }));
+      row.appendChild(btn("Decline", "btn inline small ghost", function () { decide(q.project_id, q.student_id, false); }));
+      c.appendChild(row); req.appendChild(c);
+    });
+    $("req-sec").hidden = !data.join_requests.length;
+
+    var list = $("list"); list.replaceChildren();
+    if (!data.projects.length) list.appendChild(el("p", "muted", "No projects yet. Use Add Project to create one or import it from GitHub."));
+    data.projects.forEach(function (p) {
+      var c = el("div", "card");
+      c.appendChild(el("strong", null, p.title));
+      var bits = [p.is_maintainer ? "Maintainer" : "Contributor", p.role, p.published ? "Public" : "Private draft"];
+      if (p.status === "removed") bits.push("Removed by maintainer (can be restored)");
+      else if (p.status === "requested") bits.push("Join request pending");
+      else if (p.status === "declined" || p.status === "cancelled") bits.push(p.status);
+      else if (!p.featured) bits.push("Hidden from my profile");
+      c.appendChild(el("span", "muted", bits.join(" · ")));
+      var row = el("div", "row");
+      if (p.status === "accepted") row.appendChild(btn("Open", "btn inline small", function () { openProject(p.id); }));
+      if (p.published) { var a = el("a", "btn inline small ghost", "View public page"); a.href = "project.html?id=" + encodeURIComponent(p.id); row.appendChild(a); }
+      c.appendChild(row); list.appendChild(c);
+    });
+  }
+  async function respond(id, accept) {
+    try { var d = await call("/api/projects/" + encodeURIComponent(id) + "/respond", "POST", { accept: accept }); tell(d.message); await loadLists(); if (accept) openProject(id); }
+    catch (e) { tell(e.message, true); }
+  }
+  async function decide(pid, sid, approve) {
+    try { var d = await call("/api/projects/" + encodeURIComponent(pid) + "/requests/" + encodeURIComponent(sid), "POST", { approve: approve }); tell(d.message); await loadLists(); }
+    catch (e) { tell(e.message, true); }
+  }
+
+  // ---------------- editor
+  function formValues() {
+    return {
+      title: $("title").value.trim(), description: $("description").value.trim(), domain: $("domain").value.trim(),
+      technologies: splitList($("technologies").value, ","), status: $("status").value, project_date: $("project_date").value.trim(),
+      repo_urls: splitList($("repo_urls").value, /\n/), playable_url: $("playable_url").value.trim(), video_url: $("video_url").value.trim(),
+      fallback_url: $("fallback_url").value.trim(), fallback_text: $("fallback_text").value.trim()
+    };
+  }
+  function fillForm(p) {
+    $("title").value = p.title || ""; $("description").value = p.description || ""; $("domain").value = p.domain || "";
+    $("technologies").value = (p.technologies || []).join(", "); $("status").value = p.status || ""; $("project_date").value = p.project_date || "";
+    $("repo_urls").value = (p.repo_urls || []).join("\n"); $("playable_url").value = p.playable_url || ""; $("video_url").value = p.video_url || "";
+    $("fallback_url").value = p.fallback_url || ""; $("fallback_text").value = p.fallback_text || "";
+  }
+  function openNew() {
+    current = null;
+    fillForm({}); $("gh-url").value = ""; $("dupes").replaceChildren(); $("conflict").replaceChildren();
+    $("editor-title").textContent = "Add Project";
+    $("editor-note").textContent = "Create it manually or import from GitHub. It is saved as a private draft until you publish it.";
+    $("import-box").hidden = false; $("my-role-wrap").hidden = false; $("manage").hidden = true; $("mine").hidden = true;
+    document.querySelectorAll(".shared").forEach(function (x) { x.disabled = false; }); $("save").hidden = false;
+    $("editor").hidden = false; $("title").focus();
+    history.replaceState(null, "", "projects.html?new=1");
+  }
+  async function openProject(id) {
+    try {
+      var p = await call("/api/my/projects/" + encodeURIComponent(id));
+      current = p;
+      fillForm(p); $("dupes").replaceChildren(); $("conflict").replaceChildren();
+      $("editor-title").textContent = p.title;
+      $("import-box").hidden = true; $("my-role-wrap").hidden = true;
+      document.querySelectorAll(".shared").forEach(function (x) { x.disabled = !p.is_maintainer; });
+      $("save").hidden = !p.is_maintainer;
+      $("editor-note").textContent = p.is_maintainer
+        ? "You are the maintainer: you edit the shared project details and manage teammates."
+        : "Only the maintainer edits the shared details. You control your own contribution below.";
+      renderManage(p); renderMine(p);
+      $("editor").hidden = false;
+      history.replaceState(null, "", "projects.html?id=" + encodeURIComponent(p.id));
+      $("editor-title").scrollIntoView({ behavior: "smooth" });
+    } catch (e) { tell(e.message, true); }
+  }
+  function renderManage(p) {
+    $("manage").hidden = !p.is_maintainer;
+    if (!p.is_maintainer) return;
+    $("pub-state").textContent = p.is_published ? "This project is public." : "This project is a private draft. Only its team can see it.";
+    $("view-public").href = "project.html?id=" + encodeURIComponent(p.id);
+    $("view-public").hidden = !p.is_published;
+    fillRoles($("inv-role"));
+    var box = $("contributors"); box.replaceChildren();
+    var transferTo = $("transfer-to"); transferTo.replaceChildren();
+    p.contributors.forEach(function (c) {
+      var card = el("div", "card");
+      card.appendChild(el("strong", null, c.name + (c.is_me ? " (you)" : "")));
+      var labels = { accepted: "Accepted", invited: "Invitation pending", declined: "Declined", removed: "Removed (hidden from project page)", requested: "Asked to join", cancelled: "Invitation cancelled" };
+      card.appendChild(el("span", "muted", c.role + " · " + (labels[c.status] || c.status) + (c.is_maintainer ? " · Maintainer" : "")));
+      if (c.statement) card.appendChild(el("span", null, "“" + c.statement + "”"));
+      var row = el("div", "row");
+      if (!c.is_me && c.status === "accepted") row.appendChild(btn("Remove", "btn inline small ghost", function () { if (confirm("Hide " + c.name + " from this project? You can restore them later.")) act("contributors/" + encodeURIComponent(c.student_id) + "/remove"); }));
+      if (!c.is_me && c.status === "invited") row.appendChild(btn("Cancel invitation", "btn inline small ghost", function () { act("contributors/" + encodeURIComponent(c.student_id) + "/remove"); }));
+      if (c.status === "removed") row.appendChild(btn("Restore", "btn inline small", function () { act("contributors/" + encodeURIComponent(c.student_id) + "/restore"); }));
+      if (row.children.length) card.appendChild(row);
+      box.appendChild(card);
+      if (!c.is_me && c.status === "accepted") { var o = el("option", null, c.name); o.value = c.student_id; transferTo.appendChild(o); }
+    });
+    $("transfer").disabled = !transferTo.children.length;
+    if (!transferTo.children.length) { var o = el("option", null, "No other accepted contributors yet"); o.value = ""; transferTo.appendChild(o); }
+  }
+  function renderMine(p) {
+    var me = (p.contributors || []).filter(function (c) { return c.is_me; })[0];
+    $("mine").hidden = !(me && me.status === "accepted");
+    if ($("mine").hidden) return;
+    fillRoles($("c-role"), me.role);
+    $("c-statement").value = me.statement || "";
+    $("c-featured").checked = !!me.featured;
+  }
+  async function act(path, payload) {
+    try {
+      var d = await call("/api/projects/" + encodeURIComponent(current.id) + "/" + path, "POST", payload === undefined ? {} : payload);
+      tell(d.message); await loadLists(); await openProject(current.id);
+    } catch (e) { tell(e.message, true); }
+  }
+  function showDupes(detail, forCreate) {
+    var box = $("dupes"); box.replaceChildren();
+    var matches = (detail && detail.matches) || detail.repo_matches || [];
+    var similar = detail.similar_titles || [];
+    if (!matches.length && !similar.length) return;
+    var w = el("div", "warn"); w.setAttribute("role", "alert");
+    if (matches.length) {
+      w.appendChild(el("strong", null, "This repository is already connected to a project on ImmXrsive."));
+      w.appendChild(el("span", null, "You can view or ask to join the existing project instead of creating a duplicate."));
+      matches.forEach(function (m) {
+        var row = el("div", "row");
+        row.appendChild(el("span", null, m.title));
+        if (m.published) { var a = el("a", "btn inline small ghost", "View project"); a.href = "project.html?id=" + encodeURIComponent(m.id); a.target = "_blank"; a.rel = "noopener"; row.appendChild(a); }
+        row.appendChild(btn("Ask to join", "btn inline small", async function () {
+          try { var d = await call("/api/projects/" + encodeURIComponent(m.id) + "/join", "POST", { role: $("my_role").value }); tell(d.message); box.replaceChildren(); $("editor").hidden = true; await loadLists(); }
+          catch (e) { tell(e.message, true); }
+        }));
+        w.appendChild(row);
+      });
+      if (forCreate) w.appendChild(btn("It's a different project. Create it anyway", "link", function () { saveNew(true); }));
+    }
+    if (similar.length) {
+      w.appendChild(el("strong", null, "Projects with a similar name already exist. They are never merged automatically."));
+      similar.forEach(function (m) {
+        var row = el("div", "row");
+        row.appendChild(el("span", null, m.title));
+        var a = el("a", "btn inline small ghost", "View project"); a.href = "project.html?id=" + encodeURIComponent(m.id); a.target = "_blank"; a.rel = "noopener"; row.appendChild(a);
+        w.appendChild(row);
+      });
+      if (forCreate && !matches.length) w.appendChild(btn("It's a different project. Create it", "btn inline small", function () { saveNew(true); }));
+    }
+    box.appendChild(w);
+  }
+  async function importGithub() {
+    var url = $("gh-url").value.trim();
+    if (!url) { tell("Paste a GitHub repository link first.", true); $("gh-url").focus(); return; }
+    tell("Importing from GitHub…");
+    try {
+      var d = await call("/api/github/repo?url=" + encodeURIComponent(url));
+      var s = d.suggestion;
+      if (s.title) $("title").value = s.title;
+      if (s.description) $("description").value = s.description;
+      if (s.technologies.length) $("technologies").value = s.technologies.join(", ");
+      if (s.project_date) $("project_date").value = s.project_date;
+      if (s.repo_url) { var repos = splitList($("repo_urls").value, /\n/); if (repos.indexOf(s.repo_url) < 0) repos.push(s.repo_url); $("repo_urls").value = repos.join("\n"); }
+      if (s.homepage && !$("playable_url").value) $("playable_url").value = s.homepage;
+      showDupes({ matches: d.duplicates }, true);
+      tell("Imported suggestions filled in. Review and edit them, then save." + (s.topics.length ? " GitHub topics: " + s.topics.join(", ") : ""));
+    } catch (e) { tell(e.message, true); }
+  }
+  async function saveNew(acknowledge) {
+    var v = formValues();
+    if (!v.title) { tell("Add a project title.", true); $("title").focus(); return; }
+    if (!acknowledge) {
+      // Warn about existing projects first (same repository, or a similar name). Nothing is merged.
+      try {
+        var chk = await call("/api/projects/duplicates", "POST", { repo_urls: v.repo_urls, title: v.title });
+        if (chk.repo_matches.length || chk.similar_titles.length) {
+          showDupes(chk, true);
+          tell(chk.repo_matches.length ? "This repository is already connected to a project." : "Similar project names exist. Check them, or create yours anyway.", true);
+          return;
+        }
+      } catch (e) { if (e.status === 422) { tell(e.message, true); return; } }
+    }
+    v.my_role = $("my_role").value; v.acknowledge_duplicates = !!acknowledge;
+    try {
+      var d = await call("/api/projects", "POST", v);
+      tell(d.message); $("dupes").replaceChildren(); await loadLists(); await openProject(d.id);
+    } catch (e) {
+      if (e.status === 409 && e.detail && e.detail.code === "duplicate_repository") { tell(e.detail.message, true); showDupes(e.detail, true); }
+      else tell(e.message, true);
+    }
+  }
+  async function saveExisting() {
+    var v = formValues(); v.version = current.version;
+    if (!v.title) { tell("Add a project title.", true); $("title").focus(); return; }
+    try {
+      var d = await call("/api/projects/" + encodeURIComponent(current.id), "PUT", v);
+      tell(d.message); await loadLists(); await openProject(current.id);
+    } catch (e) {
+      if (e.status === 409 && e.detail && e.detail.code === "stale_version") {
+        tell(e.detail.message, true);
+        var box = $("conflict"); box.replaceChildren();
+        var w = el("div", "warn"); w.setAttribute("role", "alert");
+        w.appendChild(el("strong", null, "Not saved: someone saved a newer version first."));
+        w.appendChild(el("span", null, "Your unsaved text is copied here so you can re-apply it after loading the latest version."));
+        var pre = el("pre", "keep", "Title: " + v.title + "\nDescription: " + v.description + "\nTechnologies: " + v.technologies.join(", "));
+        w.appendChild(pre);
+        w.appendChild(btn("Load latest version", "btn inline small", async function () { await openProject(current.id); $("conflict").appendChild(w); w.lastChild.remove(); }));
+        box.appendChild(w);
+      } else tell(e.message, true);
+    }
+  }
+
+  // ---------------- wiring
+  $("add").onclick = openNew;
+  $("cancel").onclick = function () { $("editor").hidden = true; history.replaceState(null, "", "projects.html"); $("add").focus(); };
+  $("gh-import").onclick = importGithub;
+  $("pform").onsubmit = function (e) { e.preventDefault(); current ? saveExisting() : saveNew(false); };
+  $("publish").onclick = function () { act("publish"); };
+  $("unpublish").onclick = function () { act("unpublish"); };
+  $("invite").onclick = async function () {
+    var user = $("inv-user").value.trim();
+    if (!user) { tell("Enter your teammate's GitHub username.", true); $("inv-user").focus(); return; }
+    await act("invitations", { github_username: user, role: $("inv-role").value });
+    $("inv-user").value = "";
+  };
+  $("transfer").onclick = function () {
+    var to = $("transfer-to").value; if (!to) return;
+    if (confirm("Make this contributor the maintainer? You will no longer edit shared details.")) act("transfer", { student_id: to });
+  };
+  $("c-save").onclick = async function () {
+    try {
+      var d = await call("/api/projects/" + encodeURIComponent(current.id) + "/my-contribution", "PUT",
+        { role: $("c-role").value, statement: $("c-statement").value.trim(), featured: $("c-featured").checked });
+      tell(d.message); await loadLists(); await openProject(current.id);
+    } catch (e) { tell(e.message, true); }
+  };
+  $("logout").onclick = async function () { try { await call("/api/auth/logout", "POST"); } catch (e) {} sessionStorage.removeItem("imx_token"); location.href = "login.html"; };
+
+  async function init() {
+    if (!token()) { location.href = "login.html"; return; }
+    try {
+      var me = await call("/api/auth/me");
+      if (!me.verified) { tell("Verify your Algoma email on the sign-in page before adding projects.", true); setTimeout(function () { location.href = "login.html"; }, 2500); return; }
+      ROLES = (await call("/api/roles")).roles;
+      fillRoles($("my_role"));
+      await loadLists();
+      $("app").hidden = false;
+      tell("Signed in as " + me.name + ".");
+      var q = new URLSearchParams(location.search);
+      if (q.get("id")) openProject(q.get("id")); else if (q.get("new")) openNew();
+    } catch (e) { tell(e.message + " The server may be waking up; refresh in a moment.", true); }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

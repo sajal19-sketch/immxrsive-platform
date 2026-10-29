@@ -152,25 +152,21 @@
       stack.appendChild(section("Open to", availabilityTags));
     }
 
-    // The public detail API currently supplies project_ids / project_count,
-    // not full project objects. Link by published IDs without inventing content.
-    var projectIds = list(p.project_ids);
-    if (projectIds.length) {
-      var projectLinks = el("div", "tags");
-      projectIds.forEach(function (projectId) {
-        if (!X.validId(projectId)) return;
-        var a = el("a", "tag", projectId);
-        a.href = "project.html?id=" + encodeURIComponent(projectId);
-        projectLinks.appendChild(a);
-      });
-      if (projectLinks.children.length) stack.appendChild(section("Projects", projectLinks));
-    } else if (list(p.projects).length) {
+    // R3: projects come from accepted, featured memberships of published projects.
+    var linked = Array.isArray(p.projects) ? p.projects.filter(function (pr) { return pr && X.validId(pr.id); }) : [];
+    if (linked.length) {
       var projectList = el("div", "ev-grid");
-      p.projects.forEach(function (pr) {
+      linked.forEach(function (pr) {
         var card = el("article", "ev");
-        if (pr && pr.role) card.appendChild(el("span", "meta", pr.role));
-        card.appendChild(el("h3", null, pr && pr.title || "Untitled project"));
-        if (pr && pr.summary) card.appendChild(el("p", null, pr.summary));
+        if (pr.role) card.appendChild(el("span", "meta", pr.role));
+        var h3 = el("h3");
+        var a = el("a", null, pr.title || "Untitled project");
+        a.href = "project.html?id=" + encodeURIComponent(pr.id);
+        h3.appendChild(a);
+        card.appendChild(h3);
+        var go = el("a", "go", "View project, roles and demo →");
+        go.href = a.href;
+        card.appendChild(go);
         projectList.appendChild(card);
       });
       stack.appendChild(section("Projects", projectList));

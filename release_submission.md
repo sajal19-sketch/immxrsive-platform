@@ -16,6 +16,25 @@ https://immxrsive-api.onrender.com
 
 ---
 
+## Release 3 — Shared Projects, Contributor Evidence, Playable Demos
+
+**Release Tag:** R3-submission
+**Commit SHA:** `<PASTE FULL SHA OF THE R3-submission COMMIT>`
+**Project Option:** Project 1
+**Release notes / known issues / team decisions:** [RELEASE_NOTES_R3.md](RELEASE_NOTES_R3.md)
+**Evaluation adapter:** [evaluation_adapter.json](evaluation_adapter.json) (release R3)
+
+**QA evidence**
+- Shared published project with 2+ accepted contributors: `<PASTE URL>`
+- Project with working demo and fallback: `<PASTE URL>`
+- Public repository used for GitHub import: `<PASTE URL>`
+- Hosted demo: https://sajal19-sketch.github.io/immxrsive-platform/demo/working_demo.html
+- Hosted fallback: https://sajal19-sketch.github.io/immxrsive-platform/demo/fallback.svg
+
+**Test access:** reviewers sign in with their own GitHub account and verify their own @algomau.ca email. No shared passwords; nothing sensitive is in this repository.
+
+---
+
 ## Release 2 — Resume Parsing & Security
 
 **Release Tag:** R2-submission
