@@ -61,7 +61,14 @@ QA evidence prepared by the team:
 - Demos open in a new tab rather than embedded. This keeps arbitrary embed code out of our pages and isolates broken demos.
 - Not built (explicit non-requirements): staff verification, audit-history UI, duplicate merging.
 
-## Tests
+## Testing
 
-- 18 backend tests run against PostgreSQL 16 (including the three cases in `data/project_duplicate_cases.json` and the roles in `data/standard_roles.json`) covering create, invite, accept/decline, contribution ownership, authorization by changed IDs, soft remove/restore, transfer, duplicate warning and join, stale-version conflict, repository separation, technologies vs skills, unpublished visibility and GitHub import.
-- Browser checks at 390px: project page (play/source links, broken fallback, contributor roles, no horizontal scroll, 404 state) and My Projects (import, similar-name and duplicate-repository warnings, conflict box, labels, keyboard focus). 22 of 22 passed.
+Checked against the live deployment (GitHub Pages + Render) on 2026-10-29:
+
+- Public project page for the QA evidence project: Play Demo, View Source, fallback image and caption, both contributors with their standard roles, Inquire link. Usable at 390px with no horizontal scroll.
+- Unknown or malformed project IDs show a "Project not found" page, and site navigation still works.
+- Write routes (`POST /api/projects`, `PUT /api/projects/{id}`, `GET /api/my/projects`, `GET /api/github/repo`) refuse requests with no sign-in (401).
+- `GET /api/roles` returns the 12 roles from `standard_roles.json`.
+- Directory: each student's `projects` lists only accepted, published memberships with their role. Project technologies are not added to personal skills.
+- `demo/working_demo.html` and `demo/fallback.svg` are byte-for-byte the Moodle Release 3 fixtures.
+- Phone header at 320, 390 and 800px: every navigation link is visible and none is pushed off-screen.
