@@ -78,9 +78,13 @@
   // While it is empty, inquiries are only saved in this browser so you can test the flow.
   var INQUIRY_URL = "";
 
-  // Read ?source_id=S01 from the URL.
-  var raw = new URLSearchParams(window.location.search).get("source_id");
-  var sourceId = X.validId(raw) ? raw : "";
+    // Inquiry context: source_type, source_id, source_name, source_url (R1.18, R1.19).
+  var params = new URLSearchParams(window.location.search);
+  var raw = params.get("source_id");
+  var sourceId = (raw && /^[A-Za-z0-9_-]{1,64}$/.test(raw)) ? raw : "";
+  var sourceType = sourceId ? (params.get("source_type") === "project" ? "project" : "student") : "";
+  var sourceName = "";
+  var sourceUrl = sourceId ? location.href.split("intake.html")[0] + (sourceType === "project" ? "project.html?id=" : "student.html?id=") + encodeURIComponent(sourceId) : "";
   $("source_id").value = sourceId;
 
   var about = $("about");
@@ -89,22 +93,30 @@
   }
   if (!sourceId) {
     setAbout("General inquiry");
+  } else if (sourceType === "project") {
+    sourceName = (params.get("source_name") || "").slice(0, 150);
+    setAbout("Project: " + (sourceName || sourceId));
+    fetch("https://immxrsive-api.onrender.com/api/projects/" + encodeURIComponent(sourceId))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (pr) { if (pr && pr.title) { sourceName = pr.title; setAbout("Project: " + pr.title); } })
+      .catch(function () {});
   } else {
     setAbout(sourceId.toUpperCase());
-    // Swap the id for the student's name once the directory loads.
     X.loadDirectory().then(function (res) {
       var p = res.data.filter(function (x) { return lc(x.id) === lc(sourceId); })[0];
-      if (p) { setAbout(p.name + " (" + p.id.toUpperCase() + ")"); document.title = "Inquiry about " + p.name + " · ImmXrsive"; }
+      if (p) { sourceName = p.name; setAbout(p.name + " (" + p.id.toUpperCase() + ")"); document.title = "Inquiry about " + p.name + " · ImmXrsive"; }
     });
   }
-
   function msg(text, cls) { var m = $("msg"); m.textContent = text; m.className = "form-msg" + (cls ? " " + cls : ""); }
 
   $("form").addEventListener("submit", function (e) {
     e.preventDefault();
     if ($("website").value) return; // honeypot: bots fill this in, people never see it
     var d = {
+            source_type: sourceType,
       source_id: sourceId,
+      source_name: sourceName,
+      source_url: sourceUrl,
       name: $("name").value.trim(),
       company: $("company").value.trim(),
       email: $("email").value.trim(),
