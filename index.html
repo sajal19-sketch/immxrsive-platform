@@ -41,7 +41,6 @@
           <a class="btn" href="#index">Begin descent <span aria-hidden="true">↓</span></a>
           <span class="cue">Scroll to descend</span>
         </div>
-        <div class="telemetry" aria-hidden="true"><div><small>Target</small><b>Gargantua</b></div><div><small>Distance</small><b id="t-dist">10.40 AU</b></div><div><small>Time dilation</small><b class="warn" id="t-dil">1 h = 7 yr</b></div></div>
       </div>
     </section>
 
@@ -141,17 +140,6 @@
   var grid = $("grid"), countEl = $("count"), clearBtn = $("clear"), banner = $("banner");
   var qEl = $("q"), statusEl = $("status"), availEl = $("avail"), sortEl = $("sort");
   var all = [], filtered = [];
-
-  /* ---------- Telemetry ---------- */
-  (function () {
-    var d = $("t-dist"), l = $("t-dil");
-    function upd() {
-      var h = Math.max(1, document.documentElement.scrollHeight - window.innerHeight), p = Math.min(1, (window.scrollY || 0) / h);
-      d.textContent = (10.4 * (1 - p * 0.92)).toFixed(2) + " AU";
-      l.textContent = "1 h = " + Math.round(7 + p * 60) + " yr";
-    }
-    window.addEventListener("scroll", upd, { passive: true }); upd();
-  })();
 
   /* ---------- Search parsing: "," = AND, "|" = OR ---------- */
   function parseQuery(raw) {
