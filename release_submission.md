@@ -19,7 +19,9 @@ https://immxrsive-api.onrender.com
 ## Release 3 — Shared Projects, Contributor Evidence, Playable Demos
 
 **Release Tag:** R3-submission
-**Commit SHA:** `<PASTE FULL SHA OF THE R3-submission COMMIT>`
+**Commit SHA:** a37b83d34ccd9c38a2e358c9d066752b788653b1
+
+_The R3-submission tag points to commit a37b83d, the last commit made before the Release 3 freeze (Oct 29, 2026, 9:56 p.m. Toronto time). No code changes were made after it._
 **Project Option:** Project 1
 **Release notes / known issues / team decisions:** [RELEASE_NOTES_R3.md](RELEASE_NOTES_R3.md)
 **Evaluation adapter:** [evaluation_adapter.json](evaluation_adapter.json) (release R3)
