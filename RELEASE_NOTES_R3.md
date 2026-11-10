@@ -72,3 +72,9 @@ Checked against the live deployment (GitHub Pages + Render) on 2026-10-29:
 - Directory: each student's `projects` lists only accepted, published memberships with their role. Project technologies are not added to personal skills.
 - `demo/working_demo.html` and `demo/fallback.svg` are byte-for-byte the Moodle Release 3 fixtures.
 - Phone header at 320, 390 and 800px: every navigation link is visible and none is pushed off-screen.
+
+## Post-freeze fixes (do not change the frozen R3-submission tag)
+
+| Issue | Problem in frozen version | Fix |
+|---|---|---|
+| #11 | Employer inquiry showed "Inquiry submitted successfully." but was only saved in the visitor's own browser; nothing reached staff. The frozen release notes did not list this as a known issue. | New `POST /api/inquiries` stores each inquiry in PostgreSQL with server-checked context (student or project, name, link). The form shows success only after the server confirms, and shows a clear error if the server refuses or cannot be reached. Staff read inquiries with `GET /api/staff/inquiries` and the `INQUIRY_ADMIN_TOKEN` set on Render (not in the repository). Includes validation, a hidden spam field and a limit of 5 inquiries per 10 minutes per sender. |

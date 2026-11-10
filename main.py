@@ -27,6 +27,7 @@ from pypdf import PdfReader
 from schemas import VerificationRequest, VerificationSubmit
 from email_service import send_verification_email
 import projects_r3
+import inquiries
 
 FRONTEND = os.environ.get('FRONTEND_URL', 'https://sajal19-sketch.github.io/immxrsive-platform').rstrip('/')
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
@@ -115,6 +116,7 @@ def setup_db():
             project_id TEXT, student_id TEXT, role TEXT,
             UNIQUE(project_id, student_id, role))''')
         projects_r3.setup_schema(conn)
+        inquiries.setup_schema(conn)
         conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS students_github_unique ON students(github_id) WHERE github_id IS NOT NULL')
         conn.execute('''CREATE UNIQUE INDEX IF NOT EXISTS verified_email_unique
             ON students(lower(email)) WHERE email IS NOT NULL AND github_id IS NOT NULL AND is_algoma_verified=1''')
@@ -430,3 +432,6 @@ async def parse_resume(file:UploadFile=File(...),student=Depends(verified)):
 
 projects_r3.configure(db=db, authenticated=authenticated, parsed=parsed, skill_catalog=skill_catalog, frontend=FRONTEND)
 app.include_router(projects_r3.router)
+
+inquiries.configure(db=db, frontend=FRONTEND)
+app.include_router(inquiries.router)

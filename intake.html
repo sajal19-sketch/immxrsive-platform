@@ -74,9 +74,9 @@
   "use strict";
   var X = window.IMX, $ = X.$, el = X.el, lc = X.lc;
 
-  // Set this to your backend route to receive inquiries as JSON (POST).
-  // While it is empty, inquiries are only saved in this browser so you can test the flow.
-  var INQUIRY_URL = "";
+  // Inquiries are stored by the ImmXrsive API (issue #11). Success is shown only
+  // after the server confirms it saved the inquiry.
+  var INQUIRY_URL = "https://immxrsive-api.onrender.com/api/inquiries";
 
     // Inquiry context: source_type, source_id, source_name, source_url (R1.18, R1.19).
   var params = new URLSearchParams(window.location.search);
@@ -128,19 +128,34 @@
     if (!/^\S+@\S+\.\S+$/.test(d.email)) return msg("Enter a valid email address.", "err");
     if (!d.message) return msg("Add a short message.", "err");
 
-    var btn = $("send"); btn.disabled = true; msg("Sending", "");
-    var done = function (note) {
-      $("form").reset(); msg(""); btn.disabled = false; X.toast(note);
-      document.dispatchEvent(new CustomEvent("inquiry:submit", { detail: d }));
+    var btn = $("send"); btn.disabled = true; msg("Sending. The server may take up to a minute to wake up.", "");
+    var body = {
+      source_type: d.source_type, source_id: d.source_id, name: d.name, company: d.company,
+      email: d.email, role_type: d.role_type, message: d.message, website: $("website").value
     };
-    if (!INQUIRY_URL) {
-      try { var box = JSON.parse(localStorage.getItem("imx_inquiries") || "[]"); box.push(d); localStorage.setItem("imx_inquiries", JSON.stringify(box)); } catch (err) {}
-      done("Inquiry submitted successfully.");
-      return;
-    }
-    fetch(INQUIRY_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d), credentials: "same-origin" })
-      .then(function (res) { if (!res.ok) throw new Error("HTTP " + res.status); done("Inquiry sent."); })
-      .catch(function () { btn.disabled = false; msg("Couldn't send your inquiry. Try again in a moment.", "err"); });
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 70000);
+    fetch(INQUIRY_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal })
+      .then(function (res) {
+        clearTimeout(timer);
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) {
+            var detail = data && data.detail;
+            var e = new Error(typeof detail === "string" ? detail : "Couldn't send your inquiry. Try again in a moment.");
+            e.fromServer = true;
+            throw e;
+          }
+          $("form").reset(); btn.disabled = false;
+          msg("Sent. ImmXrsive staff received your inquiry" + (d.source_name ? " about " + d.source_name : "") + " and will follow up by email.", "ok");
+          X.toast("Inquiry sent to ImmXrsive staff.");
+          document.dispatchEvent(new CustomEvent("inquiry:submit", { detail: d }));
+        });
+      })
+      .catch(function (err) {
+        clearTimeout(timer);
+        btn.disabled = false;
+        msg(err && err.fromServer ? err.message : "Couldn't reach the server, so your inquiry was not sent. Check your connection and try again.", "err");
+      });
   });
 })();
 </script>
