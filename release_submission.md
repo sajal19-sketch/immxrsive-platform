@@ -1,4 +1,50 @@
-# ImmXrsive Talent Platform 
+Chosen challenge: R4.10 - Untrusted Website Content
+
+# Release Submission — ImmXrsive Talent Platform
+
+Release: R4
+Team: team-10 (Sajal Patel, Dhruv Panchani, Harshit Piyushkumar Patel)
+Project Option: Project 1
+Deployment: https://sajal19-sketch.github.io/immxrsive-platform/ (frontend) · https://immxrsive-api.onrender.com (API)
+Repository: https://github.com/sajal19-sketch/immxrsive-platform
+Release tag: R4-submission
+Commit: <full SHA of the commit tagged R4-submission — fill in after tagging>
+Adapter: evaluation_adapter.json
+Known issues: see RELEASE_NOTES_R4.md → "Known issues / limits"
+Test notes: staff area is https://sajal19-sketch.github.io/immxrsive-platform/admin.html. The API sleeps when idle; the first request can take up to a minute.
+
+## Test accounts
+
+- **Staff/admin (R4.01):** one staff test account, sign in at `admin.html` with a
+  username and password. The username and password are sent to reviewers and the
+  instructor through the approved private course channel only. Do not try to
+  get staff access any other way.
+- **Student maintainer:** reviewers sign in with their own GitHub account
+  (`login.html`) and verify their own @algomau.ca email, as in R2–R3. To test the
+  student partner request (Scenario I), create a project under My Projects; you
+  are its maintainer.
+- **Public visitor:** no account. Use an incognito window.
+
+## Release-specific evidence
+
+- Chosen Challenge: **R4.10 – Untrusted Website Content** (details in RELEASE_NOTES_R4.md)
+- Fixture source URLs (published unchanged on GitHub Pages):
+  - company_normal.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_normal.html
+  - company_sparse.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_sparse.html
+  - company_prompt_injection.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_prompt_injection.html
+  - company_same_name_other_domain.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_same_name_other_domain.html
+  - Setup to repeat an import: staff sign-in → Import partner from website → paste URL → Get details from website.
+- Published fixture partner imported from a supplied page: <partner.html?id=… link — fill in after creating it on production>
+- Company with at least two collaborations: <same partner, link — fill in>
+- Student-requested relationship shown pending → staff review: <project link + short note — fill in>
+- Release notes / known issues: [RELEASE_NOTES_R4.md](RELEASE_NOTES_R4.md)
+- Automated evidence: `tests/test_r4_api.py` (72 checks, all passed on a local disposable database)
+
+---
+
+## Earlier releases
+
+### Team and links (from R1–R3) 
 
 **Team Members:**
 - Sajal Patel

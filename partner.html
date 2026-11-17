@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Industry partner · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<link rel="stylesheet" href="r4.css">
+</head>
+<body>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="partners.html">Industry partners</a><a class="cta" href="intake.html">Inquire</a></nav></div></header>
+<main class="chapter sub"><div class="wrap r4">
+  <a href="partners.html" class="muted">← All industry partners</a>
+  <div id="content" aria-live="polite"><p class="muted" style="padding:40px 0">Loading partner…</p></div>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = window.IMX_API, root = document.getElementById("content");
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function safeHttps(u) { try { var x = new URL(String(u || "")); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; } }
+  function a(label, href, cls) { var n = el("a", cls || "", label); n.href = href; return n; }
+  function inquiryHref(type, id, name) { return "intake.html?source_type=" + type + "&source_id=" + encodeURIComponent(id) + "&source_name=" + encodeURIComponent(name || ""); }
+  function fail(title, text) {
+    root.replaceChildren(el("h1", null, title), el("p", "muted", text), a("Browse industry partners", "partners.html", "btn inline"));
+  }
+  function collabBlock(x, company) {
+    var b = el("article", "collab " + x.status); b.id = x.id;
+    var top = el("div", "row");
+    top.appendChild(el("span", "pill " + x.status, x.status === "current" ? "Current" : "Past"));
+    if (x.years) top.appendChild(el("span", "muted", x.years));
+    b.appendChild(top);
+    b.appendChild(el("h3", null, x.title));
+    if (x.kind === "limited") {
+      b.appendChild(el("p", null, x.summary));
+      b.appendChild(el("p", "muted", "Details of this collaboration are confidential."));
+    } else {
+      if (x.description) b.appendChild(el("p", null, x.description));
+      if (x.outcome) { var o = el("p"); o.appendChild(el("strong", null, "Outcome: ")); o.appendChild(document.createTextNode(x.outcome)); b.appendChild(o); }
+      if (x.projects.length) { var pl = el("div", "links"); pl.appendChild(el("span", "muted", "Projects:")); x.projects.forEach(function (p) { pl.appendChild(a(p.title, "project.html?id=" + encodeURIComponent(p.id))); }); b.appendChild(pl); }
+      if (x.students.length) { var sl = el("div", "links"); sl.appendChild(el("span", "muted", "Students:")); x.students.forEach(function (s) { sl.appendChild(a(s.name, "student.html?id=" + encodeURIComponent(s.id))); }); b.appendChild(sl); }
+    }
+    var ask = a("Ask about this collaboration", inquiryHref("collaboration", x.id, company.name + " – " + x.title), "btn inline small ghost");
+    ask.style.marginTop = "8px"; b.appendChild(ask);
+    return b;
+  }
+  function render(c) {
+    document.title = c.name + " · Industry partner · ImmXrsive";
+    root.replaceChildren();
+    var head = el("div", "row");
+    var logo = safeHttps(c.logo_url);
+    if (logo) { var img = document.createElement("img"); img.className = "logo-img"; img.alt = c.name + " logo"; img.src = logo; img.onerror = function () { img.remove(); }; head.appendChild(img); }
+    head.appendChild(el("h1", null, c.name));
+    root.appendChild(head);
+    var tags = el("div", "row");
+    if (c.relationship === "current") tags.appendChild(el("span", "pill current", "Working with ImmXrsive now"));
+    else if (c.relationship === "past") tags.appendChild(el("span", "pill past", "Past partner"));
+    [c.sector, c.location].forEach(function (t) { if (t) tags.appendChild(el("span", "tag", t)); });
+    root.appendChild(tags);
+
+    var who = el("section"); who.appendChild(el("h2", null, "Who they are"));
+    who.appendChild(el("p", null, c.description || "No description yet."));
+    if ((c.keywords || []).length) { var k = el("div", "tags"); c.keywords.forEach(function (w) { k.appendChild(el("span", "tag", w)); }); who.appendChild(k); }
+    var site = safeHttps(c.website);
+    if (site) { var w = el("p"); var l = a("Visit the company website", site); l.target = "_blank"; l.rel = "noopener noreferrer"; w.appendChild(l); who.appendChild(w); }
+    root.appendChild(who);
+
+    var how = el("section"); how.appendChild(el("h2", null, "How ImmXrsive works with them"));
+    how.appendChild(el("p", null, c.relationship_summary || (c.current.length + c.past.length ? "See the collaborations below." : "Details coming soon.")));
+    root.appendChild(how);
+
+    if (c.current.length) { var cur = el("section"); cur.appendChild(el("h2", null, "Working together now")); c.current.forEach(function (x) { cur.appendChild(collabBlock(x, c)); }); root.appendChild(cur); }
+    if (c.past.length) { var past = el("section"); past.appendChild(el("h2", null, "Past collaborations")); c.past.forEach(function (x) { past.appendChild(collabBlock(x, c)); }); root.appendChild(past); }
+
+    if (c.related_projects.length || c.related_students.length) {
+      var rel = el("section"); rel.appendChild(el("h2", null, "Student work with " + c.name));
+      if (c.related_projects.length) { var g = el("div", "links"); g.appendChild(el("span", "muted", "Projects:")); c.related_projects.forEach(function (p) { g.appendChild(a(p.title, "project.html?id=" + encodeURIComponent(p.id))); }); rel.appendChild(g); }
+      if (c.related_students.length) { var s = el("div", "links"); s.style.marginTop = "8px"; s.appendChild(el("span", "muted", "Students:")); c.related_students.forEach(function (x) { s.appendChild(a(x.name, "student.html?id=" + encodeURIComponent(x.id))); }); rel.appendChild(s); }
+      root.appendChild(rel);
+    }
+    var cta = el("div", "panel");
+    cta.appendChild(el("h2", null, "Interested in working with ImmXrsive?"));
+    cta.appendChild(el("p", "muted", "Your inquiry is sent to ImmXrsive staff with a note that it came from the " + c.name + " page."));
+    cta.appendChild(a("Start a collaboration inquiry", inquiryHref("partner", c.id, c.name), "btn inline"));
+    root.appendChild(cta);
+    if (location.hash) { var t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+  }
+  var id = new URLSearchParams(location.search).get("id") || "";
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) { fail("Partner not found", "This link does not point to a public industry partner."); return; }
+  fetch(API + "/api/partners/" + encodeURIComponent(id))
+    .then(function (r) { if (r.status === 404) { fail("Partner not found", "This partner does not exist or is not public."); return null; } if (!r.ok) throw new Error(); return r.json(); })
+    .then(function (c) { if (c) render(c); })
+    .catch(function () { fail("Could not load this partner", "The server may be waking up. Wait a moment and refresh the page."); });
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>My Projects · ImmXrsive</title>
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 <style>
   .mp{max-width:880px}
   .mp h1{font-size:clamp(30px,5vw,56px);margin:0 0 8px}
@@ -23,6 +24,7 @@
   textarea.ctl{height:auto;min-height:90px;padding:10px 14px;line-height:1.5}
   .formbox{max-width:none}
   .ctl[disabled]{opacity:.65}
+  .ok-line{color:#4ade80}
   pre.keep{white-space:pre-wrap;overflow-wrap:anywhere;font:13px var(--mono);background:#05070d;padding:10px;border-radius:3px}
   @media (max-width:520px){.row .btn{flex:1 1 auto}}
 </style>
@@ -99,6 +101,28 @@
           <label class="f">New maintainer <select class="ctl" id="transfer-to"></select></label>
           <div class="row"><button class="btn inline ghost" id="transfer" type="button">Transfer</button></div>
         </div>
+
+        <h3>Official ImmXrsive verification</h3>
+        <p class="muted">Ask ImmXrsive staff to officially verify this project. Only staff can add the verified mark; it appears on the public page after they approve.</p>
+        <div id="verify-state"></div>
+        <div class="formbox" id="verify-form">
+          <label class="f">Why should this project be verified? <textarea class="ctl" id="v-note" rows="3" maxlength="1500" placeholder="For example: capstone project delivered for North Shore Simulations in Winter 2026, supervised by Prof. Lin."></textarea></label>
+          <label class="f">Supporting link (https, optional) <input class="ctl" id="v-evidence" type="url" placeholder="https://... report, demo video or letter"></label>
+          <div class="row"><button class="btn inline" id="v-send" type="button">Request verification</button></div>
+        </div>
+
+        <h3>Industry partners</h3>
+        <p class="muted">Did a company sponsor, mentor or use this project? Ask staff to add it as an official partner. It shows on your project only after staff approve it.</p>
+        <div id="partner-state"></div>
+        <div class="formbox">
+          <label class="f">Company <select class="ctl" id="pr-company"></select></label>
+          <div id="pr-new" hidden>
+            <label class="f">New company name <input class="ctl" id="pr-name" maxlength="150"></label>
+            <label class="f">Company website (optional) <input class="ctl" id="pr-site" maxlength="300" placeholder="https://company.example"></label>
+          </div>
+          <label class="f">How was this company involved? <textarea class="ctl" id="pr-why" rows="3" maxlength="1500" placeholder="For example: they gave us their training scenario and tested the prototype with their staff."></textarea></label>
+          <div class="row"><button class="btn inline" id="pr-send" type="button">Send partner request</button></div>
+        </div>
       </div>
 
       <div id="mine" hidden>
@@ -118,7 +142,7 @@
 <script>
 (function () {
   "use strict";
-  var API = "https://immxrsive-api.onrender.com";
+  var API = window.IMX_API;
   var $ = function (id) { return document.getElementById(id); };
   var token = function () { return sessionStorage.getItem("imx_token"); };
   var ROLES = [];
@@ -240,7 +264,7 @@
       $("editor-note").textContent = p.is_maintainer
         ? "You are the maintainer: you edit the shared project details and manage teammates."
         : "Only the maintainer edits the shared details. You control your own contribution below.";
-      renderManage(p); renderMine(p);
+      renderManage(p); renderMine(p); renderIndustry(p);
       $("editor").hidden = false;
       history.replaceState(null, "", "projects.html?id=" + encodeURIComponent(p.id));
       $("editor-title").scrollIntoView({ behavior: "smooth" });
@@ -272,6 +296,61 @@
     $("transfer").disabled = !transferTo.children.length;
     if (!transferTo.children.length) { var o = el("option", null, "No other accepted contributors yet"); o.value = ""; transferTo.appendChild(o); }
   }
+  // ---------------- Release 4: verification + industry partner requests
+  var COMPANIES = null;
+  var REQ_LABEL = { pending: "Waiting for staff review", approved: "Approved", rejected: "Not approved", withdrawn: "Withdrawn" };
+  async function renderIndustry(p) {
+    if (!p.is_maintainer) return;
+    var d;
+    try { d = await call("/api/my/projects/" + encodeURIComponent(p.id) + "/industry"); } catch (e) { return; }
+    var vs = $("verify-state"); vs.replaceChildren();
+    var vr = d.verification_request;
+    var pending = vr && vr.status === "pending";
+    if (d.official_verified) vs.appendChild(el("p", "ok-line", "✓ This project is officially verified by ImmXrsive."));
+    else if (pending) vs.appendChild(el("p", "muted", "Verification requested " + new Date(vr.created_at).toLocaleDateString() + ". Waiting for staff review."));
+    else if (vr && vr.status === "rejected") { var w = el("div", "warn"); w.appendChild(el("strong", null, "Staff did not approve the last request.")); if (vr.staff_note) w.appendChild(el("span", null, "Staff note: " + vr.staff_note)); w.appendChild(el("span", "muted", "You can update the project and ask again.")); vs.appendChild(w); }
+    $("verify-form").hidden = d.official_verified || pending;
+
+    var ps = $("partner-state"); ps.replaceChildren();
+    d.partners.forEach(function (c) { ps.appendChild(el("p", null, "✓ Official partner: " + c.name + (c.status === "published" ? "" : " (staff are still preparing this partner's public page)"))); });
+    d.partner_requests.forEach(function (r) {
+      var c = el("div", "card");
+      c.appendChild(el("strong", null, r.company_name));
+      c.appendChild(el("span", "muted", (REQ_LABEL[r.status] || r.status) + " · sent " + new Date(r.created_at).toLocaleDateString()));
+      if (r.staff_note) c.appendChild(el("span", null, "Staff note: " + r.staff_note));
+      if (r.status === "pending") c.appendChild(btn("Withdraw request", "btn inline small ghost", async function () {
+        try { var x = await call("/api/projects/" + encodeURIComponent(p.id) + "/partner-requests/" + encodeURIComponent(r.id) + "/withdraw", "POST", {}); tell(x.message); renderIndustry(p); } catch (e) { tell(e.message, true); }
+      }));
+      ps.appendChild(c);
+    });
+    if (!COMPANIES) {
+      try { COMPANIES = await fetch(API + "/api/partners").then(function (r) { return r.ok ? r.json() : []; }); } catch (e) { COMPANIES = []; }
+    }
+    var sel = $("pr-company"), keep = sel.value; sel.replaceChildren();
+    var first = el("option", null, "Choose a company…"); first.value = ""; sel.appendChild(first);
+    COMPANIES.forEach(function (c) { var o = el("option", null, c.name + (c.location ? " – " + c.location : "")); o.value = c.id; sel.appendChild(o); });
+    var other = el("option", null, "It's not in the list – suggest a new company"); other.value = "__new"; sel.appendChild(other);
+    sel.onchange = function () { $("pr-new").hidden = sel.value !== "__new"; };
+    if (keep && sel.querySelector('option[value="' + CSS.escape(keep) + '"]')) sel.value = keep;   // don't lose a choice in progress
+    $("pr-new").hidden = sel.value !== "__new";
+  }
+  $("v-send").onclick = async function () {
+    var note = $("v-note").value.trim();
+    if (!note) { tell("Explain briefly why this project should be verified.", true); $("v-note").focus(); return; }
+    try { var d = await call("/api/projects/" + encodeURIComponent(current.id) + "/verification-request", "POST", { note: note, evidence_url: $("v-evidence").value.trim() }); tell(d.message); $("v-note").value = ""; $("v-evidence").value = ""; renderIndustry(current); }
+    catch (e) { tell(e.message, true); }
+  };
+  $("pr-send").onclick = async function () {
+    var v = $("pr-company").value, why = $("pr-why").value.trim();
+    if (!v) { tell("Choose a company, or choose to suggest a new one.", true); $("pr-company").focus(); return; }
+    if (!why) { tell("Explain how the company was involved.", true); $("pr-why").focus(); return; }
+    var body = { explanation: why };
+    if (v === "__new") { body.suggested_name = $("pr-name").value.trim(); body.suggested_website = $("pr-site").value.trim(); if (!body.suggested_name) { tell("Type the new company's name.", true); $("pr-name").focus(); return; } }
+    else body.company_id = v;
+    try { var d = await call("/api/projects/" + encodeURIComponent(current.id) + "/partner-requests", "POST", body); tell(d.message); $("pr-why").value = ""; $("pr-name").value = ""; $("pr-site").value = ""; $("pr-company").value = ""; renderIndustry(current); }
+    catch (e) { tell(e.message, true); }
+  };
+
   function renderMine(p) {
     var me = (p.contributors || []).filter(function (c) { return c.is_me; })[0];
     $("mine").hidden = !(me && me.status === "accepted");

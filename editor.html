@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Profile Editor · ImmXrsive</title><link rel="stylesheet" href="style.css"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Profile Editor · ImmXrsive</title><link rel="stylesheet" href="style.css">
+<script src="config.js"></script></head><body>
 <div class="page"><header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a><nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="editor.html" aria-current="page">My Profile</a><a href="projects.html">My Projects</a><button id="logout" type="button">Sign out</button></nav></div></header>
 <main class="chapter sub"><div class="wrap" style="max-width:850px"><h1 style="font-size:clamp(30px,5vw,58px)">Your private profile</h1><p id="message" role="status" aria-live="polite">Checking sign-in…</p>
 <div class="formbox" id="form-section" hidden>
@@ -26,7 +27,7 @@
 <div style="margin-top:30px"><button class="btn inline" id="preview">Preview public view</button><button class="btn inline" id="publish">Publish</button><button class="btn inline" id="unpublish">Unpublish</button></div><p id="publish-state"></p><section id="preview-panel" hidden><h2>Public preview</h2><pre id="preview-output" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></section>
 </div></div></main></div>
 <script>
-const API='https://immxrsive-api.onrender.com', $=id=>document.getElementById(id);
+const API=window.IMX_API, $=id=>document.getElementById(id);
 const token=()=>sessionStorage.getItem('imx_token');
   let catalog=null;
   const skillEntries=()=>document.getElementById('skills').value.split(',').map(x=>x.trim()).filter(Boolean);

@@ -4,7 +4,7 @@
   "use strict";
 
   /* ---------- Config ---------- */
-  var API_URL = "https://immxrsive-api.onrender.com/api/directory";
+  var API_URL = window.IMX_API + "/api/directory";
   var TIMEOUT_MS = 45000;
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 

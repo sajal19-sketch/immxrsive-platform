@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -24,6 +25,7 @@
         <a class="hide-sm" href="index.html#field">The field</a>
         <a href="index.html#index">Index</a>
         <a href="upload.html">Upload</a>
+        <a href="partners.html">Partners</a>
         <a class="cta" href="intake.html">Inquire</a>
       </nav>
     </div>
@@ -52,7 +54,7 @@
   var $ = X.$, el = X.el;
   var root = $("profile"), banner = $("banner");
   var id = new URLSearchParams(window.location.search).get("id");
-  var API = "https://immxrsive-api.onrender.com";
+  var API = window.IMX_API;
   var controller = new AbortController();
   var timeout = setTimeout(function () { controller.abort(); }, 45000);
   var slow = setTimeout(function () {

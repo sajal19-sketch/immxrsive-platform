@@ -1,4 +1,5 @@
-"""ImmXrsive backend (Release 3: shared projects in projects_r3.py).
+"""ImmXrsive backend (Release 3: shared projects in projects_r3.py; Release 4: staff,
+industry partners and collaborations in industry_r4.py).
 Deploy with HTTPS. Requires GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET.
 Cross-origin static frontend uses short-lived OAuth exchange tickets and bearer sessions.
 """
@@ -28,6 +29,7 @@ from schemas import VerificationRequest, VerificationSubmit
 from email_service import send_verification_email
 import projects_r3
 import inquiries
+import industry_r4
 
 FRONTEND = os.environ.get('FRONTEND_URL', 'https://sajal19-sketch.github.io/immxrsive-platform').rstrip('/')
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
@@ -117,6 +119,7 @@ def setup_db():
             UNIQUE(project_id, student_id, role))''')
         projects_r3.setup_schema(conn)
         inquiries.setup_schema(conn)
+        industry_r4.setup_schema(conn)
         conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS students_github_unique ON students(github_id) WHERE github_id IS NOT NULL')
         conn.execute('''CREATE UNIQUE INDEX IF NOT EXISTS verified_email_unique
             ON students(lower(email)) WHERE email IS NOT NULL AND github_id IS NOT NULL AND is_algoma_verified=1''')
@@ -435,3 +438,6 @@ app.include_router(projects_r3.router)
 
 inquiries.configure(db=db, frontend=FRONTEND)
 app.include_router(inquiries.router)
+
+industry_r4.configure(db=db, authenticated=authenticated, parsed=parsed, frontend=FRONTEND)
+app.include_router(industry_r4.router)

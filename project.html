@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Project · ImmXrsive</title>
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 <style>
   .pj{max-width:900px}
   .pj h1{font-size:clamp(30px,6vw,56px);line-height:1.05;margin:14px 0 10px;overflow-wrap:anywhere}
@@ -22,12 +23,15 @@
   .pj-state{padding:60px 0}
   .tags{display:flex;flex-wrap:wrap;gap:8px}
   .tags .tag{white-space:normal;overflow-wrap:anywhere}
+  .pj-verified{display:inline-block;margin:0 0 10px;padding:6px 12px;border:1px solid #5db7d9;border-radius:999px;color:#9fdcf2;font:12px var(--mono);letter-spacing:.06em}
+  .pj-partners{margin:0 0 14px;color:#cfccc2}
+  .pj-partners a{text-decoration:underline;text-underline-offset:4px}
 </style>
 </head>
 <body>
 <div class="page">
 <header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
-<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="projects.html">My Projects</a><a class="cta" href="intake.html">Inquire</a></nav></div></header>
+<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="projects.html">My Projects</a><a href="partners.html">Partners</a><a class="cta" href="intake.html">Inquire</a></nav></div></header>
 <main class="chapter sub"><div class="wrap pj">
   <a href="index.html" id="back" class="pj-note">← Back to directory</a>
   <div id="content" aria-live="polite"><p class="pj-state">Loading project…</p></div>
@@ -36,7 +40,7 @@
 <script>
 (function () {
   "use strict";
-  var API = "https://immxrsive-api.onrender.com";
+  var API = window.IMX_API;
   var root = document.getElementById("content");
 
   function el(tag, cls, text) {
@@ -77,6 +81,7 @@
     var meta = el("div", "pj-meta");
     [p.domain, p.status, p.project_date].forEach(function (m) { if (m) meta.appendChild(el("span", "tag", m)); });
     root.appendChild(meta);
+    var industry = el("div"); root.appendChild(industry);   // filled by loadIndustry (R4)
     root.appendChild(el("p", "pj-desc", p.description || "No description yet."));
 
     // ---- Demo / evidence: links only, never embedded code (R3.19-R3.22)
@@ -131,10 +136,35 @@
     tech.appendChild(el("p", "pj-note", "These describe the project. Each contributor's personal skills are on their own profile."));
     root.appendChild(section("Project technologies", tech));
 
+    loadIndustry(p.id, industry);
+
     var inquiry = el("a", "btn inline", "Inquire about this project");
     inquiry.href = "intake.html?source_type=project&source_id=" + encodeURIComponent(p.id) + "&source_name=" + encodeURIComponent(p.title);
     var wrap = el("div", "pj-actions"); wrap.appendChild(inquiry);
     root.appendChild(section("Interested?", wrap));
+  }
+
+  // ---- Release 4: official verification and approved industry partners (set by staff only)
+  function loadIndustry(pid, box) {
+    fetch(API + "/api/projects/" + encodeURIComponent(pid) + "/industry")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        if (d.official_verified) {
+          var v = el("p", "pj-verified", "✓ Officially verified by ImmXrsive");
+          if (d.verified_at) v.title = "Verified " + new Date(d.verified_at).toLocaleDateString();
+          box.appendChild(v);
+        }
+        if (d.partners.length) {
+          var row = el("p", "pj-partners");
+          row.appendChild(document.createTextNode("Industry partner" + (d.partners.length > 1 ? "s" : "") + ": "));
+          d.partners.forEach(function (c, i) {
+            if (i) row.appendChild(document.createTextNode(", "));
+            var a = el("a", null, c.name); a.href = "partner.html?id=" + encodeURIComponent(c.id); row.appendChild(a);
+          });
+          box.appendChild(row);
+        }
+      }).catch(function () {});
   }
 
   var id = new URLSearchParams(location.search).get("id") || "";

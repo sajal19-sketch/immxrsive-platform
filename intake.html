@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -24,6 +25,7 @@
         <a class="hide-sm" href="index.html#field">The field</a>
         <a href="index.html#index">Index</a>
         <a href="upload.html">Upload</a>
+        <a href="partners.html">Partners</a>
         <a class="cta" href="intake.html">Inquire</a>
         <a href="login.html" style="background: #004b87; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; margin-left: 10px;">Algoma Login</a>
       </nav>
@@ -76,15 +78,16 @@
 
   // Inquiries are stored by the ImmXrsive API (issue #11). Success is shown only
   // after the server confirms it saved the inquiry.
-  var INQUIRY_URL = "https://immxrsive-api.onrender.com/api/inquiries";
+  var INQUIRY_URL = window.IMX_API + "/api/inquiries";
 
     // Inquiry context: source_type, source_id, source_name, source_url (R1.18, R1.19).
   var params = new URLSearchParams(window.location.search);
   var raw = params.get("source_id");
   var sourceId = (raw && /^[A-Za-z0-9_-]{1,64}$/.test(raw)) ? raw : "";
-  var sourceType = sourceId ? (params.get("source_type") === "project" ? "project" : "student") : "";
+  var TYPES = { project: "project.html?id=", partner: "partner.html?id=", collaboration: "partner.html#", student: "student.html?id=" };
+  var sourceType = sourceId ? (TYPES[params.get("source_type")] ? params.get("source_type") : "student") : "";
   var sourceName = "";
-  var sourceUrl = sourceId ? location.href.split("intake.html")[0] + (sourceType === "project" ? "project.html?id=" : "student.html?id=") + encodeURIComponent(sourceId) : "";
+  var sourceUrl = sourceId ? location.href.split("intake.html")[0] + TYPES[sourceType] + encodeURIComponent(sourceId) : "";
   $("source_id").value = sourceId;
 
   var about = $("about");
@@ -93,10 +96,22 @@
   }
   if (!sourceId) {
     setAbout("General inquiry");
+  } else if (sourceType === "partner" || sourceType === "collaboration") {
+    // Display label only; the server looks up the real name and link itself.
+    sourceName = (params.get("source_name") || "").slice(0, 200);
+    setAbout((sourceType === "partner" ? "Industry partner: " : "Collaboration: ") + (sourceName || sourceId));
+    if (sourceType === "partner") {
+      fetch(window.IMX_API + "/api/partners/" + encodeURIComponent(sourceId))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (c) { if (c && c.name) { sourceName = c.name; setAbout("Industry partner: " + c.name); } })
+        .catch(function () {});
+    }
+    var h = document.querySelector(".sub-copy");
+    if (h) h.textContent = "Tell us about the project, study or hiring need you have in mind. ImmXrsive staff will reply by email.";
   } else if (sourceType === "project") {
     sourceName = (params.get("source_name") || "").slice(0, 150);
     setAbout("Project: " + (sourceName || sourceId));
-    fetch("https://immxrsive-api.onrender.com/api/projects/" + encodeURIComponent(sourceId))
+    fetch(window.IMX_API + "/api/projects/" + encodeURIComponent(sourceId))
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (pr) { if (pr && pr.title) { sourceName = pr.title; setAbout("Project: " + pr.title); } })
       .catch(function () {});

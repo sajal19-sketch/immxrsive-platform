@@ -1,0 +1,55 @@
+/* Release 4 pages: staff admin, industry partners. Builds on style.css. */
+.r4{max-width:980px}
+.r4 h1{font-size:clamp(28px,5vw,52px);line-height:1.08;margin:8px 0 10px;overflow-wrap:anywhere}
+.r4 h2{font-size:21px;margin:34px 0 12px}
+.r4 h3{font-size:17px;margin:22px 0 8px}
+.r4 p{overflow-wrap:anywhere}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.muted{color:var(--muted);font-size:14px}
+.msg{min-height:1.4em;margin:10px 0}
+.msg.err{color:#f87171}.msg.ok{color:#4ade80}
+.card{border:1px solid var(--line);border-radius:4px;padding:16px;background:rgba(7,10,20,.85);display:grid;gap:8px;margin:0 0 12px}
+.card strong,.card h3{overflow-wrap:anywhere;margin:0}
+.panel{border:1px solid var(--line-strong);border-radius:4px;padding:18px;margin-top:18px;background:rgba(3,7,11,.92)}
+.warn{border:1px solid var(--warn);border-radius:4px;padding:14px;margin:12px 0;display:grid;gap:8px}
+.good{border:1px solid #2f7d55;border-radius:4px;padding:14px;margin:12px 0;display:grid;gap:6px}
+.btn.small{padding:8px 12px;font-size:11.5px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+button.link{background:none;border:0;color:var(--hud,#5db7d9);text-decoration:underline;cursor:pointer;padding:0;font:inherit;text-align:left}
+textarea.ctl{height:auto;min-height:90px;padding:10px 14px;line-height:1.5}
+.formbox{max-width:none}
+.pill{display:inline-block;font:11px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted)}
+.pill.current{border-color:#2f7d55;color:#6ee7a8}
+.pill.past{border-color:#5b6b85;color:#b6c2d6}
+.pill.draft{border-color:var(--warn);color:var(--warn)}
+.pill.published{border-color:#2f7d55;color:#6ee7a8}
+.pill.verified{border-color:#5db7d9;color:#9fdcf2}
+.tasks{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.task h2{margin:0 0 4px;font-size:18px}
+.task .count{font:600 30px var(--sans);color:var(--fg)}
+.task ul{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}
+.task li{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:8px}
+.task li span{overflow-wrap:anywhere}
+.src{font-size:12.5px;color:var(--muted);margin:-4px 0 6px;overflow-wrap:anywhere}
+.suggest{font-size:13px;border-left:2px solid var(--hud,#5db7d9);padding:4px 10px;margin:-2px 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.choices{display:grid;gap:8px}
+.choices label{display:flex;gap:10px;align-items:flex-start}
+.pick{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:4px;padding:8px;display:grid;gap:6px}
+.pick label{display:flex;gap:8px;align-items:center}
+.adminnav a,.adminnav button{font-size:13px}
+.collab{border-left:3px solid var(--line-strong);padding:4px 0 4px 16px;margin:0 0 22px}
+.collab.current{border-left-color:#2f7d55}
+.collab h3{margin:6px 0}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{text-decoration:underline;text-underline-offset:3px}
+.partners{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.partners .card a.title{font-size:19px;text-decoration:none}
+.partners .card a.title:hover{text-decoration:underline}
+.logo-img{width:64px;height:64px;object-fit:contain;background:#05070d;border-radius:4px}
+@media (max-width:520px){.row .btn{flex:1 1 auto}.task li{flex-direction:column;align-items:flex-start}}
+/* style.css's directory .card is a flex column that pushes buttons down (margin-top:auto);
+   R4 cards are plain stacked content. */
+.r4 .card{display:grid;align-content:start;gap:8px;padding:16px}
+.r4 .card .btn{margin-top:0;justify-self:start}
+.r4 .card:hover{transform:none}
+.r4 .task li .btn{flex:none}

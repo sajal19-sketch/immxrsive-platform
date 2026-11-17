@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Staff · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<link rel="stylesheet" href="r4.css">
+</head>
+<body>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep adminnav" aria-label="Staff" id="staffnav" hidden>
+  <a href="#home">Staff home</a><a href="#partners">Industry partners</a><a href="#inbox">Inquiries</a>
+  <button id="logout" type="button">Sign out</button>
+</nav></div></header>
+<main class="chapter sub"><div class="wrap r4">
+  <p id="message" class="msg" role="status" aria-live="polite"></p>
+
+  <!-- Sign in -->
+  <section id="v-login" hidden>
+    <h1>Staff sign-in</h1>
+    <p class="muted">For ImmXrsive program staff. Students sign in with GitHub on the <a href="login.html">student page</a>.</p>
+    <form class="formbox" id="login-form" novalidate>
+      <label class="f">Staff username <input class="ctl" id="l-user" autocomplete="username"></label>
+      <label class="f">Password <input class="ctl" id="l-pass" type="password" autocomplete="current-password"></label>
+      <div class="row"><button class="btn inline" type="submit">Sign in</button></div>
+    </form>
+  </section>
+
+  <!-- Home: work queue -->
+  <section id="v-home" hidden>
+    <h1>What needs attention</h1>
+    <p class="muted" id="hello"></p>
+    <div class="tasks" id="tasks"></div>
+    <div class="row" style="margin-top:18px">
+      <a class="btn inline" href="#partner/new">+ Add partner</a>
+      <a class="btn inline ghost" href="#partner/new?import=1">Import partner from website</a>
+    </div>
+  </section>
+
+  <!-- Partner list -->
+  <section id="v-partners" hidden>
+    <h1>Industry partners</h1>
+    <p class="muted">Companies ImmXrsive works with. Drafts are only visible to staff until you publish them.</p>
+    <div class="row"><a class="btn inline" href="#partner/new">+ Add partner</a><a class="btn inline ghost" href="#partner/new?import=1">Import partner from website</a><a class="btn inline ghost" href="partners.html" target="_blank" rel="noopener">View public page</a></div>
+    <div id="partner-list" style="margin-top:18px"></div>
+  </section>
+
+  <!-- Partner editor -->
+  <section id="v-partner" hidden>
+    <a href="#partners" class="muted">← All partners</a>
+    <h1 id="p-title">Add partner</h1>
+    <p id="p-state" class="muted"></p>
+
+    <div class="panel" id="import-panel">
+      <h2 style="margin-top:0">Get details from the company's website</h2>
+      <p class="muted">Paste the company's public website. We suggest details from the page; nothing is saved or published until you review it. Text on the website is never followed as instructions.</p>
+      <div class="formbox">
+        <label class="f">Company website address <input class="ctl" id="imp-url" type="url" inputmode="url" placeholder="https://company.example"></label>
+        <div class="row"><button class="btn inline ghost" id="imp-go" type="button">Get details from website</button></div>
+      </div>
+      <div id="imp-result"></div>
+    </div>
+
+    <div id="dupes"></div>
+
+    <h2>Partner details</h2>
+    <form class="formbox" id="pform" novalidate>
+      <label class="f">Company name (required) <input class="ctl" id="f-name" maxlength="150"></label>
+      <div class="src" data-src="name"></div><div data-sug="name"></div>
+      <label class="f">Website <input class="ctl" id="f-website" maxlength="300" placeholder="https://company.example"></label>
+      <div class="src" data-src="website"></div><div data-sug="website"></div>
+      <label class="f">About the company (shown publicly) <textarea class="ctl" id="f-description" rows="4" maxlength="2000"></textarea></label>
+      <div class="src" data-src="description"></div><div data-sug="description"></div>
+      <label class="f">How ImmXrsive works with them (plain language, shown publicly) <textarea class="ctl" id="f-relationship_summary" rows="3" maxlength="1500" placeholder="For example: North Shore mentors student teams building XR safety training and hosts user tests at their site."></textarea></label>
+      <label class="f">Sector <input class="ctl" id="f-sector" maxlength="100" placeholder="For example: Industrial training"></label>
+      <div class="src" data-src="sector"></div><div data-sug="sector"></div>
+      <label class="f">Keywords (comma separated) <input class="ctl" id="f-keywords" placeholder="simulation, XR, training"></label>
+      <div class="src" data-src="keywords"></div><div data-sug="keywords"></div>
+      <label class="f">Location <input class="ctl" id="f-location" maxlength="120" placeholder="City, Province"></label>
+      <div class="src" data-src="location"></div><div data-sug="location"></div>
+      <label class="f">Logo image link (https, optional) <input class="ctl" id="f-logo_url" maxlength="500"></label>
+      <div class="row"><button class="btn inline" id="save" type="submit">Save draft</button></div>
+    </form>
+
+    <div id="publish-box" class="panel" hidden>
+      <h2 style="margin-top:0">Publish</h2>
+      <p id="pub-state" class="muted"></p>
+      <label><input type="checkbox" id="reviewed"> I reviewed these details. They are correct and safe to show the public.</label>
+      <div class="row" style="margin-top:10px"><button class="btn inline" id="publish" type="button">Publish partner</button><button class="btn inline ghost" id="unpublish" type="button">Hide from public</button><a class="btn inline ghost" id="view-public" target="_blank" rel="noopener">View public page</a></div>
+    </div>
+
+    <div id="collab-box" hidden>
+      <h2>Collaborations</h2>
+      <p class="muted">Each piece of work with this company: a project, study, sponsorship or pilot. Add one per year or engagement; the company record stays the same.</p>
+      <div id="collab-list"></div>
+      <div class="row"><button class="btn inline" id="c-add" type="button">+ Add collaboration</button></div>
+      <div class="panel" id="c-form" hidden>
+        <h3 id="c-form-title" style="margin-top:0">Add collaboration</h3>
+        <div class="formbox">
+          <label class="f">Title <input class="ctl" id="c-title" maxlength="150" placeholder="XR Maintenance Training Study"></label>
+          <div class="row">
+            <label class="f" style="flex:1">Start year <input class="ctl" id="c-start" type="number" min="1990" max="2100" placeholder="2026"></label>
+            <label class="f" style="flex:1">End year (blank if ongoing) <input class="ctl" id="c-end" type="number" min="1990" max="2100"></label>
+          </div>
+          <fieldset class="choices"><legend>Is it still going on?</legend>
+            <label><input type="radio" name="c-status" value="current" checked> <span><b>Current</b> – active relationship</span></label>
+            <label><input type="radio" name="c-status" value="past"> <span><b>Past</b> – finished; kept as history</span></label>
+          </fieldset>
+          <fieldset class="choices"><legend>Who can see it?</legend>
+            <label><input type="radio" name="c-vis" value="public" checked> <span><b>Public</b> – everything below appears on the partner page</span></label>
+            <label><input type="radio" name="c-vis" value="limited"> <span><b>Limited</b> – only the short public summary and year appear; title, details, projects and students stay hidden</span></label>
+            <label><input type="radio" name="c-vis" value="private"> <span><b>Private</b> – staff only; never shown publicly</span></label>
+          </fieldset>
+          <label class="f" id="c-summary-wrap" hidden>Public summary for a limited collaboration (no confidential details) <input class="ctl" id="c-summary" maxlength="400" placeholder="A confidential XR pilot with an industry partner."></label>
+          <label class="f">What happened (description) <textarea class="ctl" id="c-desc" rows="3" maxlength="2000"></textarea></label>
+          <label class="f">Outcome or highlight <input class="ctl" id="c-outcome" maxlength="1000" placeholder="Prototype used in onboarding trials"></label>
+          <label class="f">Find projects and students <input class="ctl" id="c-q" placeholder="Type a project title or student name"></label>
+          <div class="row" style="align-items:flex-start">
+            <div style="flex:1;min-width:240px"><h3>Related projects</h3><div class="pick" id="c-projects"></div></div>
+            <div style="flex:1;min-width:240px"><h3>Participating students</h3><div class="pick" id="c-students"></div></div>
+          </div>
+          <p class="muted">Only published projects and public student profiles are shown to visitors.</p>
+          <div class="row"><button class="btn inline" id="c-save" type="button">Save collaboration</button><button class="btn inline ghost" id="c-cancel" type="button">Cancel</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="history-box" hidden>
+      <h2>Change history</h2>
+      <div id="history" class="muted"></div>
+    </div>
+  </section>
+
+  <!-- Verify project -->
+  <section id="v-verify" hidden>
+    <a href="#home" class="muted">← Staff home</a>
+    <h1>Verify project</h1>
+    <div id="verify-body"></div>
+  </section>
+
+  <!-- Partner request -->
+  <section id="v-request" hidden>
+    <a href="#home" class="muted">← Staff home</a>
+    <h1>Review partner request</h1>
+    <div id="request-body"></div>
+  </section>
+
+  <!-- Inquiries -->
+  <section id="v-inbox" hidden>
+    <h1>Inquiries</h1>
+    <p class="muted">Messages sent from student, project, partner and collaboration pages.</p>
+    <div id="inbox"></div>
+  </section>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = window.IMX_API;
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = "imx_staff_token";
+  var token = function () { return sessionStorage.getItem(KEY); };
+  var VIEWS = ["login", "home", "partners", "partner", "verify", "request", "inbox"];
+  var state = { company: null, importId: "", importSug: null, dirty: false, collabEdit: null, chosenP: {}, chosenS: {} };
+  var FIELDS = ["name", "website", "description", "relationship_summary", "sector", "keywords", "location", "logo_url"];
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function btn(label, cls, fn) { var b = el("button", cls || "btn inline small", label); b.type = "button"; b.onclick = fn; return b; }
+  function link(label, href, cls) { var a = el("a", cls || "", label); a.href = href; return a; }
+  function safeHttps(u) { try { var x = new URL(String(u || "")); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; } }
+  function ext(label, url) { var u = safeHttps(url); if (!u) return el("span", null, label); var a = link(label, u); a.target = "_blank"; a.rel = "noopener noreferrer"; return a; }
+  function when(iso) { if (!iso) return ""; var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); }
+  function tell(s, err) { var m = $("message"); m.textContent = s || ""; m.className = "msg " + (err ? "err" : "ok"); }
+  function detailText(d) { if (!d) return "Request failed"; if (typeof d === "string") return d; if (Array.isArray(d)) return d.map(function (e) { return (e.loc ? e.loc[e.loc.length - 1] + ": " : "") + e.msg; }).join(", "); return d.message || "Request failed"; }
+  async function call(path, method, payload) {
+    var h = { Authorization: "Bearer " + token() };
+    if (payload !== undefined) h["Content-Type"] = "application/json";
+    var r = await fetch(API + path, { method: method || "GET", headers: h, body: payload === undefined ? undefined : JSON.stringify(payload) });
+    var data = await r.json().catch(function () { return { detail: "The server did not answer. It may be waking up; try again in a minute." }; });
+    // Staff routes only answer 401/403 when the staff session is missing or expired.
+    if (r.status === 401 || r.status === 403) { sessionStorage.removeItem(KEY); state.dirty = false; show("login"); throw new Error("Your staff session ended. Please sign in again."); }
+    if (!r.ok) { var e = new Error(detailText(data.detail)); e.status = r.status; e.detail = data.detail; throw e; }
+    return data;
+  }
+  function show(v) { VIEWS.forEach(function (x) { $("v-" + x).hidden = x !== v; }); $("staffnav").hidden = v === "login"; window.scrollTo(0, 0); }
+
+  // ------------------------------------------------ unsaved changes guard (back/forward during review)
+  var lastHash = location.hash;
+  window.addEventListener("beforeunload", function (e) { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("hashchange", function () {
+    if (state.dirty && !confirm("You have unsaved changes to this partner. Leave without saving?")) { history.replaceState(null, "", lastHash || "#home"); return; }
+    state.dirty = false; lastHash = location.hash; route();
+  });
+  $("pform").addEventListener("input", function () { state.dirty = true; });
+  // Clicking the link for the page you are already on refreshes it (e.g. new requests on Staff home).
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash && !state.dirty) { e.preventDefault(); route(); }
+  });
+
+  // ------------------------------------------------ login
+  $("login-form").onsubmit = async function (e) {
+    e.preventDefault();
+    var u = $("l-user").value.trim(), p = $("l-pass").value;
+    if (!u || !p) return tell("Enter your staff username and password.", true);
+    try {
+      var r = await fetch(API + "/api/staff/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: u, password: p }) });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok) return tell(detailText(d.detail) || "Sign-in failed.", true);
+      sessionStorage.setItem(KEY, d.access_token); $("l-pass").value = "";
+      tell("Signed in as " + d.name + ".");
+      location.hash = "#home"; route();
+    } catch (err) { tell("Couldn't reach the server. It may be waking up; try again in a minute.", true); }
+  };
+  $("logout").onclick = async function () { try { await call("/api/staff/logout", "POST"); } catch (e) {} sessionStorage.removeItem(KEY); state.dirty = false; show("login"); tell("Signed out."); };
+
+  // ------------------------------------------------ home / queue
+  function taskCard(title, help, items, render, empty) {
+    var c = el("article", "card task");
+    c.appendChild(el("h2", null, title));
+    c.appendChild(el("div", "count", String(items.length)));
+    c.appendChild(el("p", "muted", help));
+    var ul = el("ul");
+    items.forEach(function (it) { ul.appendChild(render(it)); });
+    if (!items.length) ul.appendChild(el("li", "muted", empty));
+    c.appendChild(ul);
+    return c;
+  }
+  function li(text, sub, href, label) {
+    var l = el("li"); var s = el("span"); s.appendChild(el("strong", null, text)); if (sub) { s.appendChild(el("br")); s.appendChild(el("span", "muted", sub)); }
+    l.appendChild(s); l.appendChild(link(label || "Review", href, "btn inline small")); return l;
+  }
+  async function loadHome() {
+    show("home");
+    var q = await call("/api/staff/queue");
+    var box = $("tasks"); box.replaceChildren();
+    box.appendChild(taskCard("Verify projects", "Students asked for official ImmXrsive verification.", q.verification_requests, function (x) {
+      return li(x.project_title, "Asked by " + (x.requester || "a student") + " · " + when(x.created_at), "#verify/" + encodeURIComponent(x.id), "Verify project");
+    }, "Nothing waiting."));
+    box.appendChild(taskCard("Partner requests", "Students linked a company to their project.", q.partner_requests, function (x) {
+      return li(x.company_name + (x.is_new_company ? " (new company)" : ""), "For " + x.project_title + " · " + (x.requester || "student"), "#request/" + encodeURIComponent(x.id), "Review request");
+    }, "Nothing waiting."));
+    var review = q.draft_partners.map(function (d) { return { kind: "draft", d: d }; }).concat(q.unsaved_imports.map(function (d) { return { kind: "import", d: d }; }));
+    box.appendChild(taskCard("Partners to review", "Drafts and website imports that are not public yet.", review, function (x) {
+      if (x.kind === "draft") return li(x.d.name, "Draft · " + (x.d.domain || "no website") + " · " + when(x.d.updated_at), "#partner/" + encodeURIComponent(x.d.id), "Review partner");
+      return li(x.d.name || x.d.source_url, "Website import not saved yet" + (x.d.status === "failed" ? " (import failed)" : "") + " · " + when(x.d.imported_at), "#partner/new?resume=" + encodeURIComponent(x.d.id), "Continue");
+    }, "Nothing waiting."));
+    var inq = el("article", "card task");
+    inq.appendChild(el("h2", null, "New inquiries")); inq.appendChild(el("div", "count", String(q.new_inquiries)));
+    inq.appendChild(el("p", "muted", "Messages from employers and companies."));
+    inq.appendChild(link("Open inquiries", "#inbox", "btn inline small")); box.appendChild(inq);
+  }
+
+  // ------------------------------------------------ partner list
+  async function loadPartners() {
+    show("partners");
+    var list = await call("/api/staff/companies");
+    var box = $("partner-list"); box.replaceChildren();
+    if (!list.length) box.appendChild(el("p", "muted", "No partners yet. Add one or import one from a company website."));
+    list.forEach(function (c) {
+      var card = el("div", "card");
+      var top = el("div", "row"); top.appendChild(el("strong", null, c.name)); top.appendChild(el("span", "pill " + (c.status === "published" ? "published" : "draft"), c.status === "published" ? "Public" : "Draft"));
+      card.appendChild(top);
+      card.appendChild(el("span", "muted", (c.domain || "No website") + " · " + c.collabs + " collaboration" + (c.collabs == 1 ? "" : "s")));
+      var row = el("div", "row"); row.appendChild(link("Open", "#partner/" + encodeURIComponent(c.id), "btn inline small"));
+      if (c.status === "published") { var a = link("View public page", "partner.html?id=" + encodeURIComponent(c.id), "btn inline small ghost"); a.target = "_blank"; a.rel = "noopener"; row.appendChild(a); }
+      card.appendChild(row); box.appendChild(card);
+    });
+  }
+
+  // ------------------------------------------------ partner editor
+  function val(f) { var v = $("f-" + f).value.trim(); return f === "keywords" ? v.split(",").map(function (x) { return x.trim(); }).filter(Boolean) : v; }
+  function setVal(f, v) { $("f-" + f).value = Array.isArray(v) ? v.join(", ") : (v || ""); }
+  function same(a, b) { return JSON.stringify(a || "") === JSON.stringify(b || ""); }
+  function clearSuggestions() { document.querySelectorAll("[data-sug]").forEach(function (n) { n.replaceChildren(); n.className = ""; }); }
+  function showSources(src) {
+    document.querySelectorAll("[data-src]").forEach(function (n) {
+      var s = src && src[n.getAttribute("data-src")]; n.replaceChildren();
+      if (!s) return;
+      if (s.origin === "website import") { n.appendChild(document.createTextNode("From website: ")); n.appendChild(ext(s.source_url, s.source_url)); n.appendChild(document.createTextNode(" · imported " + when(s.imported_at))); }
+      else n.textContent = (s.origin === "staff edit" ? "Entered or edited by staff" : "From " + s.origin) + " · " + when(s.recorded_at);
+    });
+  }
+  function resetEditor() {
+    state.company = null; state.importId = ""; state.importSug = null; state.dirty = false;
+    FIELDS.forEach(function (f) { setVal(f, ""); });
+    clearSuggestions(); showSources(null);
+    ["imp-result", "dupes", "collab-list", "history"].forEach(function (i) { $(i).replaceChildren(); });
+    $("imp-url").value = ""; $("publish-box").hidden = true; $("collab-box").hidden = true; $("history-box").hidden = true; $("c-form").hidden = true;
+    $("reviewed").checked = false;
+  }
+  var openSeq = 0;
+  async function openPartner(id, params) {
+    var seq = ++openSeq;     // a later navigation cancels this one
+    show("partner"); resetEditor();
+    if (id === "new") {
+      $("p-title").textContent = "Add partner";
+      $("p-state").textContent = "Fill in the details yourself, or get them from the company's website first. Saving creates a draft; nothing is public until you publish.";
+      if (params.get("resume")) {
+        try { var imp = await call("/api/staff/company-imports/" + encodeURIComponent(params.get("resume"))); $("imp-url").value = imp.source_url; applyImport(imp); } catch (e) { tell(e.message, true); }
+      }
+      if (params.get("import")) $("imp-url").focus(); else $("f-name").focus();
+      return;
+    }
+    var c = await call("/api/staff/companies/" + encodeURIComponent(id));
+    if (seq !== openSeq) return;
+    state.company = c;
+    $("p-title").textContent = c.name;
+    $("p-state").textContent = c.status === "published" ? "Public partner. Changes you save appear on the public page." : "Draft – only staff can see this partner.";
+    FIELDS.forEach(function (f) { setVal(f, c[f]); });
+    if (c.website) $("imp-url").value = c.website;
+    showSources(c.field_sources);
+    $("publish-box").hidden = false;
+    $("pub-state").textContent = c.status === "published" ? "This partner is public." : "This partner is a draft.";
+    $("publish").hidden = c.status === "published"; $("unpublish").hidden = c.status !== "published";
+    $("view-public").href = "partner.html?id=" + encodeURIComponent(c.id); $("view-public").hidden = c.status !== "published";
+    $("collab-box").hidden = false; renderCollabs(c.collaborations);
+    $("history-box").hidden = !c.history.length; renderHistory(c.history, c.imports);
+  }
+  function applyImport(d) {
+    state.importId = d.import_id; state.importSug = d.suggestion || {};
+    var box = $("imp-result"); box.replaceChildren();
+    var b = el("div", d.status === "failed" ? "warn" : "good"); b.setAttribute("role", "status");
+    b.appendChild(el("strong", null, d.message || (d.status === "failed" ? "The website could not be imported." : "Suggestions ready.")));
+    if (d.error) b.appendChild(el("span", null, "Reason: " + d.error));
+    if (d.status !== "failed") {
+      var src = el("span", "muted"); src.appendChild(document.createTextNode("Source: ")); src.appendChild(ext(d.final_url || d.source_url, d.final_url || d.source_url)); src.appendChild(document.createTextNode(" · " + when(d.imported_at))); b.appendChild(src);
+    }
+    if (d.missing && d.missing.length) b.appendChild(el("span", null, "Not found on the page – please fill in: " + d.missing.map(function (m) { return { description: "about the company", sector: "sector", location: "location", name: "name" }[m] || m; }).join(", ") + "."));
+    box.appendChild(b);
+    (d.warnings || []).forEach(function (w) { var x = el("div", "warn"); x.setAttribute("role", "alert"); x.appendChild(el("strong", null, "Untrusted text ignored")); x.appendChild(el("span", null, w)); box.appendChild(x); });
+    var s = state.importSug;
+    ["name", "website", "description", "sector", "keywords", "location"].forEach(function (f) {
+      var holder = document.querySelector('[data-sug="' + f + '"]'); holder.replaceChildren(); holder.className = "";
+      var v = s[f]; if (v == null || v === "" || (Array.isArray(v) && !v.length)) return;
+      var current = val(f);
+      if (!current || (Array.isArray(current) && !current.length)) { setVal(f, v); state.dirty = true; holder.className = "src"; holder.textContent = "Suggested from website – check it."; return; }
+      if (same(current, v)) return;
+      // Never overwrite something staff already typed or curated: offer it instead.
+      holder.className = "suggest";
+      holder.appendChild(el("span", null, "Website suggests: " + (Array.isArray(v) ? v.join(", ") : v)));
+      holder.appendChild(btn("Use this", "link", function () { setVal(f, v); state.dirty = true; holder.replaceChildren(); holder.className = "src"; holder.textContent = "Website suggestion applied – remember to save."; }));
+    });
+    showDupes(d.duplicate_domain || [], d.similar_names || []);
+  }
+  function showDupes(matches, similar) {
+    var box = $("dupes"); box.replaceChildren();
+    var mine = state.company ? state.company.id : "";
+    matches = (matches || []).filter(function (m) { return m.id !== mine; }); similar = (similar || []).filter(function (m) { return m.id !== mine && !matches.some(function (x) { return x.id === m.id; }); });
+    if (!matches.length && !similar.length) return;
+    var w = el("div", "warn"); w.setAttribute("role", "alert");
+    if (matches.length) {
+      w.appendChild(el("strong", null, "This website already belongs to a partner on ImmXrsive."));
+      w.appendChild(el("span", null, "Use the existing partner instead of creating a second copy."));
+      matches.forEach(function (m) { var r = el("div", "row"); r.appendChild(el("span", null, m.name + " (" + m.domain + ")")); r.appendChild(link("Open existing partner", "#partner/" + encodeURIComponent(m.id), "btn inline small")); w.appendChild(r); });
+    }
+    if (similar.length) {
+      w.appendChild(el("strong", null, "Partners with a similar name (different website). They are not merged; open one if it is the same company."));
+      similar.forEach(function (m) { var r = el("div", "row"); r.appendChild(el("span", null, m.name + (m.domain ? " (" + m.domain + ")" : ""))); r.appendChild(link("Open", "#partner/" + encodeURIComponent(m.id), "btn inline small ghost")); w.appendChild(r); });
+    }
+    box.appendChild(w);
+  }
+  $("imp-go").onclick = async function () {
+    var url = $("imp-url").value.trim();
+    if (!url) { tell("Paste the company's website address first.", true); $("imp-url").focus(); return; }
+    $("imp-go").disabled = true; tell("Getting details from the website…");
+    try {
+      var d = await call("/api/staff/company-imports", "POST", { url: url, company_id: state.company ? state.company.id : "" });
+      applyImport(d); tell(d.message, d.status === "failed");
+    } catch (e) { tell(e.message + " Your typed details were kept.", true); }
+    finally { $("imp-go").disabled = false; }
+  };
+  $("pform").onsubmit = async function (e) {
+    e.preventDefault();
+    var body = {}; FIELDS.forEach(function (f) { body[f] = val(f); });
+    if (!body.name) { tell("Add the company name.", true); $("f-name").focus(); return; }
+    body.import_id = state.importId || "";
+    if (state.company) body.version = state.company.version;
+    $("save").disabled = true;
+    try {
+      var d = state.company ? await call("/api/staff/companies/" + encodeURIComponent(state.company.id), "PUT", body)
+                            : await call("/api/staff/companies", "POST", body);
+      state.dirty = false; tell(d.message);
+      if (!state.company) { lastHash = "#partner/" + d.id; history.replaceState(null, "", lastHash); }
+      await openPartner(d.id, new URLSearchParams());
+      tell(d.message);
+    } catch (err) {
+      if (err.status === 409 && err.detail && err.detail.code === "duplicate_domain") { showDupes(err.detail.matches, []); tell(err.detail.message, true); }
+      else tell(err.message, true);
+    } finally { $("save").disabled = false; }
+  };
+  $("publish").onclick = async function () {
+    if (state.dirty) return tell("Save your changes first, then publish.", true);
+    if (!$("reviewed").checked) { tell("Tick the box to confirm you reviewed the details.", true); $("reviewed").focus(); return; }
+    try { var d = await call("/api/staff/companies/" + encodeURIComponent(state.company.id) + "/publish", "POST", { reviewed: true }); await openPartner(state.company.id, new URLSearchParams()); tell(d.message); }
+    catch (e) { tell(e.message, true); }
+  };
+  $("unpublish").onclick = async function () {
+    try { var d = await call("/api/staff/companies/" + encodeURIComponent(state.company.id) + "/unpublish", "POST", {}); await openPartner(state.company.id, new URLSearchParams()); tell(d.message); }
+    catch (e) { tell(e.message, true); }
+  };
+  function renderHistory(rows, imports) {
+    var box = $("history"); box.replaceChildren();
+    rows.forEach(function (h) {
+      var p = el("p", null, when(h.when) + " – " + h.field + ": " + h.origin + (h.source_url ? " from " : ""));
+      if (h.source_url) p.appendChild(ext(h.source_url, h.source_url));
+      box.appendChild(p);
+    });
+    if (imports && imports.length) box.appendChild(el("p", null, "Website imports: " + imports.map(function (i) { return when(i.imported_at) + " (" + (i.status === "ok" ? "complete" : i.status) + ")"; }).join(", ")));
+  }
+
+  // ------------------------------------------------ collaborations
+  var VIS = { public: "Public", limited: "Limited (summary only)", private: "Private (staff only)" };
+  function years(x) { if (x.start_year && x.end_year && x.start_year !== x.end_year) return x.start_year + "–" + x.end_year; if (x.start_year && x.status === "current" && !x.end_year) return x.start_year + "–present"; return String(x.start_year || x.end_year || ""); }
+  function renderCollabs(list) {
+    var box = $("collab-list"); box.replaceChildren();
+    if (!list.length) box.appendChild(el("p", "muted", "No collaborations yet."));
+    list.forEach(function (x) {
+      var c = el("div", "card");
+      var top = el("div", "row"); top.appendChild(el("strong", null, x.title));
+      top.appendChild(el("span", "pill " + x.status, x.status === "current" ? "Current" : "Past"));
+      top.appendChild(el("span", "pill", VIS[x.visibility]));
+      c.appendChild(top);
+      c.appendChild(el("span", "muted", [years(x), x.projects.map(function (p) { return p.title; }).join(", "), x.students.map(function (s) { return s.name; }).join(", ")].filter(Boolean).join(" · ")));
+      if (x.visibility === "limited") c.appendChild(el("span", null, "Public summary: " + x.public_summary));
+      c.appendChild(btn("Edit", "btn inline small ghost", function () { openCollab(x); }));
+      box.appendChild(c);
+    });
+  }
+  function radio(name, v) { var r = document.querySelector('input[name="' + name + '"][value="' + v + '"]'); if (r) r.checked = true; }
+  function radioVal(name) { var r = document.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : ""; }
+  function syncSummary() { $("c-summary-wrap").hidden = radioVal("c-vis") !== "limited"; }
+  document.querySelectorAll('input[name="c-vis"]').forEach(function (r) { r.onchange = syncSummary; });
+  function openCollab(x) {
+    state.collabEdit = x || null;
+    $("c-form-title").textContent = x ? "Edit collaboration" : "Add collaboration";
+    $("c-title").value = x ? x.title : ""; $("c-start").value = x && x.start_year || ""; $("c-end").value = x && x.end_year || "";
+    radio("c-status", x ? x.status : "current"); radio("c-vis", x ? x.visibility : "public");
+    $("c-summary").value = x ? x.public_summary : ""; $("c-desc").value = x ? x.description : ""; $("c-outcome").value = x ? x.outcome : "";
+    state.chosenP = {}; state.chosenS = {};
+    (x ? x.projects : []).forEach(function (p) { state.chosenP[p.id] = p.title; });
+    (x ? x.students : []).forEach(function (s) { state.chosenS[s.id] = s.name; });
+    syncSummary(); $("c-form").hidden = false; $("c-q").value = ""; lookup(""); $("c-title").focus();
+  }
+  var lookupTimer;
+  $("c-q").oninput = function () { clearTimeout(lookupTimer); var q = $("c-q").value; lookupTimer = setTimeout(function () { lookup(q); }, 250); };
+  async function lookup(q) {
+    try {
+      var d = await call("/api/staff/lookup?q=" + encodeURIComponent(q));
+      fillPick($("c-projects"), d.projects, state.chosenP, function (p) { return p.title + (p.is_published ? "" : " (private draft)"); }, "title");
+      fillPick($("c-students"), d.students, state.chosenS, function (s) { return (s.name || s.id) + (s.is_published ? "" : " (profile not public)"); }, "name");
+    } catch (e) { tell(e.message, true); }
+  }
+  function fillPick(box, items, chosen, label, key) {
+    box.replaceChildren();
+    var ids = {};
+    Object.keys(chosen).forEach(function (id) { ids[id] = true; box.appendChild(pickRow(id, chosen[id], true, chosen)); });
+    items.forEach(function (it) { if (!ids[it.id]) box.appendChild(pickRow(it.id, label(it), false, chosen, it[key])); });
+    if (!box.children.length) box.appendChild(el("span", "muted", "No matches."));
+  }
+  function pickRow(id, text, checked, chosen, plain) {
+    var l = el("label"); var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = checked;
+    cb.onchange = function () { if (cb.checked) chosen[id] = plain || text; else delete chosen[id]; };
+    l.appendChild(cb); l.appendChild(el("span", null, text)); return l;
+  }
+  $("c-add").onclick = function () { openCollab(null); };
+  $("c-cancel").onclick = function () { $("c-form").hidden = true; };
+  $("c-save").onclick = async function () {
+    var body = {
+      title: $("c-title").value.trim(), start_year: $("c-start").value ? Number($("c-start").value) : null, end_year: $("c-end").value ? Number($("c-end").value) : null,
+      status: radioVal("c-status"), visibility: radioVal("c-vis"), public_summary: $("c-summary").value.trim(),
+      description: $("c-desc").value.trim(), outcome: $("c-outcome").value.trim(),
+      project_ids: Object.keys(state.chosenP), student_ids: Object.keys(state.chosenS)
+    };
+    if (!body.title) { tell("Give the collaboration a title.", true); $("c-title").focus(); return; }
+    try {
+      var d = state.collabEdit ? await call("/api/staff/collaborations/" + encodeURIComponent(state.collabEdit.id), "PUT", body)
+                               : await call("/api/staff/companies/" + encodeURIComponent(state.company.id) + "/collaborations", "POST", body);
+      $("c-form").hidden = true; await openPartner(state.company.id, new URLSearchParams()); tell(d.message);
+      $("collab-box").scrollIntoView({ behavior: "smooth" });
+    } catch (e) { tell(e.message, true); }
+  };
+
+  // ------------------------------------------------ review: shared project summary
+  function projectSummary(p) {
+    var box = el("div", "card");
+    box.appendChild(el("h3", null, p.title));
+    var meta = [p.domain, p.status, p.project_date, p.is_published ? "Public project" : "Private draft project"].filter(Boolean).join(" · ");
+    box.appendChild(el("span", "muted", meta));
+    if (p.description) box.appendChild(el("p", null, p.description));
+    var links = el("div", "links");
+    if (p.is_published) { var a = link("Open public project page", "project.html?id=" + encodeURIComponent(p.id)); a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
+    (p.repo_urls || []).forEach(function (u) { links.appendChild(ext("Source code", u)); });
+    if (p.playable_url) links.appendChild(ext("Demo", p.playable_url));
+    if (links.children.length) box.appendChild(links);
+    box.appendChild(el("strong", null, "Team"));
+    var labels = { accepted: "on the team", invited: "invited, not accepted", requested: "asked to join", removed: "removed", declined: "declined", cancelled: "invitation cancelled" };
+    (p.contributors || []).forEach(function (c) { box.appendChild(el("span", null, (c.name || "Student") + " – " + c.role + " (" + (labels[c.status] || c.status) + ")" + (c.student_id === p.maintainer_id ? " · maintainer" : ""))); });
+    if (p.official_verified) box.appendChild(el("span", "pill verified", "Already officially verified"));
+    return box;
+  }
+  function decisionForm(onDecide, extra) {
+    var f = el("div", "formbox");
+    if (extra) f.appendChild(extra);
+    var lab = el("label", "f", "Note to the students (required if you reject)"); var ta = el("textarea", "ctl"); ta.rows = 3; ta.maxLength = 1000; lab.appendChild(ta); f.appendChild(lab);
+    var row = el("div", "row");
+    var ok = btn("Approve", "btn inline", function () { onDecide(true, ta.value.trim(), ok, no); });
+    var no = btn("Reject", "btn inline ghost", function () { if (!ta.value.trim()) { tell("Write a short note explaining why, so the students know what to change.", true); ta.focus(); return; } onDecide(false, ta.value.trim(), ok, no); });
+    row.appendChild(ok); row.appendChild(no); f.appendChild(row);
+    return f;
+  }
+  function decided(box, status, note) { box.appendChild(el("div", status === "approved" ? "good" : "warn", "This request was " + status + (note ? ": " + note : "."))); }
+
+  async function openVerify(id) {
+    show("verify");
+    var d = await call("/api/staff/verification-requests/" + encodeURIComponent(id));
+    var box = $("verify-body"); box.replaceChildren();
+    box.appendChild(el("p", "muted", "Requested by " + (d.requester || "a student") + " on " + when(d.created_at) + "."));
+    box.appendChild(el("h2", null, "What the students said"));
+    box.appendChild(el("p", null, d.note));
+    if (d.evidence_url) { var p = el("p"); p.appendChild(document.createTextNode("Evidence: ")); p.appendChild(ext(d.evidence_url, d.evidence_url)); box.appendChild(p); }
+    box.appendChild(el("h2", null, "The project"));
+    if (d.project) box.appendChild(projectSummary(d.project));
+    box.appendChild(el("h2", null, "Decision"));
+    if (d.status !== "pending") return decided(box, d.status, d.staff_note);
+    box.appendChild(el("p", "muted", "Approving adds an “Officially verified by ImmXrsive” mark to the public project page. Students cannot add or change this mark themselves."));
+    box.appendChild(decisionForm(async function (approve, note, a, b) {
+      a.disabled = b.disabled = true;
+      try { var r = await call("/api/staff/verification-requests/" + encodeURIComponent(id) + "/decision", "POST", { approve: approve, staff_note: note }); tell(r.message); await openVerify(id); }
+      catch (e) { tell(e.message, true); a.disabled = b.disabled = false; }
+    }));
+  }
+
+  async function openRequest(id) {
+    show("request");
+    var d = await call("/api/staff/partner-requests/" + encodeURIComponent(id));
+    var box = $("request-body"); box.replaceChildren();
+    var who = el("div", "card");
+    who.appendChild(el("h3", null, d.company_id ? d.company_name : d.suggested_name + " (suggested new company)"));
+    if (!d.company_id && d.suggested_website) { var w = el("span"); w.appendChild(document.createTextNode("Website given by the student: ")); w.appendChild(ext(d.suggested_website, d.suggested_website)); who.appendChild(w); }
+    if (d.company_id) { var a = link("Open partner record", "#partner/" + encodeURIComponent(d.company_id)); who.appendChild(a); }
+    box.appendChild(el("p", "muted", "Requested by " + (d.requester || "a student") + " on " + when(d.created_at) + "."));
+    box.appendChild(who);
+    box.appendChild(el("h2", null, "How the company was involved (student's words)"));
+    box.appendChild(el("p", null, d.explanation));
+    box.appendChild(el("h2", null, "The project"));
+    if (d.project) box.appendChild(projectSummary(d.project));
+    box.appendChild(el("h2", null, "Decision"));
+    if (d.status !== "pending") return decided(box, d.status, d.staff_note);
+    var pickWrap = null, select = null;
+    if (!d.company_id) {
+      pickWrap = el("label", "f", "Which partner is this?");
+      select = el("select", "ctl");
+      var o = el("option", null, "Create a new draft partner from the student's suggestion"); o.value = ""; select.appendChild(o);
+      var companies = await call("/api/staff/companies");
+      var hint = {}; (d.possible_matches || []).forEach(function (m) { hint[m.id] = true; });
+      companies.sort(function (a, b) { return (hint[b.id] ? 1 : 0) - (hint[a.id] ? 1 : 0); }).forEach(function (c) {
+        var op = el("option", null, (hint[c.id] ? "Possible match: " : "") + c.name + (c.domain ? " (" + c.domain + ")" : "")); op.value = c.id; select.appendChild(op);
+      });
+      pickWrap.appendChild(select);
+    }
+    box.appendChild(el("p", "muted", "Approving makes this company an official partner on the project. The relationship shows publicly once the partner itself is published."));
+    box.appendChild(decisionForm(async function (approve, note, a, b) {
+      a.disabled = b.disabled = true;
+      try {
+        var r = await call("/api/staff/partner-requests/" + encodeURIComponent(id) + "/decision", "POST", { approve: approve, staff_note: note, company_id: select ? select.value : "" });
+        tell(r.message);
+        if (r.company_id) { state.flash = r.message; location.hash = "#partner/" + r.company_id; return; }
+        await openRequest(id);
+      } catch (e) { tell(e.message, true); a.disabled = b.disabled = false; }
+    }, pickWrap));
+  }
+
+  // ------------------------------------------------ inbox
+  var SRC = { student: "Student profile", project: "Project", partner: "Industry partner", collaboration: "Collaboration", "": "General inquiry" };
+  async function loadInbox() {
+    show("inbox");
+    var rows = await call("/api/staff/inbox");
+    var box = $("inbox"); box.replaceChildren();
+    if (!rows.length) box.appendChild(el("p", "muted", "No inquiries yet."));
+    rows.forEach(function (r) {
+      var c = el("div", "card");
+      var top = el("div", "row"); top.appendChild(el("strong", null, r.name + " · " + r.company)); top.appendChild(el("span", "pill " + (r.status === "new" ? "draft" : "published"), r.status === "new" ? "New" : "Handled"));
+      c.appendChild(top);
+      var about = el("span", "muted", (SRC[r.source_type] || r.source_type) + (r.source_name ? ": " + r.source_name : "") + " · " + when(r.created_at) + " · " + r.email + (r.role_type ? " · " + r.role_type : ""));
+      c.appendChild(about);
+      if (r.source_url) { var rel = r.source_url.split("/").pop(); c.appendChild(link("Open the page it was sent from", rel)); }
+      c.appendChild(el("p", null, r.message));
+      c.appendChild(btn(r.status === "new" ? "Mark handled" : "Mark as new", "btn inline small ghost", async function () {
+        try { await call("/api/staff/inbox/" + r.id, "POST", { status: r.status === "new" ? "handled" : "new" }); loadInbox(); } catch (e) { tell(e.message, true); }
+      }));
+      box.appendChild(c);
+    });
+  }
+
+  // ------------------------------------------------ router
+  async function route() {
+    if (!token()) { show("login"); return; }
+    tell(state.flash || "", false); state.flash = "";   // a message belongs to the screen it was shown on
+    var h = (location.hash || "#home").slice(1), q = "";
+    if (h.indexOf("?") >= 0) { q = h.slice(h.indexOf("?") + 1); h = h.slice(0, h.indexOf("?")); }
+    var parts = h.split("/"), params = new URLSearchParams(q);
+    try {
+      if (parts[0] === "partners") await loadPartners();
+      else if (parts[0] === "partner" && parts[1]) await openPartner(decodeURIComponent(parts[1]), params);
+      else if (parts[0] === "verify" && parts[1]) await openVerify(decodeURIComponent(parts[1]));
+      else if (parts[0] === "request" && parts[1]) await openRequest(decodeURIComponent(parts[1]));
+      else if (parts[0] === "inbox") await loadInbox();
+      else await loadHome();
+    } catch (e) { if (token()) tell(e.message, true); }
+  }
+  async function init() {
+    if (!token()) { show("login"); return; }
+    try { var me = await call("/api/staff/me"); $("hello").textContent = "Signed in as " + me.name + "."; route(); }
+    catch (e) { show("login"); }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

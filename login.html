@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -24,6 +25,7 @@
         <a class="hide-sm" href="index.html#field">The field</a>
         <a href="index.html#index">Index</a>
         <a href="upload.html">Upload</a>
+        <a href="partners.html">Partners</a>
         <a class="cta" href="intake.html">Inquire</a>
         <a href="login.html" style="background: #004b87; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; margin-left: 10px;">Algoma Login</a>
       </nav>
@@ -68,6 +70,7 @@
         <div><a class="back" href="index.html#index" style="margin-top: 30px; display: inline-block;">Back to the talent index</a></div>
       </div>
     </section>
+    <section class="chapter sub" style="padding-top:0"><div class="wrap"><p class="sub-copy">ImmXrsive program staff? <a href="admin.html" style="text-decoration:underline">Sign in to the staff area</a>.</p></div></section>
   </main>
 
   <footer>
@@ -77,7 +80,7 @@
 
 <script src="site.js"></script>
 <script>
-const API = 'https://immxrsive-api.onrender.com';
+const API = window.IMX_API;
 const $ = id => document.getElementById(id);
 const authHeaders = () => ({'Authorization': 'Bearer ' + (sessionStorage.getItem('imx_token') || '')});
 const status = (message, error=false) => { $('verification-message').textContent=message; $('verification-message').style.color=error?'#f87171':'#4ade80'; };

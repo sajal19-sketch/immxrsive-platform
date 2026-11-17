@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Industry partners · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<link rel="stylesheet" href="r4.css">
+</head>
+<body>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep" aria-label="Primary"><a href="index.html">Directory</a><a href="partners.html" aria-current="page">Industry partners</a><a class="cta" href="intake.html">Inquire</a></nav></div></header>
+<main class="chapter sub"><div class="wrap r4">
+  <h1>Industry partners</h1>
+  <p class="muted">Companies that ImmXrsive students have worked with on real projects, studies and pilots. Open a partner to see what we did together and the student work behind it.</p>
+  <div class="row" style="margin:14px 0 6px">
+    <label class="f" style="flex:1;min-width:220px">Search partners <input class="ctl" id="q" placeholder="Company, sector or keyword"></label>
+    <label class="f">Show <select class="ctl" id="filter"><option value="">All partners</option><option value="current">Working with us now</option><option value="past">Past partners</option></select></label>
+  </div>
+  <p id="state" class="muted" aria-live="polite">Loading partners…</p>
+  <div class="partners" id="list"></div>
+  <div class="panel">
+    <h2 style="margin-top:0">Want to work with ImmXrsive students?</h2>
+    <p class="muted">Tell us about a project, study or hiring need. Program staff reply by email.</p>
+    <a class="btn inline" href="intake.html?source_type=partner">Start a collaboration inquiry</a>
+  </div>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = window.IMX_API, all = [];
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function safeHttps(u) { try { var x = new URL(String(u || "")); return x.protocol === "https:" ? x.href : ""; } catch (e) { return ""; } }
+  function render() {
+    var q = document.getElementById("q").value.trim().toLowerCase(), f = document.getElementById("filter").value;
+    var list = document.getElementById("list"); list.replaceChildren();
+    var shown = all.filter(function (p) {
+      var hay = [p.name, p.sector, p.location, p.description, (p.keywords || []).join(" ")].join(" ").toLowerCase();
+      return (!q || hay.indexOf(q) >= 0) && (!f || p.relationship === f);
+    });
+    shown.forEach(function (p) {
+      var c = el("article", "card");
+      var top = el("div", "row");
+      var logo = safeHttps(p.logo_url);
+      if (logo) { var img = document.createElement("img"); img.className = "logo-img"; img.alt = ""; img.src = logo; img.loading = "lazy"; img.onerror = function () { img.remove(); }; top.appendChild(img); }
+      var a = el("a", "title", p.name); a.href = "partner.html?id=" + encodeURIComponent(p.id); top.appendChild(a);
+      c.appendChild(top);
+      var bits = el("div", "row");
+      if (p.relationship === "current") bits.appendChild(el("span", "pill current", "Working with us now"));
+      else if (p.relationship === "past") bits.appendChild(el("span", "pill past", "Past partner"));
+      if (p.since) bits.appendChild(el("span", "muted", "Since " + p.since));
+      if (bits.children.length) c.appendChild(bits);
+      var meta = [p.sector, p.location].filter(Boolean).join(" · ");
+      if (meta) c.appendChild(el("span", "muted", meta));
+      if (p.description) c.appendChild(el("p", null, p.description));
+      if (p.collaboration_count) c.appendChild(el("span", "muted", p.collaboration_count + " collaboration" + (p.collaboration_count === 1 ? "" : "s") + " with ImmXrsive"));
+      list.appendChild(c);
+    });
+    document.getElementById("state").textContent = !all.length ? "No industry partners are listed yet." : (shown.length ? shown.length + " partner" + (shown.length === 1 ? "" : "s") : "No partners match your search.");
+  }
+  document.getElementById("q").oninput = render;
+  document.getElementById("filter").onchange = render;
+  fetch(API + "/api/partners").then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function (d) { all = d; render(); })
+    .catch(function () { document.getElementById("state").textContent = "Partners could not be loaded. The server may be waking up; refresh in a minute."; });
+})();
+</script>
+</body>
+</html>

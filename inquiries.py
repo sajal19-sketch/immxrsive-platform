@@ -50,7 +50,7 @@ def setup_schema(conn):
 
 
 class InquiryIn(BaseModel):
-    source_type: str = Field(default='', max_length=10)
+    source_type: str = Field(default='', max_length=20)
     source_id: str = Field(default='', max_length=64)
     name: str = Field(max_length=80)
     company: str = Field(max_length=100)
@@ -71,9 +71,24 @@ def _resolve_source(conn, source_type, source_id):
     link are looked up on the server, so a hand-edited request cannot mislabel them."""
     if not source_id:
         return '', '', '', ''
-    if not ID_RE.match(source_id) or source_type not in ('student', 'project'):
+    if not ID_RE.match(source_id) or source_type not in ('student', 'project', 'partner', 'collaboration'):
         raise HTTPException(422, 'This inquiry link is not valid. Open the profile or project again and retry.')
     base = _cfg['frontend']
+    if source_type == 'partner':
+        row = conn.execute("SELECT id, name FROM companies WHERE id=%s AND status='published'", (source_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, 'That partner is not public, so we cannot route this inquiry.')
+        return 'partner', row['id'], row['name'] or '', f'{base}/partner.html?id={row["id"]}'
+    if source_type == 'collaboration':
+        # Only public or limited collaborations of a published partner; a limited one is
+        # named only by its public label so no confidential title leaks into the inbox link.
+        row = conn.execute('''SELECT x.id, x.title, x.visibility, c.id AS cid, c.name FROM collaborations x
+                              JOIN companies c ON c.id=x.company_id
+                              WHERE x.id=%s AND x.visibility<>'private' AND c.status='published' ''', (source_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, 'That collaboration is not public, so we cannot route this inquiry.')
+        label = row['title'] if row['visibility'] == 'public' else 'Confidential collaboration'
+        return 'collaboration', row['id'], f"{row['name']} – {label}", f'{base}/partner.html?id={row["cid"]}#{row["id"]}'
     if source_type == 'project':
         row = conn.execute('SELECT id, title FROM projects WHERE id=%s AND is_published=1', (source_id,)).fetchone()
         if not row:
