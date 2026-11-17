@@ -97,10 +97,10 @@ website**, paste one of the URLs above, and click **Get details from website**.
 
 These tests ran against a disposable local PostgreSQL database, never production:
 
-- `tests/test_r4_api.py`: 72 API checks covering every scenario in the R4 Peer QA
+- `tests/test_r4_api.py`: 73 API checks covering every scenario in the R4 Peer QA
   Test Plan (A–L), plus R1–R3 regression. Results: all passed.
 - Browser walk-through (Chrome, desktop for staff, 390 px mobile for public
-  pages): 34 checks covering import, review, publish, collaborations, visibility,
+  pages): 36 checks covering import, review, publish, collaborations, visibility,
   student requests, staff review, contextual inquiry, the back-button guard,
   and R1–R3 pages. Results: all passed, with no console errors and no horizontal
   scrolling at 390 px.

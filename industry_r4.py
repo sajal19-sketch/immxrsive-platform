@@ -411,6 +411,12 @@ def extract_company(html, page_url):
         # shared host (e.g. github.io) is never mistaken for the company's domain root.
         website = page_url.split('#')[0]
     website = website.rstrip('/')
+    # Markup that arrived entity-encoded (e.g. in a meta tag) is still never passed on.
+    def strip_markup(text):
+        text = re.sub(r'<(script|style|iframe|object|template)\b[^>]*>.*?(</\1\s*>|$)', ' ', text, flags=re.I | re.S)
+        return re.sub(r'<[^>]*>', ' ', text)
+    name = _clean(strip_markup(name), 150)
+    desc = _clean(strip_markup(desc), 600)
     candidates = {
         'name': name, 'description': desc, 'website': website, 'domain': domain_of(website),
         'sector': sector, 'keywords': keywords, 'location': _location(usable),

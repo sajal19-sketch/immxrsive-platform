@@ -38,7 +38,7 @@ Test notes: staff area is https://sajal19-sketch.github.io/immxrsive-platform/ad
 - Company with at least two collaborations: <same partner, link — fill in>
 - Student-requested relationship shown pending → staff review: <project link + short note — fill in>
 - Release notes / known issues: [RELEASE_NOTES_R4.md](RELEASE_NOTES_R4.md)
-- Automated evidence: `tests/test_r4_api.py` (72 checks, all passed on a local disposable database)
+- Automated evidence: `tests/test_r4_api.py` (73 checks, all passed on a local disposable database)
 
 ---
 

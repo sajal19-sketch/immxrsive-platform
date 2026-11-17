@@ -97,6 +97,7 @@
       <h2>Collaborations</h2>
       <p class="muted">Each piece of work with this company: a project, study, sponsorship or pilot. Add one per year or engagement; the company record stays the same.</p>
       <div id="collab-list"></div>
+      <div id="linked-projects"></div>
       <div class="row"><button class="btn inline" id="c-add" type="button">+ Add collaboration</button></div>
       <div class="panel" id="c-form" hidden>
         <h3 id="c-form-title" style="margin-top:0">Add collaboration</h3>
@@ -319,6 +320,13 @@
     $("publish").hidden = c.status === "published"; $("unpublish").hidden = c.status !== "published";
     $("view-public").href = "partner.html?id=" + encodeURIComponent(c.id); $("view-public").hidden = c.status !== "published";
     $("collab-box").hidden = false; renderCollabs(c.collaborations);
+    var lp = $("linked-projects"); lp.replaceChildren();
+    if (c.approved_projects.length) {
+      lp.appendChild(el("h3", null, "Projects linked through approved student requests"));
+      var row = el("div", "links");
+      c.approved_projects.forEach(function (p) { var a = link(p.title + (p.is_published ? "" : " (private)"), "project.html?id=" + encodeURIComponent(p.id)); a.target = "_blank"; a.rel = "noopener"; row.appendChild(a); });
+      lp.appendChild(row);
+    }
     $("history-box").hidden = !c.history.length; renderHistory(c.history, c.imports);
   }
   function applyImport(d) {
@@ -526,7 +534,17 @@
     box.appendChild(el("h2", null, "The project"));
     if (d.project) box.appendChild(projectSummary(d.project));
     box.appendChild(el("h2", null, "Decision"));
-    if (d.status !== "pending") return decided(box, d.status, d.staff_note);
+    if (d.status !== "pending") {
+      decided(box, d.status, d.staff_note);
+      if (d.project && d.project.official_verified) {
+        box.appendChild(btn("Remove official verification", "btn inline small ghost", async function () {
+          if (!confirm("Remove the “Officially verified by ImmXrsive” mark from this project?")) return;
+          try { var r = await call("/api/staff/projects/" + encodeURIComponent(d.project_id) + "/verification/revoke", "POST", {}); tell(r.message); await openVerify(id); tell(r.message); }
+          catch (e) { tell(e.message, true); }
+        }));
+      }
+      return;
+    }
     box.appendChild(el("p", "muted", "Approving adds an “Officially verified by ImmXrsive” mark to the public project page. Students cannot add or change this mark themselves."));
     box.appendChild(decisionForm(async function (approve, note, a, b) {
       a.disabled = b.disabled = true;
