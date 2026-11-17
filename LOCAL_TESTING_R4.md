@@ -61,4 +61,4 @@ DATABASE_URL=postgresql://localhost/imx_r4_test ALLOW_LOCAL_IMPORTS=1 \
 STAFF_BOOTSTRAP_USERNAME=staff.test STAFF_BOOTSTRAP_PASSWORD=Local-Test-Pass-2026 \
 python3 tests/test_r4_api.py
 ```
-Expected last line: `All 73 checks passed.`
+Expected last line: `All 76 checks passed.`

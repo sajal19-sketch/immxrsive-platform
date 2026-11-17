@@ -173,20 +173,34 @@ class StaffLogin(BaseModel):
     password: str = Field(min_length=1, max_length=200)
 
 
+def _client_key(request: Request, username):
+    """Failed sign-ins are counted per username *and* client address, so someone
+    guessing from elsewhere cannot lock the real staff member out."""
+    fwd = request.headers.get('x-forwarded-for', '')
+    ip = fwd.split(',')[0].strip() if fwd else (request.client.host if request.client else '')
+    return username + '|' + hashlib.sha256(('imx-staff:' + ip).encode()).hexdigest()[:16]
+
+
 @router.post('/api/staff/login')
-def staff_login(payload: StaffLogin):
-    username = payload.username.strip().lower()
+def staff_login(payload: StaffLogin, request: Request):
+    username = _client_key(request, payload.username.strip().lower()).split('|')[0]
+    key = _client_key(request, username)
     with _db() as conn:
         window = _iso(_now() - timedelta(minutes=15))
         fails = conn.execute('SELECT count(*) AS n FROM staff_login_failures WHERE username=%s AND failed_at>%s',
-                             (username, window)).fetchone()['n']
+                             (key, window)).fetchone()['n']
         if fails >= 8:
             raise HTTPException(429, 'Too many failed sign-in attempts. Wait 15 minutes and try again.')
         row = conn.execute('SELECT * FROM staff_accounts WHERE username=%s AND is_active=1', (username,)).fetchone()
-        if not row or not _password_ok(payload.password, row['password_hash']):
-            conn.execute('INSERT INTO staff_login_failures VALUES (%s,%s)', (username, _iso()))
-            raise HTTPException(401, 'Staff username or password is incorrect.')
-        conn.execute('DELETE FROM staff_login_failures WHERE username=%s', (username,))
+        ok = bool(row) and _password_ok(payload.password, row['password_hash'])
+        if not ok:
+            # Recorded and committed *before* the error is raised (raising inside the
+            # block would roll the failure back and the limit would never trigger).
+            conn.execute('INSERT INTO staff_login_failures VALUES (%s,%s)', (key, _iso()))
+    if not ok:
+        raise HTTPException(401, 'Staff username or password is incorrect.')
+    with _db() as conn:
+        conn.execute('DELETE FROM staff_login_failures WHERE username=%s', (key,))
         token = 'stf_' + secrets.token_urlsafe(40)
         conn.execute('INSERT INTO staff_sessions VALUES (%s,%s,%s)',
                      (_hash(token), row['id'], _iso(_now() + timedelta(hours=STAFF_HOURS))))
@@ -455,7 +469,11 @@ def _allow_local():
 
 
 def _check_target(url):
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+        parts.port
+    except ValueError:
+        raise ValueError("That doesn't look like a website address.")
     if parts.scheme not in ('https', 'http') or not parts.hostname:
         raise ValueError('Enter a full website address starting with https://')
     if parts.scheme == 'http' and not _allow_local():
@@ -508,8 +526,12 @@ def import_company(payload: ImportIn, staff=Depends(require_staff)):
     """Returns suggestions only. A failed import is recorded and reported, and the
     caller keeps whatever it had typed (R4.11)."""
     url = payload.url.strip()
-    if not re.match(r'^[a-z]+://', url, re.I):
+    if re.match(r'^[a-z][a-z0-9+.-]*:', url, re.I) and not re.match(r'^https?://', url, re.I):
+        raise HTTPException(422, 'Enter a normal website address, for example https://company.example')
+    if not re.match(r'^https?://', url, re.I):
         url = 'https://' + url
+    if re.search(r'\s', url) or '.' not in (urlsplit(url).hostname or '') and not _allow_local():
+        raise HTTPException(422, "That doesn't look like a website address. Use the form https://company.example")
     company_id = payload.company_id.strip()
     with _db() as conn:
         if company_id:

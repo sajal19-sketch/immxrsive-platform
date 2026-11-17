@@ -52,7 +52,7 @@ reviewers should test only R4.10.
   `STAFF_BOOTSTRAP_PASSWORD` (12+ characters) and `STAFF_BOOTSTRAP_NAME`. The
   password is never committed. A student GitHub session is rejected (403) by
   every staff endpoint; a staff session is rejected (401) by student endpoints.
-  Eight failed staff sign-ins in 15 minutes lock that username for 15 minutes.
+  Eight failed staff sign-ins from the same address within 15 minutes block that address for 15 minutes; staff signing in from elsewhere are not affected.
 - **Verification is staff-only data** (`projects.official_verified`,
   `verified_at`, `verified_by`). No student endpoint writes those columns, and
   the project edit endpoint ignores any extra fields.
@@ -97,7 +97,7 @@ website**, paste one of the URLs above, and click **Get details from website**.
 
 These tests ran against a disposable local PostgreSQL database, never production:
 
-- `tests/test_r4_api.py`: 73 API checks covering every scenario in the R4 Peer QA
+- `tests/test_r4_api.py`: 76 API checks covering every scenario in the R4 Peer QA
   Test Plan (A–L), plus R1–R3 regression. Results: all passed.
 - Browser walk-through (Chrome, desktop for staff, 390 px mobile for public
   pages): 36 checks covering import, review, publish, collaborations, visibility,

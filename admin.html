@@ -176,7 +176,19 @@
   function ext(label, url) { var u = safeHttps(url); if (!u) return el("span", null, label); var a = link(label, u); a.target = "_blank"; a.rel = "noopener noreferrer"; return a; }
   function when(iso) { if (!iso) return ""; var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); }
   function tell(s, err) { var m = $("message"); m.textContent = s || ""; m.className = "msg " + (err ? "err" : "ok"); }
-  function detailText(d) { if (!d) return "Request failed"; if (typeof d === "string") return d; if (Array.isArray(d)) return d.map(function (e) { return (e.loc ? e.loc[e.loc.length - 1] + ": " : "") + e.msg; }).join(", "); return d.message || "Request failed"; }
+  var LABELS = { name: "Company name", website: "Website", description: "Description", relationship_summary: "How ImmXrsive works with them", sector: "Sector",
+    keywords: "Keywords", location: "Location", logo_url: "Logo image link", title: "Title", start_year: "Start year", end_year: "End year",
+    outcome: "Outcome", public_summary: "Public summary", staff_note: "Note", url: "Website address", username: "Username", password: "Password" };
+  function friendly(e) {
+    var f = e.loc ? e.loc[e.loc.length - 1] : "", label = LABELS[f] || "This field", c = e.ctx || {};
+    if (e.type === "string_too_long") return label + " is too long (maximum " + c.max_length + " characters).";
+    if (e.type === "string_too_short" || e.type === "missing") return label + " is required.";
+    if (e.type === "greater_than_equal" || e.type === "less_than_equal") return label + " must be a year between 1990 and 2100.";
+    if (e.type && e.type.indexOf("int") === 0) return label + " must be a whole number.";
+    if (e.type === "too_long") return label + " has too many items.";
+    return label + ": " + e.msg;
+  }
+  function detailText(d) { if (!d) return "Request failed"; if (typeof d === "string") return d; if (Array.isArray(d)) return d.map(friendly).join(" "); return d.message || "Request failed"; }
   async function call(path, method, payload) {
     var h = { Authorization: "Bearer " + token() };
     if (payload !== undefined) h["Content-Type"] = "application/json";

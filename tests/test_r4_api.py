@@ -73,6 +73,16 @@ def run():
                                                    'password': os.environ['STAFF_BOOTSTRAP_PASSWORD']})
         check('K5 staff login works', login.status_code == 200, login.text)
         staff = {'Authorization': 'Bearer ' + login.json()['access_token']}
+        bad = {'username': 'staff.test', 'password': 'wrong'}
+        for _ in range(8):
+            api.post('/api/staff/login', json=bad, headers={'X-Forwarded-For': '9.9.9.9'})
+        good = {'username': os.environ['STAFF_BOOTSTRAP_USERNAME'], 'password': os.environ['STAFF_BOOTSTRAP_PASSWORD']}
+        r = api.post('/api/staff/login', json=good, headers={'X-Forwarded-For': '9.9.9.9'})
+        check('K7 eight wrong passwords lock that sender out for 15 minutes', r.status_code == 429, r.text)
+        r = api.post('/api/staff/login', json=good, headers={'X-Forwarded-For': '5.5.5.5'})
+        check('K8 the lock does not stop staff signing in from elsewhere', r.status_code == 200, r.text)
+        r = api.post('/api/staff/company-imports', json={'url': 'javascript:alert(1)'}, headers=staff)
+        check('L3 invalid website address gets a plain-language message', r.status_code == 422 and 'website address' in r.json()['detail'])
         r = api.get('/api/auth/me', **H(staff))
         check('K6 staff token is not a student session', r.status_code == 401)
 
