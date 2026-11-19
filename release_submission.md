@@ -34,9 +34,9 @@ Test notes: staff area is https://sajal19-sketch.github.io/immxrsive-platform/ad
   - company_prompt_injection.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_prompt_injection.html
   - company_same_name_other_domain.html → https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_same_name_other_domain.html
   - Setup to repeat an import: staff sign-in → Import partner from website → paste URL → Get details from website.
-- Published fixture partner imported from a supplied page: <partner.html?id=… link — fill in after creating it on production>
-- Company with at least two collaborations: <same partner, link — fill in>
-- Student-requested relationship shown pending → staff review: <project link + short note — fill in>
+- Published fixture partner imported from a supplied page: https://sajal19-sketch.github.io/immxrsive-platform/partner.html?id=c_6cf0e9cc392a (North Shore Simulations, imported from company_normal.html, description edited by staff, then published after review)
+- Company with at least two collaborations: https://sajal19-sketch.github.io/immxrsive-platform/partner.html?id=c_6cf0e9cc392a (Industrial Safety VR Trainer: 2025, Past, Public; XR Anatomy Lab: 2026, Current, Public; Confidential Pilot: 2026, Current, Limited)
+- Student-requested relationship shown pending → staff review: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae (ImmXrsive Talent Platform: North Shore Simulations request approved by staff and now shown as Industry partner. A second request, Soo Robotics as a suggested new company, and a project verification request are left pending for reviewers on Staff home.)
 - Release notes / known issues: [RELEASE_NOTES_R4.md](RELEASE_NOTES_R4.md)
 - Automated evidence: `tests/test_r4_api.py` (76 checks, all passed on a local disposable database)
 
