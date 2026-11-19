@@ -19,7 +19,7 @@
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#home",
       "method_or_action": "Sign in with staff username/password (POST /api/staff/login), open Staff home (GET /api/staff/queue)",
       "role": "staff",
-      "setup": "Staff test account from the private course channel",
+           "setup": "Staff test account from the online text of the Moodle Release 4 Product Result submission",
       "expected_behavior": "Task cards: Verify projects, Partner requests, Partners to review, New inquiries, each with a Review button; no database terms"
     },
     {
@@ -120,5 +120,5 @@
     }
   ],
   "fixture_setup": "Company-site fixtures are published unchanged at fixtures/r4/ on GitHub Pages (URLs above, SHA-256 in fixtures/r4/SHA256SUMS). Import them through the staff UI; nothing is pre-loaded. collaboration_seed.json is reproduced by staff through the Collaborations form (North Shore Simulations: 2025 past public, 2026 current public; Superior Immersive Labs: 2026 current private). R1-R3 fixture students/projects remain loaded by seed_db.py.",
-  "test_access": "Staff test username/password is sent to assigned reviewers and the instructor through the approved private course channel. Students sign in with their own GitHub account and verify their own @algomau.ca email. No passwords or tokens are in this repository."
+    "test_access": "Staff test username/password is in the online text of the Moodle Release 4 Product Result submission. Students sign in with their own GitHub account and verify their own @algomau.ca email. No passwords or tokens are in this repository."
 }
