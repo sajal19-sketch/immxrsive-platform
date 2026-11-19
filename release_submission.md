@@ -8,7 +8,7 @@ Project Option: Project 1
 Deployment: https://sajal19-sketch.github.io/immxrsive-platform/ (frontend) · https://immxrsive-api.onrender.com (API)
 Repository: https://github.com/sajal19-sketch/immxrsive-platform
 Release tag: R4-submission
-Commit: <full SHA of the commit tagged R4-submission — fill in after tagging>
+Commit: 874302df422bba9a44be84cac71c61daca519d14
 Adapter: evaluation_adapter.json
 Known issues: see RELEASE_NOTES_R4.md → "Known issues / limits"
 Test notes: staff area is https://sajal19-sketch.github.io/immxrsive-platform/admin.html. The API sleeps when idle; the first request can take up to a minute.
