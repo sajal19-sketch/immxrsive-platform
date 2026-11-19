@@ -16,9 +16,9 @@ Test notes: staff area is https://sajal19-sketch.github.io/immxrsive-platform/ad
 ## Test accounts
 
 - **Staff/admin (R4.01):** one staff test account, sign in at `admin.html` with a
-  username and password. The username and password are sent to reviewers and the
-  instructor through the approved private course channel only. Do not try to
-  get staff access any other way.
+  username and password. The username and password are in the online text of our
+  Moodle Release 4 Product Result submission (not in this public repository).
+  Do not try to get staff access any other way.
 - **Student maintainer:** reviewers sign in with their own GitHub account
   (`login.html`) and verify their own @algomau.ca email, as in R2–R3. To test the
   student partner request (Scenario I), create a project under My Projects; you
