@@ -1,0 +1,46 @@
+$ python scripts/migrate_legacy.py fixtures/final/legacy_export.json --apply --expected fixtures/final/legacy_expected_results.json
+Run mig_9f4f48e59738 (apply) source=legacy_export.json sha256=cf67ee667720
+Source counts: {'students': 6, 'projects': 3, 'companies': 3, 'collaborations': 4}
+  students        created=6 updated=0 skipped=0 conflict=0
+  projects        created=3 updated=0 skipped=0 conflict=0
+  companies       created=3 updated=0 skipped=0 conflict=0
+  collaborations  created=4 updated=0 skipped=0 conflict=0
+  contributors    created=4 updated=0 skipped=0 conflict=1
+  duplicate: student LS04 ~ LS01 (same email)
+  duplicate: company LC02 ~ LC01 (same website domain)
+  broken reference: {'project_legacy_id': 'LP02', 'student_legacy_id': 'LS99'} - contributor does not exist in the export or the platform; relationship not created
+  unclaimed profiles: LS02, LS05, LS06
+  [PASS] source record counts
+  [PASS] duplicate student detected
+  [PASS] broken contributor reference reported
+  [PASS] profiles left unclaimed
+Acceptance: PASS
+Full report written to evidence/final/legacy_migration_report.json
+
+$ (same command again: idempotency check)
+Run mig_869c145f8d33 (apply) source=legacy_export.json sha256=cf67ee667720
+Source counts: {'students': 6, 'projects': 3, 'companies': 3, 'collaborations': 4}
+  students        created=0 updated=0 skipped=6 conflict=0
+  projects        created=0 updated=0 skipped=3 conflict=0
+  companies       created=0 updated=0 skipped=3 conflict=0
+  collaborations  created=0 updated=0 skipped=4 conflict=0
+  contributors    created=0 updated=0 skipped=4 conflict=1
+  duplicate: student LS04 ~ LS01 (same email)
+  broken reference: {'project_legacy_id': 'LP02', 'student_legacy_id': 'LS99'} - contributor does not exist in the export or the platform; relationship not created
+  unclaimed profiles: LS02, LS05, LS06
+  [PASS] source record counts
+  [PASS] duplicate student detected
+  [PASS] broken contributor reference reported
+  [PASS] profiles left unclaimed
+Acceptance: PASS
+Full report written to evidence/final/legacy_migration_rerun_report.json
+
+$ python scripts/migrate_legacy.py fixtures/final/scale_fixture.json --apply
+Run mig_5a7221798da6 (apply) source=scale_fixture.json sha256=1cf8f6ef39f0
+Source counts: {'students': 220, 'projects': 110, 'companies': 25, 'collaborations': 0}
+  students        created=220 updated=0 skipped=0 conflict=0
+  projects        created=110 updated=0 skipped=0 conflict=0
+  companies       created=25 updated=0 skipped=0 conflict=0
+  collaborations  created=0 updated=0 skipped=0 conflict=0
+  contributors    created=328 updated=0 skipped=0 conflict=0
+Full report written to evidence/final/scale_import_report.json

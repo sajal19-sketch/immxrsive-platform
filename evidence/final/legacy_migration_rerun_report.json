@@ -1,0 +1,283 @@
+{
+  "format": "legacy",
+  "mode": "apply",
+  "source_name": "legacy_export.json",
+  "source_sha256": "cf67ee667720b465175b53070e86a93cd8c1ad4fc2e4329ef78872fe22eaf910",
+  "source_counts": {
+    "students": 6,
+    "projects": 3,
+    "companies": 3,
+    "collaborations": 4
+  },
+  "results": {
+    "students": {
+      "created": 0,
+      "updated": 0,
+      "skipped": 6,
+      "conflict": 0
+    },
+    "projects": {
+      "created": 0,
+      "updated": 0,
+      "skipped": 3,
+      "conflict": 0
+    },
+    "companies": {
+      "created": 0,
+      "updated": 0,
+      "skipped": 3,
+      "conflict": 0
+    },
+    "collaborations": {
+      "created": 0,
+      "updated": 0,
+      "skipped": 4,
+      "conflict": 0
+    },
+    "contributors": {
+      "created": 0,
+      "updated": 0,
+      "skipped": 4,
+      "conflict": 1
+    }
+  },
+  "duplicate_candidates": [
+    {
+      "entity": "student",
+      "legacy_id": "LS04",
+      "possible_duplicate_of": "LS01",
+      "reason": "same email"
+    }
+  ],
+  "existing_platform_matches": [
+    {
+      "entity": "student",
+      "legacy_id": "LS01",
+      "existing_id": "S01",
+      "reason": "same name as an existing profile; not merged automatically"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS02",
+      "existing_id": "S11",
+      "reason": "same name as an existing profile; not merged automatically"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS03",
+      "existing_id": "S02",
+      "reason": "same name as an existing profile; not merged automatically"
+    },
+    {
+      "entity": "project",
+      "legacy_id": "LP01",
+      "existing_id": "P04",
+      "reason": "same title as an existing project; review, not merged automatically"
+    },
+    {
+      "entity": "project",
+      "legacy_id": "LP02",
+      "existing_id": "P03",
+      "reason": "same title as an existing project; review, not merged automatically"
+    }
+  ],
+  "broken_references": [
+    {
+      "project_legacy_id": "LP02",
+      "student_legacy_id": "LS99",
+      "reason": "contributor does not exist in the export or the platform; relationship not created"
+    }
+  ],
+  "malformed_records": [],
+  "unclaimed_profiles": [
+    "LS02",
+    "LS05",
+    "LS06"
+  ],
+  "unclaimed_profile_count": 3,
+  "notes": [
+    "Imported profiles have no account. Their owners can claim them after verifying their email."
+  ],
+  "records": [
+    {
+      "entity": "student",
+      "legacy_id": "LS01",
+      "internal_id": "s_23b6916b2de4",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS02",
+      "internal_id": "s_6ac66aa1384a",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS03",
+      "internal_id": "s_cbc0587a3a43",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS04",
+      "internal_id": "s_b2772df3b112",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS05",
+      "internal_id": "s_5b11a99f1c19",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "student",
+      "legacy_id": "LS06",
+      "internal_id": "s_ab80ce036361",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "project",
+      "legacy_id": "LP01",
+      "internal_id": "p_5dfb065daed1d735",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "project",
+      "legacy_id": "LP02",
+      "internal_id": "p_320b7553303d8503",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "project",
+      "legacy_id": "LP03",
+      "internal_id": "p_d5a5680e786e6519",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "company",
+      "legacy_id": "LC01",
+      "internal_id": "c_a7d2bfa8ea1e",
+      "action": "skipped",
+      "note": "already migrated"
+    },
+    {
+      "entity": "company",
+      "legacy_id": "LC02",
+      "internal_id": "c_40470381c432",
+      "action": "skipped",
+      "note": "already migrated"
+    },
+    {
+      "entity": "company",
+      "legacy_id": "LC03",
+      "internal_id": "c_f7e1dd5af9ba",
+      "action": "skipped",
+      "note": "already migrated"
+    },
+    {
+      "entity": "collaboration",
+      "legacy_id": "LCO1",
+      "internal_id": "col_79ca779a38c9",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "collaboration",
+      "legacy_id": "LCO2",
+      "internal_id": "col_249b82e1751f",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "collaboration",
+      "legacy_id": "LCO3",
+      "internal_id": "col_db2973df3844",
+      "action": "skipped",
+      "note": "unchanged"
+    },
+    {
+      "entity": "collaboration",
+      "legacy_id": "LCO4",
+      "internal_id": "col_be1221b61fac",
+      "action": "skipped",
+      "note": "unchanged"
+    }
+  ],
+  "acceptance": {
+    "all_pass": true,
+    "checks": [
+      {
+        "check": "source record counts",
+        "expected": {
+          "students": 6,
+          "projects": 3,
+          "companies": 3,
+          "collaborations": 4
+        },
+        "found": {
+          "students": 6,
+          "projects": 3,
+          "companies": 3,
+          "collaborations": 4
+        },
+        "pass": true
+      },
+      {
+        "check": "duplicate student detected",
+        "expected": [
+          [
+            "LS04",
+            "LS01"
+          ]
+        ],
+        "found": [
+          [
+            "LS04",
+            "LS01"
+          ]
+        ],
+        "pass": true
+      },
+      {
+        "check": "broken contributor reference reported",
+        "expected": [
+          [
+            "LP02",
+            "LS99"
+          ]
+        ],
+        "found": [
+          [
+            "LP02",
+            "LS99"
+          ]
+        ],
+        "pass": true
+      },
+      {
+        "check": "profiles left unclaimed",
+        "expected": [
+          "LS02",
+          "LS05",
+          "LS06"
+        ],
+        "found": [
+          "LS02",
+          "LS05",
+          "LS06"
+        ],
+        "pass": true
+      }
+    ]
+  },
+  "run_id": "mig_869c145f8d33"
+}

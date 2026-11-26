@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Staff operations · ImmXrsive</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="r4.css">
+<script src="config.js"></script>
+<style>
+  .ops table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px}
+  .ops th,.ops td{border-bottom:1px solid rgba(255,255,255,.14);padding:8px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+  .ops th{font-weight:600}
+  .ops .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 22px}
+  .ops .tabs a[aria-current="page"]{text-decoration:underline;text-underline-offset:5px}
+  .ops .pass{color:#6ee7a8}.ops .fail{color:#f87171}
+  .ops .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .ops fieldset{border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:10px 14px;margin:10px 0}
+  .ops .scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
+<nav class="nav-links keep adminnav" aria-label="Staff">
+  <a href="admin.html#home">Staff home</a><a href="admin.html#partners">Industry partners</a><a href="admin.html#inbox">Inquiries</a><a href="staff-ops.html#claims" aria-current="page">Operations</a>
+</nav></div></header>
+<main class="chapter sub"><div class="wrap r4 ops">
+  <h1>Staff operations</h1>
+  <p class="muted">Launch and recovery tools: legacy migration, profile claims, student lifecycle, duplicates, project maintainers and diagnostics.</p>
+  <nav class="tabs" aria-label="Operations sections">
+    <a class="btn inline small ghost" href="#claims">Profile claims</a>
+    <a class="btn inline small ghost" href="#students">Students</a>
+    <a class="btn inline small ghost" href="#duplicates">Duplicates</a>
+    <a class="btn inline small ghost" href="#projects">Projects &amp; maintainers</a>
+    <a class="btn inline small ghost" href="#migrate">Legacy migration</a>
+    <a class="btn inline small ghost" href="#diagnostics">Diagnostics</a>
+  </nav>
+  <p id="message" class="msg" role="status" aria-live="polite"></p>
+  <div id="signin" hidden class="panel"><p>Your staff session has ended or you are not signed in.</p><a class="btn inline" href="admin.html">Sign in as staff</a></div>
+
+  <!-- Claims -->
+  <section id="v-claims" hidden aria-labelledby="h-claims">
+    <h2 id="h-claims">Profile claims</h2>
+    <p class="muted">Approve only when you are confident the person owns the imported profile. Names, GitHub usernames and email domains are context, not proof. Exact verified-email matches are approved automatically and appear under "All".</p>
+    <label class="f" style="max-width:260px">Show <select class="ctl" id="claim-filter"><option value="pending">Waiting for review</option><option value="all">All</option></select></label>
+    <div id="claims"></div>
+  </section>
+
+  <!-- Students -->
+  <section id="v-students" hidden aria-labelledby="h-students">
+    <h2 id="h-students">Students and alumni</h2>
+    <form class="row" id="s-form" role="search">
+      <label class="f" style="flex:1;min-width:200px">Name, id or legacy id <input class="ctl" id="s-q" autocomplete="off"></label>
+      <label class="f">Filter <select class="ctl" id="s-state"><option value="">All</option><option value="unclaimed">Unclaimed (imported)</option><option value="legacy_claimed">Imported, owned on old site</option><option value="owned">Has an owner</option><option value="published">Published</option><option value="unpublished">Unpublished</option><option value="retired">Retired</option></select></label>
+      <button class="btn inline" type="submit">Search</button>
+    </form>
+    <div id="s-list" class="scroll"></div>
+    <div id="s-detail"></div>
+  </section>
+
+  <!-- Duplicates -->
+  <section id="v-duplicates" hidden aria-labelledby="h-dupes">
+    <h2 id="h-dupes">Possible duplicates</h2>
+    <p class="muted">Merging moves projects, collaborations and inquiries to the record you keep. The other record is not deleted; its old public link leads to the survivor.</p>
+    <div id="dupes"></div>
+  </section>
+
+  <!-- Projects -->
+  <section id="v-projects" hidden aria-labelledby="h-projects">
+    <h2 id="h-projects">Projects and maintainers</h2>
+    <form class="row" id="p-form" role="search">
+      <label class="f" style="flex:1;min-width:200px">Project title or id <input class="ctl" id="p-q" autocomplete="off"></label>
+      <button class="btn inline" type="submit">Search</button>
+    </form>
+    <div id="p-list" class="scroll"></div>
+    <div id="p-detail"></div>
+  </section>
+
+  <!-- Migration -->
+  <section id="v-migrate" hidden aria-labelledby="h-migrate">
+    <h2 id="h-migrate">Legacy migration</h2>
+    <p class="muted">Imports the old site's export. Safe to run again: records are matched on their legacy id, so a repeat run reports them as skipped or updated instead of creating copies. Broken references and duplicates are reported, never guessed.</p>
+    <div class="panel">
+      <label class="f">Export file (JSON) <input class="ctl" type="file" id="m-file" accept="application/json,.json"></label>
+      <p class="muted">Or use a supplied file: <button class="btn inline small ghost" type="button" id="m-legacy">Legacy export (legacy_export.json)</button> <button class="btn inline small ghost" type="button" id="m-scale">Scale fixture (scale_fixture.json)</button></p>
+      <p id="m-chosen" class="muted">No file chosen.</p>
+      <label><input type="checkbox" id="m-dry" checked> Preview only (dry run: nothing is saved)</label><br>
+      <label><input type="checkbox" id="m-expect" checked> Check the result against legacy_expected_results.json</label>
+      <div class="row" style="margin-top:10px"><button class="btn inline" type="button" id="m-run">Run migration</button></div>
+    </div>
+    <div id="m-report"></div>
+    <h3>Previous runs</h3>
+    <div id="m-runs" class="scroll"></div>
+  </section>
+
+  <!-- Diagnostics -->
+  <section id="v-diagnostics" hidden aria-labelledby="h-diag">
+    <h2 id="h-diag">Diagnostics</h2>
+    <p class="muted">Failed integrations and unexpected server errors. Each entry has a time, request reference and short detail. Tokens, passwords, codes and form contents are never recorded.</p>
+    <label class="f" style="max-width:300px">Kind <select class="ctl" id="d-kind"><option value="">All</option><option>server_error</option><option>github_import</option><option>github_sign_in</option><option>email_delivery</option><option>email_verification</option><option>company_import</option><option>legacy_migration</option></select></label>
+    <div id="diag"></div>
+  </section>
+</div></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var API = window.IMX_API, KEY = "imx_staff_token";
+  var $ = function (id) { return document.getElementById(id); };
+  var VIEWS = ["claims", "students", "duplicates", "projects", "migrate", "diagnostics"];
+  var migrationData = null, migrationName = "";
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function btn(label, fn, cls) { var b = el("button", cls || "btn inline small", label); b.type = "button"; b.onclick = fn; return b; }
+  function link(label, href, cls) { var a = el("a", cls || "", label); a.href = href; return a; }
+  function when(iso) { if (!iso) return ""; var d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); }
+  function tell(s, err) { var m = $("message"); m.textContent = s || ""; m.className = "msg " + (err ? "err" : "ok"); }
+  function detailText(d) { if (!d) return "Request failed"; if (typeof d === "string") return d; if (Array.isArray(d)) return d.map(function (e) { return (e.loc ? e.loc[e.loc.length - 1] + ": " : "") + e.msg; }).join(" "); return d.message || "Request failed"; }
+  async function call(path, method, payload) {
+    var h = { Authorization: "Bearer " + (sessionStorage.getItem(KEY) || "") };
+    if (payload !== undefined) h["Content-Type"] = "application/json";
+    var r;
+    try { r = await fetch(API + path, { method: method || "GET", headers: h, body: payload === undefined ? undefined : JSON.stringify(payload) }); }
+    catch (e) { throw new Error("Couldn't reach the server. It may be waking up; try again in a minute."); }
+    var data = await r.json().catch(function () { return { detail: "The server did not answer properly (HTTP " + r.status + ")." }; });
+    if (r.status === 401 || r.status === 403) { $("signin").hidden = false; throw new Error("Staff sign-in required."); }
+    if (!r.ok) throw new Error(detailText(data.detail));
+    return data;
+  }
+  function table(headers, rows) {
+    var t = el("table"), thead = el("thead"), tr = el("tr");
+    headers.forEach(function (h) { var th = el("th", null, h); th.scope = "col"; tr.appendChild(th); });
+    thead.appendChild(tr); t.appendChild(thead);
+    var tb = el("tbody");
+    rows.forEach(function (r) { var row = el("tr"); r.forEach(function (c) { var td = el("td"); if (c instanceof Node) td.appendChild(c); else td.textContent = c == null ? "" : String(c); row.appendChild(td); }); tb.appendChild(row); });
+    t.appendChild(tb); return t;
+  }
+  function labelled(text, control) { var l = el("label", "f"); l.appendChild(document.createTextNode(text + " ")); l.appendChild(control); return l; }
+  function select(options, value) { var s = el("select", "ctl"); options.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; s.appendChild(op); }); if (value != null) s.value = value; return s; }
+  function input(value, attrs) { var i = el("input", "ctl"); i.value = value || ""; Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); }); return i; }
+
+  // ------------------------------------------------------------------ claims
+  async function loadClaims() {
+    var list = await call("/api/staff/claims?status=" + $("claim-filter").value);
+    var box = $("claims"); box.replaceChildren();
+    if (!list.length) { box.appendChild(el("p", "muted", "No claims to show.")); return; }
+    list.forEach(function (c) {
+      var card = el("article", "panel");
+      card.appendChild(el("h3", null, (c.claimant_name || c.claimant_id) + " wants to claim " + c.profile_name));
+      var facts = el("ul");
+      [["Imported profile", c.profile_name + " · legacy id " + (c.legacy_id || "none") + " · " + (c.profile_status || "")],
+       ["Email on legacy record", c.legacy_email || "none"],
+       ["Claimant's verified email", c.claimant_email || "none"],
+       ["Exact email match", c.signals.email_exact_match ? "Yes" : "No"],
+       ["Same email domain", c.signals.same_email_domain ? "Yes (not proof)" : "No"],
+       ["Claimant's note", c.note || "none"], ["Requested", when(c.created_at)], ["Status", c.status + (c.staff_note ? " · " + c.staff_note : "")]]
+        .forEach(function (f) { var li = el("li"); li.appendChild(el("strong", null, f[0] + ": ")); li.appendChild(document.createTextNode(f[1])); facts.appendChild(li); });
+      card.appendChild(facts);
+      card.appendChild(el("p", "muted", c.signals.note));
+      var row = el("div", "row");
+      row.appendChild(link("Open imported profile", "student.html?id=" + encodeURIComponent(c.profile_id), "btn inline small ghost"));
+      if (c.status === "pending") {
+        var note = input("", { maxlength: "1000", id: "note-" + c.id });
+        card.appendChild(labelled("Note to the student (required to reject)", note));
+        row.appendChild(btn("Approve claim", async function () { try { tell((await call("/api/staff/claims/" + c.id + "/decision", "POST", { approve: true, note: note.value.trim() })).message); loadClaims(); } catch (e) { tell(e.message, true); } }));
+        row.appendChild(btn("Reject claim", async function () {
+          if (!note.value.trim()) { note.setAttribute("aria-invalid", "true"); note.focus(); return tell("Note to the student: explain why the claim was rejected.", true); }
+          try { tell((await call("/api/staff/claims/" + c.id + "/decision", "POST", { approve: false, note: note.value.trim() })).message); loadClaims(); } catch (e) { tell(e.message, true); }
+        }, "btn inline small ghost"));
+      }
+      card.appendChild(row);
+      box.appendChild(card);
+    });
+  }
+  $("claim-filter").onchange = function () { loadClaims().catch(function (e) { tell(e.message, true); }); };
+
+  // ------------------------------------------------------------------ students
+  var STATE_LABEL = { active: "Active Talent", stale: "Availability stale (>12 months)", unconfirmed: "Availability not confirmed", showcase: "Showcase Only" };
+  async function searchStudents(e) {
+    if (e) e.preventDefault();
+    var d = await call("/api/staff/students?q=" + encodeURIComponent($("s-q").value.trim()) + "&state=" + encodeURIComponent($("s-state").value));
+    var box = $("s-list"); box.replaceChildren();
+    box.appendChild(el("p", "muted", d.total + " record(s)" + (d.total > 50 ? ", first 50 shown. Narrow the search." : ".")));
+    box.appendChild(table(["Name", "Status", "Portfolio", "Owner", "Talent", ""], d.items.map(function (s) {
+      return [s.name + (s.legacy_id ? " (" + s.legacy_id + ")" : ""), s.status, s.publication, s.has_owner ? "Signed-in owner" : (s.claim_state || "none"),
+        STATE_LABEL[s.talent_state] || s.talent_state, btn("Manage", function () { openStudent(s.id); })];
+    })));
+  }
+  $("s-form").onsubmit = function (e) { searchStudents(e).catch(function (x) { tell(x.message, true); }); };
+  async function openStudent(id) {
+    var s = await call("/api/staff/students/" + encodeURIComponent(id));
+    var box = $("s-detail"); box.replaceChildren();
+    var card = el("article", "panel"); card.id = "student-card";
+    card.appendChild(el("h3", null, s.name + (s.legacy_id ? " · legacy " + s.legacy_id : "")));
+    card.appendChild(el("p", "muted", "Owner: " + (s.has_owner ? "signed-in account (" + (s.email || "verified") + ")" : "none (" + s.claim_state + ")") +
+      " · Affiliation " + (s.is_algoma_verified ? "verified" + (s.affiliation_verified_at ? " " + when(s.affiliation_verified_at) : "") : "not verified") +
+      (s.legacy_email ? " · Legacy email " + s.legacy_email : "")));
+    card.appendChild(link("Open public page", s.public_url, "btn inline small ghost"));
+
+    var f = el("fieldset"); f.appendChild(el("legend", null, "Lifecycle (status, portfolio, availability)"));
+    var status = select([["Current", "Current student"], ["Alumni", "Alumni"]], (s.status || "").charAt(0).toUpperCase() + (s.status || "").slice(1).toLowerCase());
+    var pub = select([["published", "Published"], ["unpublished", "Unpublished (draft)"], ["retired", "Retired / archived"]], s.publication);
+    var mode = select([["active", "Active Talent"], ["showcase", "Showcase Only"]], s.talent_mode);
+    var conf = input(s.availability_confirmed_at || "", { type: "date" });
+    var g = el("div", "grid2");
+    g.appendChild(labelled("Student status", status)); g.appendChild(labelled("Portfolio", pub));
+    g.appendChild(labelled("Talent mode", mode)); g.appendChild(labelled("Availability last confirmed", conf));
+    f.appendChild(g);
+    var av = el("fieldset"); av.appendChild(el("legend", null, "Stated availability"));
+    var avBoxes = ["internship", "contract", "full-time"].map(function (v) {
+      var l = el("label"); var c = el("input"); c.type = "checkbox"; c.value = v; c.checked = (s.stated_availability || []).indexOf(v) >= 0;
+      l.appendChild(c); l.appendChild(document.createTextNode(" " + v + "  ")); av.appendChild(l); return c;
+    });
+    f.appendChild(av);
+    f.appendChild(el("p", "muted", "Now shown publicly as: " + (STATE_LABEL[s.talent_state] || s.talent_state) + ". Changing status to Alumni does not unpublish the portfolio or ask the person to verify again."));
+    var lnote = input("", { maxlength: "500" }); f.appendChild(labelled("Reason (kept in the history)", lnote));
+    f.appendChild(btn("Save lifecycle changes", async function () {
+      try {
+        var d = await call("/api/staff/students/" + encodeURIComponent(s.id) + "/lifecycle", "POST", {
+          status: status.value, publication: pub.value, talent_mode: mode.value, availability_confirmed_at: conf.value || "",
+          availability: avBoxes.filter(function (c) { return c.checked; }).map(function (c) { return c.value; }), note: lnote.value.trim() });
+        tell(d.message); openStudent(s.id);
+      } catch (e) { tell(e.message, true); }
+    }));
+    card.appendChild(f);
+
+    var o = el("fieldset"); o.appendChild(el("legend", null, "Ownership recovery"));
+    var onote = input("", { maxlength: "1000" });
+    var acct = input("", { placeholder: "u_…" });
+    o.appendChild(labelled("Justification (required)", onote));
+    if (s.has_owner) {
+      o.appendChild(btn("Remove current owner", async function () {
+        if (!confirm("Remove the current owner from " + s.name + "? They lose access to this profile.")) return;
+        try { tell((await call("/api/staff/students/" + encodeURIComponent(s.id) + "/owner", "POST", { action: "release", note: onote.value.trim() })).message); openStudent(s.id); } catch (e) { tell(e.message, true); }
+      }, "btn inline small ghost"));
+    } else {
+      o.appendChild(labelled("Assign to account id (the person's signed-in account, from Students search)", acct));
+      o.appendChild(btn("Assign owner", async function () {
+        try { tell((await call("/api/staff/students/" + encodeURIComponent(s.id) + "/owner", "POST", { action: "assign", account_id: acct.value.trim(), note: onote.value.trim() })).message); openStudent(s.id); } catch (e) { tell(e.message, true); }
+      }));
+    }
+    card.appendChild(o);
+
+    if (s.duplicates.length) {
+      card.appendChild(el("h4", null, "Possible duplicates"));
+      card.appendChild(table(["Other record", "Reason", "Status", ""], s.duplicates.map(function (d) {
+        var other = d.record_id === s.id ? d.other_id : d.record_id;
+        return [d.other_name + " (" + other + ")", d.reason, d.status, d.status === "open" ? btn("Merge " + (d.other_name || other) + " into this record", function () { mergeStudents(s.id, other); }) : ""];
+      })));
+    }
+    if (s.projects.length) { card.appendChild(el("h4", null, "Projects")); card.appendChild(table(["Project", "Role", "Status"], s.projects.map(function (p) { return [p.title + (p.is_maintainer ? " (maintainer)" : ""), p.role, p.status]; }))); }
+    if (s.events.length) { card.appendChild(el("h4", null, "History")); card.appendChild(table(["When", "What", "Detail"], s.events.map(function (e) { return [when(e.at), e.action, e.detail]; }))); }
+    box.appendChild(card);
+    card.scrollIntoView({ block: "start" });
+  }
+  async function mergeStudents(keep, drop) {
+    if (!confirm("Merge record " + drop + " into " + keep + "? Its projects and collaborations move to the record you keep, and its old link redirects there.")) return;
+    try { var d = await call("/api/staff/students/merge", "POST", { survivor_id: keep, duplicate_id: drop, note: "staff merge" }); tell(d.message); if ($("v-students").hidden) loadDupes(); else openStudent(keep); }
+    catch (e) { tell(e.message, true); }
+  }
+
+  // ------------------------------------------------------------------ duplicates
+  async function loadDupes() {
+    var list = await call("/api/staff/duplicates");
+    var box = $("dupes"); box.replaceChildren();
+    if (!list.length) { box.appendChild(el("p", "muted", "No open duplicate candidates.")); return; }
+    box.appendChild(table(["Kind", "Record", "Possible duplicate of", "Reason", "Actions"], list.map(function (d) {
+      var actions = el("div", "row");
+      var mergePath = d.entity === "student" ? "/api/staff/students/merge" : "/api/staff/companies/merge";
+      function merge(keep, drop, keepName, dropName) {
+        return btn("Keep " + keepName + ", merge " + dropName + " into it", async function () {
+          if (!confirm("Merge " + dropName + " into " + keepName + "? Relationships move to " + keepName + "; the other record's old link redirects there.")) return;
+          try { tell((await call(mergePath, "POST", { survivor_id: keep, duplicate_id: drop, note: d.reason })).message); loadDupes(); } catch (e) { tell(e.message, true); }
+        });
+      }
+      var rn = (d.record_name || "") + " [" + d.record_id + "]", on = (d.other_name || "") + " [" + d.other_id + "]";
+      actions.appendChild(merge(d.other_id, d.record_id, on, rn));
+      actions.appendChild(merge(d.record_id, d.other_id, rn, on));
+      actions.appendChild(btn("Not a duplicate", async function () { try { tell((await call("/api/staff/duplicates/" + d.id + "/dismiss", "POST")).message); loadDupes(); } catch (e) { tell(e.message, true); } }, "btn inline small ghost"));
+      var view = d.entity === "student" ? "student.html?id=" : "admin.html#partner/";
+      return [d.entity, link((d.record_name || "") + " (" + d.record_id + ")", view + encodeURIComponent(d.record_id)),
+        link((d.other_name || "") + " (" + d.other_id + ")", view + encodeURIComponent(d.other_id)), d.reason, actions];
+    })));
+  }
+
+  // ------------------------------------------------------------------ projects
+  async function searchProjects(e) {
+    if (e) e.preventDefault();
+    var list = await call("/api/staff/projects?q=" + encodeURIComponent($("p-q").value.trim()));
+    var box = $("p-list"); box.replaceChildren();
+    box.appendChild(table(["Project", "Maintainer", "Contributors", "Demo", ""], list.map(function (p) {
+      return [p.title + (p.legacy_id ? " (" + p.legacy_id + ")" : "") + (p.is_published ? "" : " · private"), p.maintainer_name || "None", p.contributors, p.demo_state, btn("Manage", function () { openProject(p.id); })];
+    })));
+  }
+  $("p-form").onsubmit = function (e) { searchProjects(e).catch(function (x) { tell(x.message, true); }); };
+  async function openProject(id) {
+    var p = await call("/api/staff/projects/" + encodeURIComponent(id));
+    var box = $("p-detail"); box.replaceChildren();
+    var card = el("article", "panel");
+    card.appendChild(el("h3", null, p.title));
+    card.appendChild(link("Open public page", p.public_url, "btn inline small ghost"));
+    var current = p.contributors.filter(function (c) { return c.student_id === p.maintainer_id; })[0];
+    card.appendChild(el("p", null, "Current maintainer: " + (current ? current.name : (p.maintainer_id || "none"))));
+    var f = el("fieldset"); f.appendChild(el("legend", null, "Assign a new maintainer"));
+    f.appendChild(el("p", "muted", "Use this when the maintainer has left or is unreachable. The project keeps its page, link and every contributor's role and statement."));
+    var eligible = p.contributors.filter(function (c) { return c.status === "accepted" && c.has_account && c.is_algoma_verified && c.student_id !== p.maintainer_id; });
+    var who = select([["", eligible.length ? "Choose an accepted contributor" : "No other contributor has a verified account"]].concat(eligible.map(function (c) { return [c.student_id, c.name + " · " + c.role]; })));
+    var other = input("", { placeholder: "or a student account id (u_…)" });
+    var role = select([["", "Role (needed only for someone not yet on the project)"], ["Project Manager", "Project Manager"], ["Software Developer", "Software Developer"], ["XR Developer", "XR Developer"]]);
+    var note = input("", { maxlength: "1000" });
+    f.appendChild(labelled("New maintainer", who)); f.appendChild(labelled("Other student account", other));
+    f.appendChild(labelled("Role", role)); f.appendChild(labelled("Reason (required)", note));
+    f.appendChild(btn("Assign maintainer", async function () {
+      try { tell((await call("/api/staff/projects/" + encodeURIComponent(p.id) + "/maintainer", "POST", { student_id: other.value.trim() || who.value, role: role.value, note: note.value.trim() })).message); openProject(p.id); }
+      catch (e) { tell(e.message, true); }
+    }));
+    card.appendChild(f);
+    var d = el("fieldset"); d.appendChild(el("legend", null, "Demo status"));
+    var ds = select([["available", "Available"], ["unavailable", "Temporarily unavailable"], ["archived", "Archived"], ["replaced", "Replaced by a newer build"]], p.demo_state);
+    var dn = input(p.demo_note, { maxlength: "300" }), dr = input(p.demo_replacement_url, { type: "url", placeholder: "https://…" });
+    d.appendChild(labelled("Demo is", ds)); d.appendChild(labelled("Note for visitors", dn)); d.appendChild(labelled("Replacement build link", dr));
+    d.appendChild(btn("Save demo status", async function () {
+      try { tell((await call("/api/staff/projects/" + encodeURIComponent(p.id) + "/demo-state", "POST", { demo_state: ds.value, demo_note: dn.value.trim(), demo_replacement_url: dr.value.trim() })).message); }
+      catch (e) { tell(e.message, true); }
+    }));
+    card.appendChild(d);
+    card.appendChild(el("h4", null, "Contributors"));
+    card.appendChild(table(["Name", "Role", "Status", "Account"], p.contributors.map(function (c) { return [c.name + (c.student_id === p.maintainer_id ? " (maintainer)" : ""), c.role, c.status, c.has_account ? (c.is_algoma_verified ? "verified" : "unverified") : "none"]; })));
+    if (p.maintainer_history.length) { card.appendChild(el("h4", null, "Maintainer history")); card.appendChild(table(["When", "From", "To", "Reason"], p.maintainer_history.map(function (h) { return [when(h.at), h.from_id || "none", h.to_id, h.note]; }))); }
+    box.appendChild(card);
+    card.scrollIntoView({ block: "start" });
+  }
+
+  // ------------------------------------------------------------------ migration
+  function chosen(data, name) { migrationData = data; migrationName = name; $("m-chosen").textContent = "Ready: " + name + " (" + ["students", "projects", "companies", "collaborations"].map(function (k) { return (data[k] || []).length + " " + k; }).join(", ") + ")"; }
+  async function fixture(name) {
+    try { var r = await fetch("fixtures/final/" + name, { cache: "no-store" }); if (!r.ok) throw new Error(); chosen(await r.json(), name); }
+    catch (e) { tell("Couldn't load " + name + " from this site. Choose the file instead.", true); }
+  }
+  $("m-legacy").onclick = function () { fixture("legacy_export.json"); $("m-expect").checked = true; };
+  $("m-scale").onclick = function () { fixture("scale_fixture.json"); $("m-expect").checked = false; };
+  $("m-file").onchange = function () {
+    var f = this.files[0]; if (!f) return;
+    f.text().then(function (t) { try { chosen(JSON.parse(t), f.name); } catch (e) { $("m-file").setAttribute("aria-invalid", "true"); tell("Export file: this is not valid JSON.", true); } });
+  };
+  $("m-run").onclick = async function () {
+    if (!migrationData) return tell("Choose an export file or one of the supplied files first.", true);
+    var expected;
+    if ($("m-expect").checked) { try { expected = await (await fetch("fixtures/final/legacy_expected_results.json", { cache: "no-store" })).json(); } catch (e) { expected = undefined; } }
+    tell("Running…");
+    try { var rep = await call("/api/staff/migrations", "POST", { data: migrationData, source_name: migrationName, dry_run: $("m-dry").checked, expected: expected }); showReport(rep); tell(rep.mode === "dry_run" ? "Preview finished. Nothing was saved." : "Migration applied."); loadRuns(); }
+    catch (e) { tell(e.message, true); }
+  };
+  function showReport(rep) {
+    var box = $("m-report"); box.replaceChildren();
+    var card = el("article", "panel");
+    card.appendChild(el("h3", null, "Run " + rep.run_id + " · " + (rep.mode === "dry_run" ? "preview" : "applied") + " · " + rep.source_name));
+    card.appendChild(el("p", "muted", "Source counts: " + Object.keys(rep.source_counts).map(function (k) { return rep.source_counts[k] + " " + k; }).join(", ") + " · SHA-256 " + rep.source_sha256.slice(0, 16) + "…"));
+    card.appendChild(table(["Records", "Created", "Updated", "Skipped", "Conflict"], Object.keys(rep.results).map(function (k) { var c = rep.results[k]; return [k, c.created, c.updated, c.skipped, c.conflict]; })));
+    if (rep.acceptance) {
+      card.appendChild(el("h4", null, "Acceptance checks (legacy_expected_results.json): " + (rep.acceptance.all_pass ? "all pass" : "some fail")));
+      card.appendChild(table(["Check", "Result", "Found"], rep.acceptance.checks.map(function (c) { return [c.check, el("span", c.pass ? "pass" : "fail", c.pass ? "PASS" : "FAIL"), JSON.stringify(c.found)]; })));
+    }
+    function list(title, items, fmt) { if (!items || !items.length) return; card.appendChild(el("h4", null, title + " (" + items.length + ")")); var ul = el("ul"); items.forEach(function (i) { ul.appendChild(el("li", null, fmt(i))); }); card.appendChild(ul); }
+    list("Duplicate candidates", rep.duplicate_candidates, function (d) { return d.entity + " " + d.legacy_id + " may duplicate " + d.possible_duplicate_of + " (" + d.reason + ")"; });
+    list("Broken references (not created)", rep.broken_references, function (b) { return Object.keys(b).filter(function (k) { return k !== "reason"; }).map(function (k) { return k + "=" + b[k]; }).join(", ") + ": " + b.reason; });
+    list("Malformed records", rep.malformed_records, function (m) { return m.entity + " " + m.legacy_id + ": " + m.reason; });
+    list("Matches with records already on the platform (review; never merged by name)", rep.existing_platform_matches, function (m) { return m.entity + " " + m.legacy_id + " ~ " + m.existing_id + ": " + m.reason; });
+    if (rep.unclaimed_profiles && rep.unclaimed_profiles.length) card.appendChild(el("p", null, "Profiles left unclaimed: " + rep.unclaimed_profiles.join(", ")));
+    box.appendChild(card);
+  }
+  async function loadRuns() {
+    var runs = await call("/api/staff/migrations");
+    var box = $("m-runs"); box.replaceChildren();
+    if (!runs.length) { box.appendChild(el("p", "muted", "No runs yet.")); return; }
+    box.appendChild(table(["When", "Source", "Mode", "Students c/u/s/x", "Projects c/u/s/x", ""], runs.map(function (r) {
+      function c(k) { var x = r.counts[k] || {}; return [x.created, x.updated, x.skipped, x.conflict].join("/"); }
+      return [when(r.started_at), r.source_name, r.mode, c("students"), c("projects"), btn("Open report", async function () { try { showReport(await call("/api/staff/migrations/" + r.id)); $("m-report").scrollIntoView(); } catch (e) { tell(e.message, true); } })];
+    })));
+  }
+
+  // ------------------------------------------------------------------ diagnostics
+  async function loadDiag() {
+    var d = await call("/api/staff/diagnostics?kind=" + encodeURIComponent($("d-kind").value));
+    var box = $("diag"); box.replaceChildren();
+    var conf = el("p");
+    conf.textContent = "Configured on the server: " + Object.keys(d.configured).map(function (k) { return k.replace(/_/g, " ") + " " + (d.configured[k] ? "yes" : "NO"); }).join(" · ");
+    box.appendChild(conf);
+    box.appendChild(el("h3", null, "Last 7 days"));
+    box.appendChild(d.last_7_days.length ? table(["Kind", "Count", "Most recent"], d.last_7_days.map(function (x) { return [x.kind, x.n, when(x.last)]; })) : el("p", "muted", "No failures recorded."));
+    box.appendChild(el("h3", null, "Recent events"));
+    box.appendChild(d.events.length ? table(["When", "Kind", "Level", "Route", "Status", "Reference", "Detail"], d.events.map(function (e) { return [when(e.at), e.kind, e.level, e.route, e.status, e.request_id, e.detail]; })) : el("p", "muted", "Nothing recorded."));
+  }
+  $("d-kind").onchange = function () { loadDiag().catch(function (e) { tell(e.message, true); }); };
+
+  // ------------------------------------------------------------------ router
+  async function route() {
+    var v = (location.hash || "#claims").slice(1); if (VIEWS.indexOf(v) < 0) v = "claims";
+    VIEWS.forEach(function (x) { $("v-" + x).hidden = x !== v; });
+    document.querySelectorAll(".tabs a").forEach(function (a) { if (a.getAttribute("href") === "#" + v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    tell("");
+    try {
+      if (v === "claims") await loadClaims();
+      else if (v === "students") await searchStudents();
+      else if (v === "duplicates") await loadDupes();
+      else if (v === "projects") await searchProjects();
+      else if (v === "migrate") await loadRuns();
+      else if (v === "diagnostics") await loadDiag();
+    } catch (e) { tell(e.message, true); }
+  }
+  window.addEventListener("hashchange", route);
+  if (!sessionStorage.getItem(KEY)) { $("signin").hidden = false; tell("Sign in as staff to use these tools.", true); }
+  else route();
+})();
+</script>
+</body>
+</html>

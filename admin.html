@@ -13,7 +13,7 @@
 <div class="page">
 <header class="nav"><div class="wrap"><a class="logo" href="index.html">ImmXrsive</a>
 <nav class="nav-links keep adminnav" aria-label="Staff" id="staffnav" hidden>
-  <a href="#home">Staff home</a><a href="#partners">Industry partners</a><a href="#inbox">Inquiries</a>
+  <a href="#home">Staff home</a><a href="#partners">Industry partners</a><a href="#inbox">Inquiries</a><a href="staff-ops.html#claims">Operations</a>
   <button id="logout" type="button">Sign out</button>
 </nav></div></header>
 <main class="chapter sub"><div class="wrap r4">
@@ -266,6 +266,19 @@
     inq.appendChild(el("h2", null, "New inquiries")); inq.appendChild(el("div", "count", String(q.new_inquiries)));
     inq.appendChild(el("p", "muted", "Messages from employers and companies."));
     inq.appendChild(link("Open inquiries", "#inbox", "btn inline small")); box.appendChild(inq);
+    try {   // Final release: claims, duplicates, orphaned projects, recent errors
+      var f = await call("/api/staff/final-queue");
+      var ops = el("article", "card task");
+      ops.appendChild(el("h2", null, "Launch & recovery"));
+      ops.appendChild(el("div", "count", String(f.pending_claims + f.open_duplicates)));
+      var ul = el("ul");
+      [["Profile claims waiting", f.pending_claims, "staff-ops.html#claims"], ["Possible duplicates", f.open_duplicates, "staff-ops.html#duplicates"],
+       ["Public projects without an active maintainer", f.projects_without_active_maintainer, "staff-ops.html#projects"],
+       ["Diagnostic events (24 h)", f.diagnostic_events_24h, "staff-ops.html#diagnostics"]].forEach(function (r) { ul.appendChild(li(r[0] + ": " + r[1], "", r[2], "Open")); });
+      ops.appendChild(ul);
+      ops.appendChild(link("Legacy migration", "staff-ops.html#migrate", "btn inline small ghost"));
+      box.appendChild(ops);
+    } catch (e) {}
   }
 
   // ------------------------------------------------ partner list

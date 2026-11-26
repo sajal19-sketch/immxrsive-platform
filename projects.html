@@ -71,6 +71,12 @@
         <label class="f">Date (YYYY, YYYY-MM or YYYY-MM-DD) <input class="ctl shared" id="project_date" placeholder="2026-10" maxlength="10"></label>
         <label class="f">Repository links (one per line, optional) <textarea class="ctl shared" id="repo_urls" rows="3" placeholder="https://github.com/owner/repo"></textarea></label>
         <label class="f">Playable demo link (https, optional) <input class="ctl shared" id="playable_url" type="url" placeholder="https://..."></label>
+        <label class="f">How the playable demo runs <select class="ctl shared" id="demo_type">
+          <option value="link">Opens in a new tab (any https link)</option>
+          <option value="embed">Embedded web build (runs in an isolated frame after the visitor presses Launch)</option>
+          <option value="webxr">WebXR experience (checks headset/browser support first, then launches in an isolated frame)</option>
+        </select></label>
+        <p class="muted">Only a link and a type are stored. Code or HTML pasted here is never run on ImmXrsive pages.</p>
         <label class="f">Video demo link (https, optional) <input class="ctl shared" id="video_url" type="url" placeholder="https://..."></label>
         <label class="f">Fallback image or link (https, shown if the demo can't run) <input class="ctl shared" id="fallback_url" type="url" placeholder="https://.../screenshot.png"></label>
         <label class="f">Fallback caption <input class="ctl shared" id="fallback_text" maxlength="300" placeholder="Screenshot of the main scene"></label>
@@ -83,6 +89,17 @@
         <h3>Publish</h3>
         <p id="pub-state" class="muted"></p>
         <div class="row"><button class="btn inline" id="publish" type="button">Publish</button><button class="btn inline ghost" id="unpublish" type="button">Make private</button><a class="btn inline ghost" id="view-public" target="_blank" rel="noopener">View public page</a></div>
+
+        <h3>Demo status</h3>
+        <p class="muted">If the build breaks or is retired, mark it here. The project page keeps its description, contributors and fallback.</p>
+        <div class="formbox">
+          <label class="f">Demo is <select class="ctl" id="demo_state">
+            <option value="available">Available</option><option value="unavailable">Temporarily unavailable</option>
+            <option value="archived">Archived (no longer playable)</option><option value="replaced">Replaced by a newer build</option></select></label>
+          <label class="f">Note for visitors (optional) <input class="ctl" id="demo_note" maxlength="300" placeholder="Build is being updated for the new headset"></label>
+          <label class="f">Replacement build link (https, for "Replaced") <input class="ctl" id="demo_replacement_url" type="url" placeholder="https://..."></label>
+          <div class="row"><button class="btn inline" id="demo-save" type="button">Save demo status</button></div>
+        </div>
 
         <h3>Add teammate</h3>
         <p class="muted">Your teammate must have signed in to ImmXrsive with GitHub and verified their Algoma email. They appear on the project only after they accept.</p>
@@ -233,7 +250,8 @@
       title: $("title").value.trim(), description: $("description").value.trim(), domain: $("domain").value.trim(),
       technologies: splitList($("technologies").value, ","), status: $("status").value, project_date: $("project_date").value.trim(),
       repo_urls: splitList($("repo_urls").value, /\n/), playable_url: $("playable_url").value.trim(), video_url: $("video_url").value.trim(),
-      fallback_url: $("fallback_url").value.trim(), fallback_text: $("fallback_text").value.trim()
+      fallback_url: $("fallback_url").value.trim(), fallback_text: $("fallback_text").value.trim(),
+      demo_type: $("demo_type").value || "link"
     };
   }
   function fillForm(p) {
@@ -241,6 +259,7 @@
     $("technologies").value = (p.technologies || []).join(", "); $("status").value = p.status || ""; $("project_date").value = p.project_date || "";
     $("repo_urls").value = (p.repo_urls || []).join("\n"); $("playable_url").value = p.playable_url || ""; $("video_url").value = p.video_url || "";
     $("fallback_url").value = p.fallback_url || ""; $("fallback_text").value = p.fallback_text || "";
+    $("demo_type").value = p.demo_type || "link";
   }
   function openNew() {
     current = null;
@@ -277,6 +296,15 @@
     $("view-public").href = "project.html?id=" + encodeURIComponent(p.id);
     $("view-public").hidden = !p.is_published;
     fillRoles($("inv-role"));
+    $("demo_state").value = p.demo_state || "available"; $("demo_note").value = p.demo_note || "";
+    $("demo_replacement_url").value = p.demo_replacement_url || "";
+    $("demo-save").onclick = async function () {
+      try {
+        var d = await call("/api/projects/" + encodeURIComponent(p.id) + "/demo-state", "POST",
+          { demo_state: $("demo_state").value, demo_note: $("demo_note").value.trim(), demo_replacement_url: $("demo_replacement_url").value.trim() });
+        tell(d.message);
+      } catch (e) { tell(e.message, true); }
+    };
     var box = $("contributors"); box.replaceChildren();
     var transferTo = $("transfer-to"); transferTo.replaceChildren();
     p.contributors.forEach(function (c) {

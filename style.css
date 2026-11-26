@@ -396,3 +396,16 @@ body[data-portfolio-theme="minimal"] .pf-stack .m-sec { padding-bottom: 16px; bo
 }
 /* Very small phones: the links take two rows, so sticky bars sit lower. */
 @media (max-width:359px){:root{--nav-h:122px}}
+
+/* ---- Final release additions ---- */
+.pager{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:28px 0 0}
+.pager button[disabled]{opacity:.4;cursor:not-allowed}
+.talent-active{color:var(--hud,#5db7d9)}
+.talent-stale,.talent-unconfirmed{color:#f5c26b}
+.notice{border:1px solid var(--line-strong,rgba(255,255,255,.25));border-radius:4px;padding:14px 16px;margin:16px 0;background:rgba(255,255,255,.04)}
+.notice.warn{border-color:#f5c26b}
+.demo-stage{position:relative;margin-top:16px;border:1px solid var(--line-strong,rgba(255,255,255,.25));border-radius:4px;background:#05080c}
+.demo-stage iframe{display:block;width:100%;height:min(70vh,560px);border:0;background:#fff}
+.demo-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line-strong,rgba(255,255,255,.25))}
+:focus-visible{outline:2px solid #5db7d9;outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

@@ -1,0 +1,26 @@
+{
+  "request": "GET /api/talent (first directory load)",
+  "profiles_in_database": 230,
+  "cards_returned": 24,
+  "response_bytes": 10509,
+  "pages": 10,
+  "fields_per_card": [
+    "availability",
+    "availability_confirmed_at",
+    "headline",
+    "id",
+    "last_stated_availability",
+    "name",
+    "program",
+    "project_count",
+    "projects",
+    "skills",
+    "status",
+    "talent_state"
+  ],
+  "skill_filter_OpenXR_total": 16,
+  "r1_directory_endpoint": {
+    "returned": 50,
+    "x_total_count": "230"
+  }
+}

@@ -84,35 +84,121 @@
     var industry = el("div"); root.appendChild(industry);   // filled by loadIndustry (R4)
     root.appendChild(el("p", "pj-desc", p.description || "No description yet."));
 
-    // ---- Demo / evidence: links only, never embedded code (R3.19-R3.22)
+    // ---- Demo / evidence (R3.19-R3.22, Final F.29 and F.33-F.38)
+    // Nothing heavy loads with the page: no iframe, video or runtime until the
+    // visitor presses Launch. Embedded builds run in a sandboxed frame without
+    // same-origin access, so they cannot read this site's session or act as the
+    // visitor. Camera/mic/XR permissions are only delegated to a WebXR build, and
+    // only at launch time.
     var play = safeHttps(p.playable_url), video = safeHttps(p.video_url), fb = safeHttps(p.fallback_url);
+    var replacement = safeHttps(p.demo_replacement_url);
     var repos = (p.repo_urls || []).map(safeHttps).filter(Boolean);
+    var state = p.demo_state || "available", type = p.demo_type || "link";
     var evidence = el("div");
-    var actions = el("div", "pj-actions");
-    if (play) actions.appendChild(extLink("▶ Play Demo", play));
-    if (video) actions.appendChild(extLink("Watch Demo Video", video, "btn inline ghost"));
-    repos.forEach(function (r, i) { actions.appendChild(extLink(repos.length > 1 ? "View Source " + (i + 1) : "View Source", r, "btn inline ghost")); });
-    if (actions.children.length) evidence.appendChild(actions);
-    if (play) evidence.appendChild(el("p", "pj-note", "The demo opens in a new tab. Some interactive experiences need a desktop browser; if it does not load, the preview below shows the project."));
-
-    if (fb || p.fallback_text) {
-      var fig = el("figure", "pj-fallback");
+    var fallbackFig = null;
+    function fallback() {
+      if (fallbackFig) return fallbackFig;
+      fallbackFig = el("figure", "pj-fallback");
       if (fb) {
         var img = document.createElement("img");
-        img.src = fb; img.alt = "Preview of " + p.title; img.loading = "lazy";
+        img.src = fb; img.alt = p.fallback_text || ("Preview of " + p.title); img.loading = "lazy"; img.decoding = "async";
         img.onerror = function () {
-          // Broken/unsupported media must not break the page.
           var alt = el("p", "pj-note", "Preview image could not be loaded. ");
           alt.appendChild(extLink("Open preview link", fb, ""));
           img.replaceWith(alt);
         };
-        fig.appendChild(img);
+        fallbackFig.appendChild(img);
       }
-      fig.appendChild(el("figcaption", null, p.fallback_text || "Project preview"));
-      evidence.appendChild(fig);
+      fallbackFig.appendChild(el("figcaption", null, p.fallback_text || (fb ? "Project preview" : "No preview image was provided. The description and contributors above describe the project.")));
+      return fallbackFig;
     }
-    if (!evidence.children.length) evidence.appendChild(el("p", "pj-note", "No demo, video or source link has been added for this project."));
+    if (play && state !== "available") {
+      var msg = { unavailable: "The playable demo is temporarily unavailable.", archived: "This demo has been archived and is no longer playable.",
+                  replaced: "This demo was replaced by a newer build." }[state] || "The demo is not available.";
+      var n = el("div", "notice warn");
+      n.appendChild(el("p", null, msg + (p.demo_note ? " " + p.demo_note : "")));
+      if (state === "replaced" && replacement) n.appendChild(extLink("Open the new build", replacement));
+      evidence.appendChild(n);
+    }
+    var actions = el("div", "pj-actions");
+    var stageHost = el("div");
+    if (play && state === "available") {
+      if (type === "link") {
+        actions.appendChild(extLink("▶ Play Demo (opens a new tab)", play));
+      } else {
+        var launch = el("button", "btn inline", type === "webxr" ? "▶ Launch WebXR demo" : "▶ Launch demo");
+        launch.type = "button";
+        launch.setAttribute("aria-describedby", "demo-help");
+        launch.onclick = function () { launchDemo(play, type, stageHost, launch); };
+        actions.appendChild(launch);
+        actions.appendChild(extLink("Open in a new tab", play, "btn inline ghost"));
+      }
+    }
+    if (video) actions.appendChild(extLink("Watch Demo Video", video, "btn inline ghost"));
+    repos.forEach(function (r, i) { actions.appendChild(extLink(repos.length > 1 ? "View Source " + (i + 1) : "View Source", r, "btn inline ghost")); });
+    if (actions.children.length) evidence.appendChild(actions);
+    if (play && state === "available" && type !== "link") {
+      var help = el("p", "pj-note", "The demo starts only when you press Launch. It runs in an isolated frame; press Close demo or Escape to leave it.");
+      help.id = "demo-help"; evidence.appendChild(help);
+    }
+    evidence.appendChild(stageHost);
+    if (fb || p.fallback_text || (play && state !== "available")) evidence.appendChild(fallback());
+    if (!evidence.children.length || (evidence.children.length === 1 && evidence.firstChild === stageHost))
+      evidence.appendChild(el("p", "pj-note", "No demo, video or source link has been added for this project."));
     root.appendChild(section("Try it / evidence", evidence));
+
+    function launchDemo(url, kind, host, opener) {
+      function open() {
+        host.replaceChildren();
+        var stage = el("div", "demo-stage");
+        stage.setAttribute("role", "region"); stage.setAttribute("aria-label", "Playable demo");
+        var bar = el("div", "demo-bar");
+        var status = el("span", "pj-note", "Loading demo…"); status.setAttribute("aria-live", "polite");
+        var right = el("div", "pj-actions");
+        var trouble = el("button", "btn inline ghost", "Not working? Show preview"); trouble.type = "button";
+        var close = el("button", "btn inline", "Close demo"); close.type = "button";
+        right.appendChild(trouble); right.appendChild(close);
+        bar.appendChild(status); bar.appendChild(right); stage.appendChild(bar);
+        var frame = document.createElement("iframe");
+        frame.title = "Playable demo for " + p.title;
+        frame.setAttribute("sandbox", "allow-scripts allow-pointer-lock");
+        frame.referrerPolicy = "no-referrer";
+        frame.setAttribute("allow", kind === "webxr" ? "xr-spatial-tracking; fullscreen; camera; microphone; gyroscope; accelerometer" : "fullscreen");
+        var loaded = false;
+        var slow = setTimeout(function () { if (!loaded) status.textContent = "This demo is taking a long time to load. You can keep waiting, open it in a new tab, or close it."; }, 15000);
+        frame.onload = function () { loaded = true; clearTimeout(slow); status.textContent = "Demo running. If it shows an error page, the build may be broken; use Close demo."; };
+        frame.onerror = function () { status.textContent = "The demo could not be loaded."; };
+        frame.src = url;
+        stage.appendChild(frame);
+        host.appendChild(stage);
+        function shut(showFallback) {
+          clearTimeout(slow);
+          frame.src = "about:blank"; host.replaceChildren();
+          document.removeEventListener("keydown", esc);
+          if (showFallback) { var f = fallback(); if (!f.isConnected) host.appendChild(f); f.scrollIntoView({ block: "nearest" }); }
+          opener.focus();
+        }
+        function esc(e) { if (e.key === "Escape") shut(false); }
+        document.addEventListener("keydown", esc);
+        close.onclick = function () { shut(false); };
+        trouble.onclick = function () { shut(true); };
+        close.focus();
+      }
+      if (kind === "webxr") {
+        var check = navigator.xr && navigator.xr.isSessionSupported ? navigator.xr.isSessionSupported("immersive-vr").catch(function () { return false; }) : Promise.resolve(false);
+        check.then(function (ok) {
+          if (ok) return open();
+          host.replaceChildren();
+          var n = el("div", "notice warn");
+          n.appendChild(el("p", null, "This browser or device can't run the immersive (WebXR) version of this demo. Here is the project preview instead."));
+          var anyway = el("button", "btn inline ghost", "Try the browser version anyway"); anyway.type = "button";
+          anyway.onclick = open; n.appendChild(anyway);
+          host.appendChild(n);
+          var f = fallback(); if (!f.isConnected) host.appendChild(f);
+          anyway.focus();
+        });
+      } else open();
+    }
 
     // ---- Contributors and roles (R3.15)
     var grid = el("div", "ev-grid pj-contrib");

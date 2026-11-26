@@ -130,11 +130,23 @@
     head.appendChild(intro);
     root.appendChild(head);
 
+    if (from) {
+      var moved = el("p", "notice", "The profile link you followed was combined with this one. Update any saved links to this page.");
+      root.insertBefore(moved, head);
+    }
     var actions = el("div", "pf-actions");
-    var inquire = el("a", "btn inline", "Employer Inquiry");
+    var inquire = el("a", "btn inline", p.talent_state === "showcase" ? "Contact about this portfolio" : "Employer Inquiry");
     inquire.href = X.intakeUrl(p.id);
     actions.appendChild(inquire);
     root.appendChild(actions);
+    if (p.claimed === false) {
+      var claim = el("p", "program");
+      claim.appendChild(document.createTextNode("This profile was brought over from the previous ImmXrsive site and has no owner yet. "));
+      var ca = el("a", null, "Is this you? Claim it");
+      ca.href = "editor.html#claim=" + encodeURIComponent(p.id);
+      claim.appendChild(ca);
+      root.appendChild(claim);
+    }
 
     var stack = el("div", "pf-stack");
     stack.style.marginTop = "40px";
@@ -147,11 +159,23 @@
     X.fillTags(skillTags, skills);
     stack.appendChild(section("Skills", skills.length ? skillTags : el("p", null, "No skills listed.")));
 
+    // Final F.13/F.14: only Active Talent confirmed in the last 365 days is shown as current.
     var availability = list(p.availability);
-    if (availability.length) {
+    var openBox = el("div");
+    if (p.talent_state === "active" && availability.length) {
       var availabilityTags = el("div", "tags");
       X.fillTags(availabilityTags, availability);
-      stack.appendChild(section("Open to", availabilityTags));
+      openBox.appendChild(availabilityTags);
+      if (p.availability_confirmed_at) openBox.appendChild(el("p", "program", "Confirmed " + p.availability_confirmed_at));
+      stack.appendChild(section("Open to", openBox));
+    } else if (p.talent_state === "stale" || p.talent_state === "unconfirmed") {
+      var last = list(p.last_stated_availability);
+      openBox.appendChild(el("p", "notice warn", (p.talent_state === "stale" ? "Availability was last confirmed " + p.availability_confirmed_at + ", more than a year ago. " : "Availability has not been confirmed. ") +
+        (last.length ? "Previously listed: " + last.join(", ") + ". " : "") + "Contact ImmXrsive before assuming this person is looking for work."));
+      stack.appendChild(section("Availability", openBox));
+    } else if (p.talent_state === "showcase") {
+      openBox.appendChild(el("p", null, "Showcase only. This portfolio is public, but this person is not currently looking for opportunities."));
+      stack.appendChild(section("Availability", openBox));
     }
 
     // R3: projects come from accepted, featured memberships of published projects.
@@ -199,6 +223,27 @@
     root.appendChild(stack);
   }
 
+  var from = new URLSearchParams(window.location.search).get("from");
+  function retired(p) {
+    finish();
+    document.title = (p.name || "Archived portfolio") + " · ImmXrsive";
+    var box = el("div", "state");
+    box.appendChild(el("h3", null, (p.name || "This portfolio") + " · archived"));
+    box.appendChild(el("p", null, p.message || "This portfolio has been retired."));
+    if (Array.isArray(p.projects) && p.projects.length) {
+      box.appendChild(el("p", null, "Shared projects this person contributed to:"));
+      var ul = el("ul");
+      p.projects.forEach(function (pr) {
+        if (!X.validId(pr.id)) return;
+        var li = el("li"); var a = el("a", null, pr.title + (pr.role ? " (" + pr.role + ")" : ""));
+        a.href = "project.html?id=" + encodeURIComponent(pr.id); li.appendChild(a); ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    }
+    var back = el("a", "btn", "Back to the index"); back.href = "index.html#index"; back.style.marginTop = "22px";
+    box.appendChild(back);
+    root.replaceChildren(box);
+  }
   if (!id) { state("No profile selected", "Open a profile from the talent index."); return; }
   if (!X.validId(id)) { state("Invalid profile id", "Open a valid profile from the talent index."); return; }
   $("crew-id").textContent = id.toUpperCase();
@@ -217,7 +262,17 @@
     if (!response.ok) throw new Error("API returned HTTP " + response.status);
     return response.json();
   }).then(function (profile) {
-    if (profile) showProfile(profile);
+    if (!profile) return;
+    // F.18: a merged record names what happened and takes the visitor to the survivor.
+    if (profile.moved && X.validId(profile.moved_to)) {
+      finish();
+      banner.textContent = profile.message || "This profile moved.";
+      banner.hidden = false;
+      location.replace("student.html?id=" + encodeURIComponent(profile.moved_to) + "&from=" + encodeURIComponent(id));
+      return;
+    }
+    if (profile.retired) { retired(profile); return; }
+    showProfile(profile);
   }).catch(function () {
     state("Profile temporarily unavailable", "Could not load this profile from the live API. Please try again.");
   });

@@ -1,6 +1,64 @@
+# Release Submission — ImmXrsive Talent Platform
+
+Release: FINAL
+Team: team-10 (Sajal Patel, Dhruv Panchani, Harshit Piyushkumar Patel)
+Project Option: Project 1
+Deployment: https://sajal19-sketch.github.io/immxrsive-platform/ (frontend) · https://immxrsive-api.onrender.com (API)
+Repository: https://github.com/sajal19-sketch/immxrsive-platform
+Release tag: FINAL-submission
+Commit: __FINAL_SHA__
+Adapter: evaluation_adapter.json
+Known issues: see RELEASE_NOTES_FINAL.md → "Known issues and limitations" (secrets in early git history must be rotated; legacy records with the same name as R1 seed records are queued for staff review rather than merged; scale-fixture students have no availability confirmation date; cross-origin demos cannot report a 404 to the parent page)
+Test notes: Staff tools are at admin.html → Operations (staff-ops.html). The legacy export and the scale fixture were applied on the deployed database through Operations → Legacy migration, and the reports are under Previous runs. The API sleeps when idle, so the first request can take up to a minute.
+
+## Test accounts
+
+- **Staff/admin:** one staff test account. Sign in at `admin.html`, then open **Operations**.
+  The username and password are only in the Online text of our Moodle Final Product Result
+  submission, under *Reviewer test access*. They are not in this repository.
+- **Student / contributor / claimant:** reviewers sign in with their own GitHub account
+  (`login.html`) and verify their own @algomau.ca email, as in R2–R4. To test a claim,
+  claim an imported synthetic profile, for example "Daniel Kim" (alumni) or "Unclaimed Alum".
+  The staff account then approves or rejects it. To test maintainer/contributor flows,
+  create a project under My Projects.
+- **Public visitor / employer:** no account. Use a private window.
+
+## Release-specific evidence
+
+- Migration command/tool/instructions: RELEASE_NOTES_FINAL.md → "Migration: how to run it".
+  - Staff screen: https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#migrate
+  - CLI: `scripts/migrate_legacy.py`
+- Migration result report for the supplied legacy fixture: `evidence/final/migration_console_log.txt`,
+  `evidence/final/legacy_migration_report.json`, and the re-run in `evidence/final/legacy_migration_rerun_report.json`.
+  The acceptance checks against `legacy_expected_results.json` all pass.
+- Release/launch notes and known issues: [RELEASE_NOTES_FINAL.md](RELEASE_NOTES_FINAL.md)
+- Scale-fixture test: `evidence/final/scale_payload_before.json`, `scale_payload_after.json`, `scale_import_report.json`.
+  The first directory load is 24 cards and about 10 KB with 17 or 230 profiles.
+- Completed team regression checklist: RELEASE_NOTES_FINAL.md → "Team regression checklist".
+- Automated checks: `tests/test_r4_api.py` (76, R1–R4 regression) and `tests/test_final_api.py`
+  (106, Final scenarios A–J). All passed on a disposable local PostgreSQL database.
+- Fixtures: `fixtures/final/` holds byte-for-byte copies of the Moodle Final fixtures (`SHA256SUMS`).
+
+## Operational note (Final Release only)
+
+- **Deploy:** push to `main`. GitHub Pages serves the static pages and Render redeploys the FastAPI API.
+  Schema changes run at API startup and are additive only. Roll back by redeploying an earlier commit.
+- **Configuration:** Render environment variables only (database, GitHub OAuth, Gmail API,
+  approved email domains, staff bootstrap account). The browser receives only the public API URL (`config.js`).
+- **External dependencies:** GitHub (sign-in, repository import), Gmail API (verification codes),
+  company websites (partner import), externally hosted demos/videos, PostgreSQL. If one fails,
+  only its own workflow fails, with a readable message and a manual path.
+- **Diagnostics:** Staff → Operations → Diagnostics shows failed integrations and server errors
+  with time, route, status, short detail and a reference id. The same id is in the response
+  header `X-Request-ID`, in user-facing error messages and in the timestamped Render log line.
+  Secrets, tokens, codes and form contents are never logged.
+
+---
+
+## Release 4 (frozen R4 evidence, unchanged)
+
 Chosen challenge: R4.10 - Untrusted Website Content
 
-# Release Submission — ImmXrsive Talent Platform
 
 Release: R4
 Team: team-10 (Sajal Patel, Dhruv Panchani, Harshit Piyushkumar Patel)

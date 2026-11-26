@@ -1,13 +1,40 @@
 {
-  "release": "R4",
+  "release": "FINAL",
   "deployment_url": "https://sajal19-sketch.github.io/immxrsive-platform/",
   "repository_url": "https://github.com/sajal19-sketch/immxrsive-platform",
   "backend_url": "https://immxrsive-api.onrender.com",
-  "release_tag": "R4-submission",
+  "release_tag": "FINAL-submission",
   "project_option": "Project 1",
-  "chosen_challenge": "R4.10 - Untrusted Website Content",
   "staff_entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html",
+  "staff_operations": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html",
+  "directory_endpoint": "https://immxrsive-api.onrender.com/api/talent",
+  "directory_results_path": "items",
+  "legacy_directory_endpoint": "https://immxrsive-api.onrender.com/api/directory",
+  "student_detail_endpoint": "https://immxrsive-api.onrender.com/api/students/{id}",
+  "project_detail_endpoint": "https://immxrsive-api.onrender.com/api/projects/{id}",
+  "student_page_route": "https://sajal19-sketch.github.io/immxrsive-platform/student.html?id={id}",
+  "project_page_route": "https://sajal19-sketch.github.io/immxrsive-platform/project.html?id={id}",
+  "query_parameters": {
+    "text": "q",
+    "skill": "skills",
+    "availability": "availability",
+    "status": "status",
+    "talent_mode": "talent",
+    "page": "page",
+    "page_size": "limit"
+  },
+  "id_field": "id",
+  "skills_field": "skills",
+  "contributors_field": "contributors",
+  "migration_entry_points": {
+    "staff_ui": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#migrate",
+    "api": "POST https://immxrsive-api.onrender.com/api/staff/migrations",
+    "cli": "scripts/migrate_legacy.py"
+  },
   "fixture_source_urls": {
+    "legacy_export.json": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/final/legacy_export.json",
+    "legacy_expected_results.json": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/final/legacy_expected_results.json",
+    "scale_fixture.json": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/final/scale_fixture.json",
     "company_normal.html": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_normal.html",
     "company_sparse.html": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_sparse.html",
     "company_prompt_injection.html": "https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_prompt_injection.html",
@@ -15,15 +42,215 @@
   },
   "checks": [
     {
-      "requirement_or_scenario": "R4.01-R4.03; Scenario A",
+      "requirement_or_scenario": "F.01-F.03; Scenario C1",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#migrate",
+      "method_or_action": "Choose 'Legacy export (legacy_export.json)', keep 'Preview only' ticked, Run migration (POST /api/staff/migrations {data, dry_run:true, expected}); untick and run again to apply; Previous runs -> Open report (GET /api/staff/migrations, /api/staff/migrations/{run_id})",
+      "role": "staff",
+      "setup": "Staff sign-in (Moodle Online text). legacy_export.json and legacy_expected_results.json are served unchanged from fixtures/final/.",
+      "expected_behavior": "Report shows source counts 6/3/3/4, created/updated/skipped/conflict per record type, duplicate LS04~LS01 (same email), company LC02~LC01 (same domain), broken reference LP02->LS99 not created, unclaimed LS02/LS05/LS06, acceptance table all PASS. Preview saves nothing."
+    },
+    {
+      "requirement_or_scenario": "F.02; Scenario C1",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#migrate",
+      "method_or_action": "Run the same legacy export again with Preview only unticked",
+      "role": "staff",
+      "setup": "Legacy export already applied",
+      "expected_behavior": "Created = 0 for every record type; students/projects/companies/collaborations reported as skipped; no new copies in the directory"
+    },
+    {
+      "requirement_or_scenario": "F.01, F.27 (command line, same importer)",
+      "entry_point": "scripts/migrate_legacy.py",
+      "method_or_action": "python scripts/migrate_legacy.py fixtures/final/legacy_export.json [--apply] --expected fixtures/final/legacy_expected_results.json",
+      "role": "developer with DATABASE_URL",
+      "setup": "Local or authorized database only",
+      "expected_behavior": "Same counts and acceptance output as the staff screen; evidence/final/migration_console_log.txt"
+    },
+    {
+      "requirement_or_scenario": "F.04; Scenario C2",
+      "entry_point": "https://immxrsive-api.onrender.com/api/projects/{project_id}  (page: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id={project_id})",
+      "method_or_action": "Open the migrated project \"XR Anatomy Lab\" from Avery Chen or Daniel Kim (legacy) profile",
+      "role": "public",
+      "setup": "Legacy export applied; staff can find the id in Operations -> Projects & maintainers (search \"XR Anatomy\", legacy id LP01)",
+      "expected_behavior": "One project with legacy id LP01; contributors Avery Chen (XR Developer) and Daniel Kim (Interaction Developer). The R1 seed project of the same title is a different record and is listed in the migration report under existing platform matches"
+    },
+    {
+      "requirement_or_scenario": "F.05; Scenario J",
+      "entry_point": "https://immxrsive-api.onrender.com/api/partners/{company_id}  (page: https://sajal19-sketch.github.io/immxrsive-platform/partner.html?id={company_id})",
+      "method_or_action": "Open North Shore Simulations on partners.html",
+      "role": "public",
+      "setup": "Legacy export applied",
+      "expected_behavior": "'Working with ImmXrsive now' plus Past collaborations: Industrial Safety Training (past) and XR Maintenance Study (current) linked to XR Anatomy Lab; Confidential Prototype (private, Superior Immersive Labs) never appears in any public response"
+    },
+    {
+      "requirement_or_scenario": "F.06",
+      "entry_point": "https://immxrsive-api.onrender.com/api/students/{student_id}",
+      "method_or_action": "Compare the id in a migrated profile URL with its legacy id (staff Students list shows both)",
+      "role": "public / staff",
+      "setup": "Legacy export applied",
+      "expected_behavior": "Internal ids are generated (s_…, p_…, c_…, col_…); legacy ids are a separate field; name/email/domain are never the key"
+    },
+    {
+      "requirement_or_scenario": "F.07; Scenario C3",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/student.html?id={student_id}",
+      "method_or_action": "Open Daniel Kim (legacy, alumni) or Unclaimed Alum",
+      "role": "public",
+      "setup": "Legacy export applied",
+      "expected_behavior": "Profile is public, shows 'This profile was brought over from the previous ImmXrsive site and has no owner yet. Is this you? Claim it'; public JSON (GET /api/students/{id}) has claimed:false and no email field"
+    },
+    {
+      "requirement_or_scenario": "F.08-F.09; Scenario C4-C5",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html#claim={student_id}",
+      "method_or_action": "Sign in, verify email, open the claim link or search the name under \"Claim a profile\", Claim this profile (POST /api/claims {profile_id, note}); GET /api/claims/mine",
+      "role": "verified student (own GitHub account)",
+      "setup": "Any imported unclaimed profile, e.g. Daniel Kim (legacy). Do not claim a real person.",
+      "expected_behavior": "status 'pending' and message 'Claim sent to ImmXrsive staff. Nothing changes on the profile until staff approve it.' Same name / GitHub handle / any @algomau.ca address never auto-approves. Only an exact match between the verified email and the legacy record's email returns 'auto_approved'"
+    },
+    {
+      "requirement_or_scenario": "F.10; Scenario C6",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#claims",
+      "method_or_action": "Approve claim / Reject claim (note required) (GET /api/staff/claims, POST /api/staff/claims/{claim_id}/decision {approve, note})",
+      "role": "staff",
+      "setup": "Pending claim from the previous check",
+      "expected_behavior": "Approve: the claimant signs in as the imported profile (GET /api/auth/me returns its id) and can edit it; other pending claims for it are rejected. Reject: profile unchanged, student sees the note"
+    },
+    {
+      "requirement_or_scenario": "F.10 (recovery)",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#students",
+      "method_or_action": "Students -> Manage -> Ownership recovery: Remove current owner / Assign owner (POST /api/staff/students/{student_id}/owner {action: release|assign, account_id, note})",
+      "role": "staff",
+      "setup": "A claimed profile; the right person signed in once so their account id appears in Students search",
+      "expected_behavior": "Release: old owner session ends, profile becomes unclaimed. Assign: chosen verified account signs in as the profile. Both recorded in History"
+    },
+    {
+      "requirement_or_scenario": "F.11-F.12; Scenario B1-B4",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#students",
+      "method_or_action": "Manage a student -> Lifecycle: set Student status = Alumni, Save (POST /api/staff/students/{student_id}/lifecycle {status})",
+      "role": "staff",
+      "setup": "Any published profile (e.g. legacy Avery Chen or your own reviewer profile)",
+      "expected_behavior": "Public profile still published with badge Alumni; owner still signed in and verified (GET /api/auth/me verified:true); editing works without new email verification"
+    },
+    {
+      "requirement_or_scenario": "F.13-F.14; Scenario A5, B5-B6",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/index.html#index",
+      "method_or_action": "Filter Looking for work? = Active Talent only and/or Availability; open Daniel Kim (legacy, confirmed 2024-06-01) and Unclaimed Alum (GET /api/talent?talent=active&availability=full-time)",
+      "role": "public",
+      "setup": "Legacy export applied",
+      "expected_behavior": "Daniel Kim (legacy) shows 'Availability was last confirmed 2024-06-01 … may be out of date' and is absent from Active Talent / full-time results; Unclaimed Alum shows 'Showcase only'; legacy Avery Chen (2026-08-01) is Active Talent, open to internship"
+    },
+    {
+      "requirement_or_scenario": "F.13-F.14 (student/staff controls)",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/editor.html",
+      "method_or_action": "Status and availability: Active Talent / Showcase Only, Save choice (PUT /api/profile/talent); My availability is still correct (POST /api/profile/availability/confirm). Staff test tool: Lifecycle -> Availability last confirmed date",
+      "role": "verified student / staff",
+      "setup": "Own profile; staff can set a past date to test staleness",
+      "expected_behavior": "Showcase Only removes availability from public profile and filters but keeps the portfolio public; confirming makes stale availability current again"
+    },
+    {
+      "requirement_or_scenario": "F.15-F.16; Scenario J",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/student.html?id={student_id}",
+      "method_or_action": "Open Retired Contributor (legacy LS06); then open Historical Training Demo project; student can Retire my portfolio in editor.html (POST /api/profile/retire)",
+      "role": "public / verified student",
+      "setup": "Legacy export applied",
+      "expected_behavior": "Retired profile not in directory; its URL shows an archived page with project history (not 404); shared project lists 'Retired Contributor (portfolio archived)' with role; partner collaborations and other contributors unchanged"
+    },
+    {
+      "requirement_or_scenario": "F.17-F.18; Scenario D1-D3",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#duplicates",
+      "method_or_action": "Keep Avery Chen [id], merge Avery C. [id] into it (POST /api/staff/students/merge {survivor_id, duplicate_id}); company: Keep North Shore Simulations, merge North Shore Simulation Inc. (POST /api/staff/companies/merge); then open the old student.html?id=<Avery C. id>",
+      "role": "staff, then public",
+      "setup": "Legacy export applied; note the Avery C. URL before merging",
+      "expected_behavior": "Project memberships/statements, collaborations and inquiries move to the survivor; old URL shows 'The profile link you followed was combined with this one' on the survivor (API returns moved:true, moved_to); Legacy Brand Event moves to North Shore Simulations' past collaborations; re-import does not recreate the merged record"
+    },
+    {
+      "requirement_or_scenario": "F.19; Scenario D4-D5",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#projects",
+      "method_or_action": "Search a project -> Manage -> Assign a new maintainer (POST /api/staff/projects/{project_id}/maintainer {student_id, role?, note})",
+      "role": "staff",
+      "setup": "New maintainer must be a signed-in student with verified email (accepted contributor, or give a role)",
+      "expected_behavior": "Same project id and URL; contributor names/roles/statements unchanged; Maintainer history row; new maintainer sees Maintainer controls in projects.html"
+    },
+    {
+      "requirement_or_scenario": "F.20; Scenario E1",
+      "entry_point": "https://immxrsive-api.onrender.com/api/directory, /api/talent, /api/students/{id}, /api/projects/{id}, /api/partners, /api/partners/{id}, /api/projects/{id}/industry",
+      "method_or_action": "Inspect JSON in the browser network panel, signed out and signed in as another student",
+      "role": "public / other student",
+      "setup": "Legacy export applied",
+      "expected_behavior": "No email, legacy_email, github_id, is_algoma_verified, private collaboration or limited collaboration details in any response"
+    },
+    {
+      "requirement_or_scenario": "F.21; Scenario E2-E4",
+      "entry_point": "https://immxrsive-api.onrender.com/api/projects/{id}/my-contribution (PUT), /api/projects/{id} (PUT), /api/staff/students/{id}/lifecycle, /api/staff/claims/{id}/decision, /api/staff/students/merge, /api/staff/diagnostics",
+      "method_or_action": "Send with a student session that does not own the record",
+      "role": "other student",
+      "setup": "Two student sessions",
+      "expected_behavior": "403 for another person's contribution, non-maintainer project edit and every /api/staff/* route; staff token is rejected (401) on student routes"
+    },
+    {
+      "requirement_or_scenario": "F.22, F.36; Scenario I",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/projects.html",
+      "method_or_action": "Maintainer: set Playable demo link to javascript:… or demo type to markup; save (PUT /api/projects/{id})",
+      "role": "verified maintainer",
+      "setup": "Own project",
+      "expected_behavior": "422 'must be a full https:// link' / unknown demo type; only a URL plus a type (link | embed | webxr) is stored; nothing from the owner is ever inserted as HTML"
+    },
+    {
+      "requirement_or_scenario": "F.24-F.26; Scenario F",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/index.html, /student.html, /project.html, /intake.html, /editor.html",
+      "method_or_action": "390 CSS px and keyboard only: directory filter -> profile -> project -> inquiry; profile edit -> preview -> publish/unpublish; Launch/Close demo; staff claim/merge buttons",
+      "role": "public / student / staff",
+      "setup": "Any data",
+      "expected_behavior": "No horizontal scrolling; every control reachable with Tab and labelled; visible focus ring; claim name error names the field and sets aria-invalid"
+    },
+    {
+      "requirement_or_scenario": "F.27-F.29; Scenario G",
+      "entry_point": "https://immxrsive-api.onrender.com/api/talent?page=1&limit=24  (page: https://sajal19-sketch.github.io/immxrsive-platform/index.html#index)",
+      "method_or_action": "Staff: Operations -> Legacy migration -> 'Scale fixture (scale_fixture.json)' -> Run with Preview unticked; then load index.html with the network panel open",
+      "role": "staff then public",
+      "setup": "scale_fixture.json applied through the same importer",
+      "expected_behavior": "One /api/talent request of about 10 KB returning 24 cards (page 1 of ~10) whether 20 or 230 profiles; cards contain no resume, image, video or demo URL; skill/availability/status filters and paging are server-side (evidence/final/scale_payload_*.json); GET /api/directory returns at most 50 with X-Total-Count"
+    },
+    {
+      "requirement_or_scenario": "F.30-F.32; Scenario H",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new?import=1 ; https://sajal19-sketch.github.io/immxrsive-platform/projects.html (Import from GitHub) ; https://sajal19-sketch.github.io/immxrsive-platform/login.html (verification)",
+      "method_or_action": "Import https://does-not-exist.invalid/ as a company; import a non-existent GitHub repo; then open Operations -> Diagnostics (GET /api/staff/diagnostics)",
+      "role": "staff / verified student",
+      "setup": "None",
+      "expected_behavior": "Readable message and a manual path ('finish the partner by hand', 'fill in the project manually'); directory and pages keep working; Diagnostics lists the failures with time, kind, route, status, reference and short detail, and shows integration configuration as yes/no only; every response has X-Request-ID"
+    },
+    {
+      "requirement_or_scenario": "F.33-F.35, F.38; Scenario I",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/project.html?id={project_id}",
+      "method_or_action": "Open a project whose demo type is Embedded or WebXR; observe network; press Launch demo; press Escape or Close demo; try Not working? Show preview",
+      "role": "public",
+      "setup": "A project with an embedded/WebXR demo (set by its maintainer in projects.html)",
+      "expected_behavior": "No iframe/runtime/video request until Launch; iframe sandbox=\"allow-scripts allow-pointer-lock\" (no same-origin); camera/mic/XR delegated only to WebXR builds and only on launch; WebXR without support shows fallback; Close/Escape unload it and return focus; parent navigation keeps working"
+    },
+    {
+      "requirement_or_scenario": "F.37; Scenario I4",
+      "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/projects.html  (staff: https://sajal19-sketch.github.io/immxrsive-platform/staff-ops.html#projects)",
+      "method_or_action": "Maintainer -> Demo status: Temporarily unavailable / Archived / Replaced (+ link) (POST /api/projects/{id}/demo-state; staff POST /api/staff/projects/{id}/demo-state)",
+      "role": "verified maintainer or staff",
+      "setup": "Own project with a demo",
+      "expected_behavior": "Project page keeps description, contributors and fallback, and shows the state and note instead of a Launch button; Replaced links the new build"
+    },
+    {
+      "requirement_or_scenario": "F.39-F.41",
+      "entry_point": "RELEASE_NOTES_FINAL.md, tests/test_r4_api.py, tests/test_final_api.py, evidence/final/",
+      "method_or_action": "Read launch notes, known issues, regression checklist; run both suites against a disposable database",
+      "role": "reviewer",
+      "setup": "See RELEASE_NOTES_FINAL.md",
+      "expected_behavior": "76 + 106 checks pass; known limitations stated; tag FINAL-submission"
+    },
+    {
+      "requirement_or_scenario": "R4 regression (F.39): R4.01-R4.03; Scenario A",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#home",
       "method_or_action": "Sign in with staff username/password (POST /api/staff/login), open Staff home (GET /api/staff/queue)",
       "role": "staff",
-           "setup": "Staff test account from the online text of the Moodle Release 4 Product Result submission",
+      "setup": "Staff test account from the online text of the Moodle Release 4 Product Result submission",
       "expected_behavior": "Task cards: Verify projects, Partner requests, Partners to review, New inquiries, each with a Review button; no database terms"
     },
     {
-      "requirement_or_scenario": "R4.02; Scenario K",
+      "requirement_or_scenario": "R4 regression (F.39): R4.02; Scenario K",
       "entry_point": "https://immxrsive-api.onrender.com/api/staff/companies/{company_id}/publish",
       "method_or_action": "POST with a student GitHub session token (or no token) from browser devtools; same for /api/staff/queue, /api/staff/companies, /api/staff/verification-requests/{id}/decision, /api/staff/partner-requests/{id}/decision",
       "role": "verified student / public",
@@ -31,7 +258,7 @@
       "expected_behavior": "403 'only available to ImmXrsive staff' (401 without a token); nothing changes"
     },
     {
-      "requirement_or_scenario": "R4.08-R4.09, R4.12; Scenario B",
+      "requirement_or_scenario": "R4 regression (F.39): R4.08-R4.09, R4.12; Scenario B",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new?import=1",
       "method_or_action": "Paste https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_normal.html, Get details from website (POST /api/staff/company-imports), edit a field, Save draft (POST /api/staff/companies), tick 'I reviewed these details', Publish (POST /api/staff/companies/{id}/publish)",
       "role": "staff",
@@ -39,7 +266,7 @@
       "expected_behavior": "Suggestions only: name North Shore Simulations, location Sault Ste. Marie, Ontario, keywords incl. simulation/XR/training; saved as Draft; under each field 'From website: <URL> · imported <time>' or 'Entered or edited by staff'; publish refused until reviewed; public page shows the reviewed values"
     },
     {
-      "requirement_or_scenario": "R4.11; Scenario C",
+      "requirement_or_scenario": "R4 regression (F.39): R4.11; Scenario C",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new?import=1",
       "method_or_action": "Import https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_sparse.html, then an unreachable URL (e.g. https://does-not-exist.invalid/), fill missing fields, Save draft",
       "role": "staff",
@@ -47,7 +274,7 @@
       "expected_behavior": "Sparse import lists fields to fill in; failed import shows the reason and leaves typed values unchanged; manual completion saves"
     },
     {
-      "requirement_or_scenario": "R4.10 (chosen Challenge); Scenario D",
+      "requirement_or_scenario": "R4 regression (F.39): R4.10 (chosen Challenge); Scenario D",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new?import=1",
       "method_or_action": "Import https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_prompt_injection.html (POST /api/staff/company-imports)",
       "role": "staff",
@@ -55,7 +282,7 @@
       "expected_behavior": "Name Superior Immersive Labs suggested; 'Untrusted text ignored' warning; instruction sentence not in description; response carries no status/verification/permission fields; nothing created, published, verified or granted; text rendered as plain text in admin and public pages"
     },
     {
-      "requirement_or_scenario": "R4.14 (not chosen); Scenario F",
+      "requirement_or_scenario": "R4 regression (F.39): R4.14 (not chosen); Scenario F",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new",
       "method_or_action": "Import https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_normal.html again, then https://sajal19-sketch.github.io/immxrsive-platform/fixtures/r4/company_same_name_other_domain.html",
       "role": "staff",
@@ -63,7 +290,7 @@
       "expected_behavior": "Same domain: warning with Open existing partner, second copy refused; similar name with different domain: listed as information only, saved as separate partner"
     },
     {
-      "requirement_or_scenario": "R4.07, R4.25",
+      "requirement_or_scenario": "R4 regression (F.39): R4.07, R4.25",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/new",
       "method_or_action": "+ Add partner, enter name, website, about, sector, location, Save draft",
       "role": "staff",
@@ -71,7 +298,7 @@
       "expected_behavior": "Draft created without any import"
     },
     {
-      "requirement_or_scenario": "R4.15-R4.17, R4.23; Scenario G",
+      "requirement_or_scenario": "R4 regression (F.39): R4.15-R4.17, R4.23; Scenario G",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/admin.html#partner/{company_id}",
       "method_or_action": "Collaborations → + Add collaboration (POST /api/staff/companies/{id}/collaborations); edit (PUT /api/staff/collaborations/{id})",
       "role": "staff",
@@ -79,7 +306,7 @@
       "expected_behavior": "Several collaborations on one partner over different years; Current/Past; multiple projects per collaboration; partner.html shows 'Working together now' and 'Past collaborations'"
     },
     {
-      "requirement_or_scenario": "R4.18-R4.19; Scenario H",
+      "requirement_or_scenario": "R4 regression (F.39): R4.18-R4.19; Scenario H",
       "entry_point": "https://immxrsive-api.onrender.com/api/partners/{company_id}",
       "method_or_action": "Create Public, Limited (with public summary) and Private collaborations; open partner.html in incognito and GET /api/partners/{id} and /api/partners",
       "role": "public",
@@ -87,7 +314,7 @@
       "expected_behavior": "Private absent from page and API; Limited shows only 'Confidential collaboration', its public summary, years and current/past (no title, description, projects or students)"
     },
     {
-      "requirement_or_scenario": "R4.04-R4.06",
+      "requirement_or_scenario": "R4 regression (F.39): R4.04-R4.06",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/projects.html?id={project_id}",
       "method_or_action": "Maintainer: Official ImmXrsive verification → Request verification (POST /api/projects/{id}/verification-request); staff: Verify project (GET /api/staff/verification-requests/{id}, POST …/decision)",
       "role": "student maintainer, then staff",
@@ -95,7 +322,7 @@
       "expected_behavior": "Pending until staff decide; approve adds 'Officially verified by ImmXrsive' on project.html (GET /api/projects/{id}/industry); reject requires a note shown to students; PUT /api/projects/{id} cannot set verification"
     },
     {
-      "requirement_or_scenario": "R4.20-R4.21; Scenario I",
+      "requirement_or_scenario": "R4 regression (F.39): R4.20-R4.21; Scenario I",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/projects.html?id={project_id}",
       "method_or_action": "Industry partners → choose a listed company or 'suggest a new company', explain, Send partner request (POST /api/projects/{id}/partner-requests); staff: Review request (GET /api/staff/partner-requests/{id}, POST …/decision)",
       "role": "student maintainer, then staff",
@@ -103,7 +330,7 @@
       "expected_behavior": "Request shows 'Waiting for staff review' and does not appear on project.html; after approval the partner is listed on the public project; rejection note shown to students; suggested company becomes a draft partner"
     },
     {
-      "requirement_or_scenario": "R4.22, R4.24, R4.26; Scenario J",
+      "requirement_or_scenario": "R4 regression (F.39): R4.22, R4.24, R4.26; Scenario J",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/partners.html",
       "method_or_action": "Open a partner, follow project/student links, 'Ask about this collaboration' or 'Start a collaboration inquiry', send (POST /api/inquiries with source_type partner|collaboration)",
       "role": "public",
@@ -111,7 +338,7 @@
       "expected_behavior": "Plain-language partner page; inquiry form names the partner/collaboration; staff Inquiries (admin.html#inbox) shows the same source; no horizontal scrolling at 390 px"
     },
     {
-      "requirement_or_scenario": "R4.27 regression",
+      "requirement_or_scenario": "R4 regression (F.39): R4.27 regression",
       "entry_point": "https://sajal19-sketch.github.io/immxrsive-platform/index.html",
       "method_or_action": "Directory search, student profile, project page, My Projects, employer inquiry",
       "role": "public / verified student",
@@ -119,6 +346,6 @@
       "expected_behavior": "R1-R3 behaviour unchanged"
     }
   ],
-  "fixture_setup": "Company-site fixtures are published unchanged at fixtures/r4/ on GitHub Pages (URLs above, SHA-256 in fixtures/r4/SHA256SUMS). Import them through the staff UI; nothing is pre-loaded. collaboration_seed.json is reproduced by staff through the Collaborations form (North Shore Simulations: 2025 past public, 2026 current public; Superior Immersive Labs: 2026 current private). R1-R3 fixture students/projects remain loaded by seed_db.py.",
-    "test_access": "Staff test username/password is in the online text of the Moodle Release 4 Product Result submission. Students sign in with their own GitHub account and verify their own @algomau.ca email. No passwords or tokens are in this repository."
+  "fixture_setup": "Final fixtures are byte-for-byte copies in fixtures/final/ (SHA256SUMS) and are served from GitHub Pages. On the deployed site staff applied legacy_export.json and scale_fixture.json once through Operations -> Legacy migration (the run reports are under Previous runs); reviewers may re-run either file (it is idempotent) or use Preview only. R1 seed data and R4 partner/collaboration fixtures remain. Company-site fixtures are published unchanged at fixtures/r4/ on GitHub Pages (URLs above, SHA-256 in fixtures/r4/SHA256SUMS). Import them through the staff UI; nothing is pre-loaded. collaboration_seed.json is reproduced by staff through the Collaborations form (North Shore Simulations: 2025 past public, 2026 current public; Superior Immersive Labs: 2026 current private). R1-R3 fixture students/projects remain loaded by seed_db.py.",
+  "test_access": "Staff: one shared staff test account, given only in the Moodle Final Product Result Online text under Reviewer test access (sign in at admin.html, then Operations). Students/contributors: reviewers sign in with their own GitHub account at login.html and verify their own @algomau.ca email, then claim or create profiles/projects with synthetic data. Public visitor: no account. No passwords or tokens are in this repository."
 }

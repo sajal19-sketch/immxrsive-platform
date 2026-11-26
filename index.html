@@ -99,8 +99,16 @@
                 <option value="full-time">Full-time</option>
               </select>
             </div>
+            <div class="field">
+              <label for="talent">Looking for work?</label>
+              <select class="control" id="talent">
+                <option value="">Everyone</option>
+                <option value="active">Active Talent only</option>
+                <option value="showcase">Showcase Only</option>
+              </select>
+            </div>
           </div>
-          <p class="hint"><span>Use <b>,</b> for AND</span><span>Use <b>|</b> for OR</span><span>Example: react, figma | unity</span></p>
+          <p class="hint"><span>Use <b>,</b> for AND</span><span>Use <b>|</b> for OR</span><span>Example: react, figma | unity</span><span>Availability shows Active Talent confirmed in the last 12 months</span></p>
         </div>
       </div>
 
@@ -114,6 +122,11 @@
           </div>
         </div>
         <div class="grid" id="grid" aria-busy="true"></div>
+        <nav class="pager" id="pager" aria-label="Directory pages" hidden>
+          <button class="btn inline ghost" type="button" id="prev">← Previous</button>
+          <span id="pageinfo" aria-live="polite"></span>
+          <button class="btn inline ghost" type="button" id="next">Next →</button>
+        </nav>
       </div>
       <div style="height:clamp(64px,9vw,120px)"></div>
     </section>
@@ -136,30 +149,24 @@
 
 <script src="site.js"></script>
 <script>
+/* Final release (F.28): the directory asks the server for ONE page of matching
+   profiles (24 cards). Search, filters and the skill cloud are computed on the
+   server, so the first load is the same size with 20 or 220 profiles, and no
+   resume, media or demo asset is ever part of it. */
 (function () {
   "use strict";
   var X = window.IMX, $ = X.$, el = X.el, lc = X.lc, REDUCED = X.REDUCED;
   var grid = $("grid"), countEl = $("count"), clearBtn = $("clear"), banner = $("banner");
-  var qEl = $("q"), statusEl = $("status"), availEl = $("avail"), sortEl = $("sort");
-  var all = [], filtered = [];
+  var qEl = $("q"), statusEl = $("status"), availEl = $("avail"), talentEl = $("talent"), sortEl = $("sort");
+  var page = 1, pages = 1, seq = 0, timer = null, PER_PAGE = 24;
 
-  /* ---------- Search parsing: "," = AND, "|" = OR ---------- */
-  function parseQuery(raw) {
-    return raw.split("|").map(function (g) {
-      return g.split(",").map(function (t) { return lc(t.trim()); }).filter(Boolean);
-    }).filter(function (g) { return g.length; });
+  function talentLabel(p) {
+    if (p.talent_state === "active") return p.availability.length ? "Active talent · open to " + p.availability.join(", ") : "Active talent";
+    if (p.talent_state === "stale") return "Availability last confirmed " + (p.availability_confirmed_at || "over a year ago") + " · may be out of date";
+    if (p.talent_state === "unconfirmed") return "Availability not confirmed";
+    if (p.talent_state === "showcase") return "Showcase only · not currently seeking work";
+    return "";
   }
-  function termMatches(hay, term) {
-    var words = term.split(/\s+/).filter(Boolean);
-    for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) === -1) return false;
-    return true;
-  }
-  function queryMatches(hay, groups) {
-    if (!groups.length) return true;
-    return groups.some(function (g) { return g.every(function (t) { return termMatches(hay, t); }); });
-  }
-
-  /* ---------- Rendering ---------- */
   function renderSkeletons() {
     grid.setAttribute("aria-busy", "true");
     grid.replaceChildren();
@@ -172,117 +179,66 @@
     if (label) { var b = el("button", "btn", label); b.type = "button"; b.addEventListener("click", action); box.appendChild(b); }
     grid.replaceChildren(box);
   }
-
   function buildCard(p) {
     var card = el("article", "card");
-    card.appendChild(el("span", "badge" + (lc(p.status) === "current" ? " current" : ""), p.status || "N/A"));
-
+    card.appendChild(el("span", "badge" + (lc(p.status || "") === "current" ? " current" : ""), p.status || "N/A"));
     var top = el("div", "card-top");
     top.appendChild(X.constellation(p, 56));
     top.appendChild(el("span", "cid", "CREW-" + p.id.toUpperCase()));
     card.appendChild(top);
-
     var head = el("div");
     head.appendChild(el("h3", null, p.name));
     if (p.program) head.appendChild(el("p", "program", p.program));
     card.appendChild(head);
-
     if (p.headline) card.appendChild(el("p", "headline", p.headline));
-
     if (p.skills.length) {
       var tags = el("div", "tags");
       p.skills.slice(0, 5).forEach(function (s) { tags.appendChild(el("span", "tag", s)); });
       if (p.skills.length > 5) tags.appendChild(el("span", "tag more", "+" + (p.skills.length - 5)));
       card.appendChild(tags);
     }
-        var facts = [];
-    if (p.availability.length) facts.push("Open to: " + p.availability.join(", "));
-    var n = Array.isArray(p.projects) ? p.projects.length : 0;
-    facts.push(n === 1 ? "1 project" : n + " projects");
-    card.appendChild(el("p", "program", facts.join(" · ")));
-    // A normal link to a real page: student.html?id=S01
+    var t = talentLabel(p);
+    if (t) card.appendChild(el("p", "program talent-" + (p.talent_state || ""), t));
+    var n = p.project_count || 0;
+    card.appendChild(el("p", "program", n === 1 ? "1 project" : n + " projects"));
     var link = el("a", "btn block", "View Profile");
     link.href = X.studentUrl(p.id);
     link.setAttribute("aria-label", "View profile for " + p.name);
     card.appendChild(link);
     return card;
   }
-
-  function render() {
-    grid.setAttribute("aria-busy", "false");
-    clearBtn.hidden = !(qEl.value.trim() || statusEl.value || availEl.value);
-    var n = filtered.length, total = all.length;
-    countEl.replaceChildren();
-    countEl.appendChild(el("b", null, String(n)));
-    countEl.appendChild(document.createTextNode(" / " + total + (n === 1 ? " match" : " matches")));
-    if (!n) {
-      renderState(
-        total ? "Nothing in range" : "The sky is empty",
-        total ? "No profiles match that search. Loosen a filter or try different keywords." : "The directory has no profiles to show right now.",
-        total ? "Clear filters" : null, clearFilters
-      );
-      return;
-    }
-    var frag = document.createDocumentFragment();
-    filtered.forEach(function (p) { frag.appendChild(buildCard(p)); });
-    grid.replaceChildren(frag);
+  function filtersActive() { return !!(qEl.value.trim() || statusEl.value || availEl.value || talentEl.value); }
+  function params() {
+    var u = new URLSearchParams();
+    if (qEl.value.trim()) u.set("q", qEl.value.trim());
+    if (statusEl.value) u.append("status", statusEl.value);
+    if (availEl.value) { u.append("availability", availEl.value); }
+    if (talentEl.value) u.set("talent", talentEl.value);
+    if (sortEl.value) u.set("sort", sortEl.value);
+    u.set("page", String(page)); u.set("limit", String(PER_PAGE));
+    return u;
   }
-
-  function applyFilters() {
-    var groups = parseQuery(qEl.value), status = statusEl.value, avail = availEl.value, sort = sortEl.value;
-    filtered = all.filter(function (p) {
-      if (status && lc(p.status) !== status) return false;
-      if (avail && !p.availability.some(function (a) { return lc(a) === avail; })) return false;
-      return queryMatches(p.hay, groups);
-    });
-    if (sort === "az") filtered.sort(function (a, b) { return a.name.localeCompare(b.name); });
-    else if (sort === "skills") filtered.sort(function (a, b) { return b.skills.length - a.skills.length; });
-    render();
-  }
-  function clearFilters() { qEl.value = ""; statusEl.value = ""; availEl.value = ""; applyFilters(); qEl.focus(); }
-
-  /* ---------- Skill cloud + stats from real data ---------- */
-  function renderField() {
-    var freq = {}, label = {};
-    all.forEach(function (p) {
-      p.skills.forEach(function (s) {
-        var k = lc(s);
-        freq[k] = (freq[k] || 0) + 1;
-        if (!label[k]) label[k] = s;
-      });
-    });
-    var keys = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a] || a.localeCompare(b); });
-    var top = keys.slice(0, 22);
-    var max = top.length ? freq[top[0]] : 1, min = top.length ? freq[top[top.length - 1]] : 1;
-
+  function renderField(f) {
     var cloud = $("cloud");
     cloud.replaceChildren();
-    top.forEach(function (k) {
-      var t = max === min ? 0.5 : (freq[k] - min) / (max - min);
-      var b = el("button", null, label[k]);
+    var list = f.skills || [], max = list.length ? list[0].count : 1, min = list.length ? list[list.length - 1].count : 1;
+    list.forEach(function (s) {
+      var t = max === min ? 0.5 : (s.count - min) / (max - min);
+      var b = el("button", null, s.name);
       b.type = "button";
       b.style.fontSize = (17 + t * 15).toFixed(1) + "px";
-      b.title = freq[k] + (freq[k] === 1 ? " profile" : " profiles");
-      b.dataset.skill = label[k];
-      b.appendChild(el("sup", null, String(freq[k])));
+      b.title = s.count + (s.count === 1 ? " profile" : " profiles");
+      b.setAttribute("aria-label", "Filter by " + s.name + ", " + b.title);
+      b.dataset.skill = s.name;
+      b.appendChild(el("sup", null, String(s.count)));
       cloud.appendChild(b);
     });
-    $("cloud-note").textContent = keys.length > top.length ? "Showing the top " + top.length + " of " + keys.length + " skills." : (keys.length ? keys.length + " skills across " + all.length + " profiles." : "");
-
-    $("s-total").textContent = String(all.length);
-    $("s-current").textContent = String(all.filter(function (p) { return lc(p.status) === "current"; }).length);
-    $("s-alumni").textContent = String(all.filter(function (p) { return lc(p.status) === "alumni"; }).length);
-    $("s-skills").textContent = String(keys.length);
+    $("cloud-note").textContent = f.distinct_skills > list.length ? "Showing the top " + list.length + " of " + f.distinct_skills + " skills." : (f.distinct_skills ? f.distinct_skills + " skills across " + f.total_published + " profiles." : "");
+    $("s-total").textContent = String(f.total_published);
+    $("s-current").textContent = String(f.current);
+    $("s-alumni").textContent = String(f.alumni);
+    $("s-skills").textContent = String(f.distinct_skills);
   }
-  $("cloud").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-skill]");
-    if (!b) return;
-    qEl.value = b.dataset.skill;
-    applyFilters();
-    $("index").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
-  });
-
-  /* ---------- Data ---------- */
   function showBanner(info) {
     banner.replaceChildren();
     if (!info) { banner.hidden = true; return; }
@@ -290,31 +246,64 @@
     msg.appendChild(el("strong", null, info.title));
     msg.appendChild(document.createTextNode(" " + info.text));
     banner.appendChild(msg);
-    if (info.retry) {
-      var r = el("button", "link-btn", "Retry live API");
-      r.type = "button"; r.addEventListener("click", load);
-      banner.appendChild(r);
-    }
+    if (info.retry) { var r = el("button", "link-btn", "Retry"); r.type = "button"; r.addEventListener("click", load); banner.appendChild(r); }
     banner.hidden = false;
   }
+  function render(d) {
+    grid.setAttribute("aria-busy", "false");
+    clearBtn.hidden = !filtersActive();
+    pages = d.pages || 1;
+    countEl.replaceChildren();
+    countEl.appendChild(el("b", null, String(d.total)));
+    countEl.appendChild(document.createTextNode(" / " + d.facets.total_published + (d.total === 1 ? " match" : " matches")));
+    $("pager").hidden = pages <= 1;
+    $("pageinfo").textContent = "Page " + d.page + " of " + pages;
+    $("prev").disabled = d.page <= 1; $("next").disabled = d.page >= pages;
+    if (!d.items.length) {
+      renderState(d.facets.total_published ? "Nothing in range" : "The sky is empty",
+        d.facets.total_published ? "No profiles match that search. Loosen a filter or try different keywords." : "The directory has no profiles to show right now.",
+        d.facets.total_published ? "Clear filters" : null, clearFilters);
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    d.items.map(function (p) { return { id: p.id, name: p.name || "Unnamed profile", headline: p.headline || "", program: p.program || "",
+      status: p.status || "", skills: X.list(p.skills), availability: X.list(p.availability), talent_state: p.talent_state,
+      availability_confirmed_at: p.availability_confirmed_at, project_count: p.project_count }; })
+      .forEach(function (p) { frag.appendChild(buildCard(p)); });
+    grid.replaceChildren(frag);
+  }
   function load() {
+    var mine = ++seq;
     renderSkeletons();
     countEl.textContent = "Loading profiles";
     showBanner(null);
-    X.loadDirectory(function () {
-      showBanner({ title: "Waking up the API.", text: "The first request can take up to a minute on free hosting." });
-    }).then(function (res) {
-      all = res.data;
-      showBanner(res.live ? null : { title: "Couldn't reach the live API.", text: "No sample data is displayed; please retry the live directory.", retry: true });
-      renderField(); applyFilters();
-    });
+    var slow = setTimeout(function () { showBanner({ title: "Waking up the API.", text: "The first request can take up to a minute on free hosting." }); }, 4000);
+    var ctrl = new AbortController(), stop = setTimeout(function () { ctrl.abort(); }, 45000);
+    fetch(window.IMX_API + "/api/talent?" + params().toString(), { headers: { Accept: "application/json" }, signal: ctrl.signal })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) { if (mine !== seq) return; showBanner(null); renderField(d.facets); render(d); })
+      .catch(function () {
+        if (mine !== seq) return;
+        grid.setAttribute("aria-busy", "false");
+        countEl.textContent = "Directory unavailable";
+        renderState("Couldn't reach the directory", "The server may be waking up. Your filters are kept.", "Try again", load);
+      })
+      .then(function () { clearTimeout(slow); clearTimeout(stop); });
   }
+  function reload() { page = 1; clearTimeout(timer); timer = setTimeout(load, 250); }
+  function clearFilters() { qEl.value = ""; statusEl.value = ""; availEl.value = ""; talentEl.value = ""; page = 1; load(); qEl.focus(); }
 
-  qEl.addEventListener("input", applyFilters);
-  statusEl.addEventListener("change", applyFilters);
-  availEl.addEventListener("change", applyFilters);
-  sortEl.addEventListener("change", applyFilters);
+  $("cloud").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-skill]");
+    if (!b) return;
+    qEl.value = b.dataset.skill; page = 1; load();
+    $("index").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+  });
+  qEl.addEventListener("input", reload);
+  [statusEl, availEl, talentEl, sortEl].forEach(function (x) { x.addEventListener("change", function () { page = 1; load(); }); });
   clearBtn.addEventListener("click", clearFilters);
+  $("prev").addEventListener("click", function () { if (page > 1) { page--; load(); $("index").scrollIntoView({ block: "start" }); } });
+  $("next").addEventListener("click", function () { if (page < pages) { page++; load(); $("index").scrollIntoView({ block: "start" }); } });
   grid.addEventListener("pointermove", function (e) {
     var card = e.target.closest(".card");
     if (!card) return;
@@ -322,7 +311,6 @@
     card.style.setProperty("--mx", (e.clientX - r.left) + "px");
     card.style.setProperty("--my", (e.clientY - r.top) + "px");
   });
-
   load();
 })();
 </script>

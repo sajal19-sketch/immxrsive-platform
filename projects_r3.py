@@ -180,6 +180,8 @@ class ProjectFields(BaseModel):
     video_url: str = ''
     fallback_url: str = ''
     fallback_text: str = Field(default='', max_length=300)
+    # Final F.36: owners pick a structured type for the playable link, never markup.
+    demo_type: str = 'link'
 
 
 class ProjectCreate(ProjectFields):
@@ -197,6 +199,8 @@ def validated(fields: ProjectFields):
         raise HTTPException(422, 'Project title is required.')
     if fields.status and fields.status not in STATUSES:
         raise HTTPException(422, 'Status must be Planning, In progress, Completed or Archived.')
+    if fields.demo_type not in ('link', 'embed', 'webxr'):
+        raise HTTPException(422, 'Demo type must be "Opens in a new tab", "Embedded web build" or "WebXR experience".')
     if fields.project_date and not re.fullmatch(r'\d{4}(-\d{2}(-\d{2})?)?', fields.project_date):
         raise HTTPException(422, 'Date must look like 2026, 2026-10 or 2026-10-29.')
     repos, norms = [], set()
@@ -217,6 +221,7 @@ def validated(fields: ProjectFields):
         'video_url': clean_url(fields.video_url, 'Video link'),
         'fallback_url': clean_url(fields.fallback_url, 'Fallback image/link'),
         'fallback_text': fields.fallback_text.strip(),
+        'demo_type': fields.demo_type,
     }
 
 
@@ -283,7 +288,7 @@ def similar_titles(conn, title, exclude=None):
 def contributor_rows(conn, pid):
     return [dict(r) for r in conn.execute(
         '''SELECT c.student_id, c.role, c.status, c.statement, c.featured,
-                  s.name, s.is_published AS student_published, s.github_link
+                  s.name, s.is_published AS student_published, s.github_link, s.publication
            FROM project_contributors c LEFT JOIN students s ON s.id=c.student_id
            WHERE c.project_id=%s ORDER BY c.student_id''', (pid,)).fetchall()]
 
@@ -297,15 +302,23 @@ def project_core(project, repos):
         'repo_urls': repos, 'playable_url': p.get('playable_url') or '',
         'video_url': p.get('video_url') or '', 'fallback_url': p.get('fallback_url') or '',
         'fallback_text': p.get('fallback_text') or '',
+        'demo_type': p.get('demo_type') or 'link',
+        'demo_state': p.get('demo_state') or 'available',
+        'demo_note': p.get('demo_note') or '',
+        'demo_replacement_url': p.get('demo_replacement_url') or '',
         'is_published': bool(p.get('is_published')),
     }
 
 
 def public_contributor(c, maintainer_id):
     visible = bool(c.get('student_published'))
+    retired = c.get('publication') == 'retired'
+    # F.16: a retired portfolio keeps its credit on shared projects (name and role,
+    # no profile link). Unpublished drafts stay anonymous as before.
     return {
         'student_id': c['student_id'] if visible else None,
-        'name': (c.get('name') or 'Student') if visible else 'Contributor (profile not public)',
+        'name': (c.get('name') or 'Student') if visible else (
+            (c.get('name') or 'Contributor') + ' (portfolio archived)' if retired else 'Contributor (profile not public)'),
         'role': c['role'], 'statement': c['statement'] or '',
         'is_maintainer': c['student_id'] == maintainer_id,
     }
@@ -424,11 +437,11 @@ def create_project(payload: ProjectCreate, student=Depends(require_verified)):
         conn.execute(
             '''INSERT INTO projects (id,title,description,domain,technologies,status,project_date,
                maintainer_id,version,is_published,playable_url,video_url,fallback_url,fallback_text,
-               created_at,updated_at,updated_by)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,1,0,%s,%s,%s,%s,%s,%s,%s)''',
+               created_at,updated_at,updated_by,demo_type)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,1,0,%s,%s,%s,%s,%s,%s,%s,%s)''',
             (pid, data['title'], data['description'], data['domain'], json.dumps(data['technologies']),
              data['status'], data['project_date'], student['id'], data['playable_url'], data['video_url'],
-             data['fallback_url'], data['fallback_text'], stamp, stamp, student['id']))
+             data['fallback_url'], data['fallback_text'], stamp, stamp, student['id'], data['demo_type']))
         save_repos(conn, pid, data['repos'])
         conn.execute(
             '''INSERT INTO project_contributors (project_id,student_id,role,status,statement,featured,updated_at)
@@ -444,12 +457,12 @@ def update_project(project_id: str, payload: ProjectUpdate, student=Depends(requ
         require_maintainer(project, student)
         row = conn.execute(
             '''UPDATE projects SET title=%s,description=%s,domain=%s,technologies=%s,status=%s,
-               project_date=%s,playable_url=%s,video_url=%s,fallback_url=%s,fallback_text=%s,
+               project_date=%s,playable_url=%s,video_url=%s,fallback_url=%s,fallback_text=%s,demo_type=%s,
                updated_at=%s,updated_by=%s,version=version+1
                WHERE id=%s AND version=%s RETURNING version''',
             (data['title'], data['description'], data['domain'], json.dumps(data['technologies']),
              data['status'], data['project_date'], data['playable_url'], data['video_url'],
-             data['fallback_url'], data['fallback_text'], _now(), student['id'],
+             data['fallback_url'], data['fallback_text'], data['demo_type'], _now(), student['id'],
              project_id, payload.version)).fetchone()
         if not row:
             current = load_project(conn, project_id)

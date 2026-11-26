@@ -1,0 +1,6 @@
+{
+  "request": "GET /api/talent (first directory load)",
+  "profiles_in_database": 17,
+  "cards_returned": 17,
+  "response_bytes": 8103
+}

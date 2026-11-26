@@ -548,6 +548,9 @@ def import_company(payload: ImportIn, staff=Depends(require_staff)):
     except Exception as exc:  # network, DNS, parsing: all become a recoverable failure
         final_url, candidates, warnings, missing, flagged = '', {}, [], [], []
         status, error = 'failed', (str(exc) if isinstance(exc, ValueError) else 'The website could not be reached.')
+        import final_release   # F.32: staff can see failed imports in Diagnostics
+        final_release.record_event('company_import', f'{type(exc).__name__}: {error} (host {urlsplit(url).hostname})',
+                                   level='warning', route='POST /api/staff/company-imports', status=200)
     with _db() as conn:
         conn.execute('''INSERT INTO company_imports (id,company_id,source_url,final_url,status,candidates,warnings,
                         error,imported_by,imported_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
@@ -640,7 +643,7 @@ def _validated_company(c: CompanyIn):
 def domain_matches(conn, domain, exclude=''):
     if not domain:
         return []
-    rows = conn.execute('SELECT id, name, status, domain FROM companies WHERE domain=%s AND id<>%s',
+    rows = conn.execute("SELECT id, name, status, domain FROM companies WHERE domain=%s AND id<>%s AND status<>'merged'",
                         (domain, exclude or '')).fetchall()
     return [{'id': r['id'], 'name': r['name'], 'status': r['status'], 'domain': r['domain']} for r in rows]
 
@@ -1276,6 +1279,10 @@ def public_partner(cid: str):
     with _db() as conn:
         c = conn.execute("SELECT * FROM companies WHERE id=%s AND status='published'", (cid,)).fetchone()
         if not c:
+            import final_release   # F.18: a merged partner's old link leads to the survivor
+            moved = final_release.moved_partner(conn, cid)
+            if moved:
+                return moved
             raise HTTPException(404, 'Partner not found')
         collabs = [public_collaboration(conn, x) for x in conn.execute(
             'SELECT * FROM collaborations WHERE company_id=%s ORDER BY coalesce(start_year,0) DESC, title', (cid,)).fetchall()]

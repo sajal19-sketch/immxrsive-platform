@@ -84,6 +84,7 @@ const API = window.IMX_API;
 const $ = id => document.getElementById(id);
 const authHeaders = () => ({'Authorization': 'Bearer ' + (sessionStorage.getItem('imx_token') || '')});
 const status = (message, error=false) => { $('verification-message').textContent=message; $('verification-message').style.color=error?'#f87171':'#4ade80'; };
+function afterLogin(){const n=sessionStorage.getItem('imx_after_login')||'';sessionStorage.removeItem('imx_after_login');return /^editor\.html#claim=[A-Za-z0-9_-]{1,64}$/.test(n)?n:'editor.html';}
 async function requestJSON(path, payload) {
  const r=await fetch(API+path,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(payload)});
  const data=await r.json().catch(()=>({detail:'Unexpected server response'}));
@@ -103,7 +104,7 @@ async function finishGitHub() {
  history.replaceState(null,'',location.pathname);
  if (!state || state !== sessionStorage.getItem('imx_oauth_state')) {status('Sign-in state mismatch; try GitHub login again.',true);return;}
  sessionStorage.removeItem('imx_oauth_state');
- try {const data=await requestJSON('/api/auth/exchange',{ticket});sessionStorage.setItem('imx_token',data.access_token); location.href='editor.html';}
+ try {const data=await requestJSON('/api/auth/exchange',{ticket});sessionStorage.setItem('imx_token',data.access_token); location.href=afterLogin();}
  catch(err){status(err.message,true);}
 }
 async function requestVerification(){
@@ -111,7 +112,7 @@ async function requestVerification(){
  catch(e){status(e.message,true);}
 }
 async function submitVerification(){
- try {const data=await requestJSON('/api/verify-code',{email:$('algoma-email').value,code:$('otp-code').value});status(data.message);location.href='editor.html';}
+ try {const data=await requestJSON('/api/verify-code',{email:$('algoma-email').value,code:$('otp-code').value});status(data.message);location.href=afterLogin();}
  catch(e){status(e.message,true);}
 }
 (async()=>{
