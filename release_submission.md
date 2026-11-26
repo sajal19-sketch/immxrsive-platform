@@ -10,6 +10,20 @@ Commit: __FINAL_SHA__
 Adapter: evaluation_adapter.json
 Known issues: see RELEASE_NOTES_FINAL.md → "Known issues and limitations" (secrets in early git history must be rotated; legacy records with the same name as R1 seed records are queued for staff review rather than merged; scale-fixture students have no availability confirmation date; cross-origin demos cannot report a 404 to the parent page)
 Test notes: Staff tools are at admin.html → Operations (staff-ops.html). The legacy export and the scale fixture were applied on the deployed database through Operations → Legacy migration, and the reports are under Previous runs. The API sleeps when idle, so the first request can take up to a minute.
+Secrets (F.23): the OAuth client secret and Gmail app password that appear in early git history were rotated on Nov 26, 2026 and no longer work.
+
+## Where to test each Final scenario
+
+- **A (employer):** directory → "Looking for work?" = Active Talent only. A Showcase Only example is "Unclaimed Alum"; a stale example is the legacy "Daniel Kim" (last confirmed 2024-06-01).
+- **B (lifecycle):** staff → Operations → Students → Lifecycle changes Current/Alumni, publication and talent mode. Students confirm availability in editor.html → Status and availability.
+- **C (migration/claim):** Operations → Legacy migration → Previous runs shows the report. Claim "Daniel Kim" (legacy, alumni) or "Unclaimed Alum" from its public profile ("Is this you? Claim it"); staff resolve it in Operations → Profile claims.
+- **D (duplicates/recovery):** Operations → Duplicates holds one student pair (legacy "Avery C." / "Avery Chen", same email) and one company pair (North Shore Simulation Inc. / North Shore Simulations, same domain). These are the only synthetic duplicates: if another reviewer has already merged them, open the merged record's old URL to check the redirect. Maintainer recovery: Operations → Projects & maintainers.
+- **H (external failure), three ready cases:**
+  1. Company import: admin.html → Import partner from website → `https://does-not-exist.invalid`.
+  2. GitHub import: My Projects → Add Project → import `https://github.com/sajal19-sketch/this-repo-does-not-exist`.
+  3. Broken demo: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_b95058392905b5f2 (playable URL points to a missing page; demo marked unavailable).
+- **I (playable/XR):** embedded build that only loads after Launch, closes with Close demo or Escape: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_471fa66270578f33. Link-type demo with fallback: https://sajal19-sketch.github.io/immxrsive-platform/project.html?id=p_7eb4b3c84a54aaae
+- **J (industry history):** https://sajal19-sketch.github.io/immxrsive-platform/partner.html?id=c_6cf0e9cc392a (current and past collaborations, one Limited; the Private one is held on another partner and must not appear).
 
 ## Test accounts
 
